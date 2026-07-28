@@ -24,6 +24,9 @@ function Scene:new()
     -- when set, every mesh draws with this material instead of its own
     s.overrideMaterial = nil
 
+    -- Fog or FogExp2, or nil for none -- matches three.js's scene.fog.
+    s.fog = nil
+
     return s
 end
 
@@ -47,6 +50,7 @@ function Scene:copy(source, recursive)
     Object3D.copy(self, source, recursive)
     self.background      = source.background and source.background:clone() or nil
     self.overrideMaterial = source.overrideMaterial
+    self.fog              = source.fog
     return self
 end
 

@@ -37,7 +37,7 @@ ShaderLib.__index = ShaderLib
 -- and ambientOcclusion, shadow writes shadowFactor, pbr reads both. Only
 -- `skinning` is optional -- see the note in its file about the 2048 uniform
 -- components a bone array costs, which is the whole reason variants exist.
-local ALWAYS = { "normalmap", "shadow", "pbr" }
+local ALWAYS = { "normalmap", "shadow", "pbr", "fog" }
 
 local cache = {}
 local loaded = {}

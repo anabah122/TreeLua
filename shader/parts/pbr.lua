@@ -15,6 +15,10 @@ return {
         uniform vec3  u_lightDir;
         uniform vec3  u_lightColor;
         uniform vec3  u_ambient;
+        uniform bool  u_hasHemi;
+        uniform vec3  u_hemiSkyColor;
+        uniform vec3  u_hemiGroundColor;
+        uniform vec3  u_hemiDir;
         uniform vec3  u_cameraPos;
         uniform float u_metalness;
         uniform float u_roughness;
@@ -129,8 +133,17 @@ return {
         // wider cone, so roughness does not dim it the way a mirror lobe would.
         //
         // A real IBL probe would replace these two lines.
-        vec3 _ambient = (u_ambient * baseColor.rgb * (1.0 - _metalness)
-                      +  u_ambient * _f0 * mix(1.0, 0.5, _roughness))
+        // Hemisphere term: same environment stand-in as u_ambient, but split
+        // into a sky and ground colour blended by how much the normal faces
+        // up vs down -- cheap proxy for outdoor bounce light with no shadows.
+        vec3 _envLight = u_ambient;
+        if (u_hasHemi) {
+            float _hemiMix = dot(_n, u_hemiDir) * 0.5 + 0.5;
+            _envLight += mix(u_hemiGroundColor, u_hemiSkyColor, _hemiMix);
+        }
+
+        vec3 _ambient = (_envLight * baseColor.rgb * (1.0 - _metalness)
+                      +  _envLight * _f0 * mix(1.0, 0.5, _roughness))
                       * ambientOcclusion;
 
         vec3 _emissive = u_emissive;

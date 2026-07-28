@@ -63,6 +63,7 @@ function WebGLRenderer:new(params)
     -- one bucket per shader variant, refilled each frame
     r._staticList  = {}
     r._skinnedList = {}
+    r._lineList    = {}
     r._lightScratch = Color:new()
     r._depthScratch = {}
     r._frustum = Frustum:new()
@@ -147,16 +148,21 @@ end
 function WebGLRenderer:_collect(scene)
     local static  = self._staticList
     local skinned = self._skinnedList
+    local lines   = self._lineList
     for i = #static,  1, -1 do static[i]  = nil end
     for i = #skinned, 1, -1 do skinned[i] = nil end
+    for i = #lines,   1, -1 do lines[i]   = nil end
 
-    local directional, ambient = nil, nil
+    local directional, ambient, hemisphere = nil, nil, nil
     local extraDirectional = false
 
     local culled = 0
 
     scene:traverseVisible(function(obj)
-        if obj.isMesh and obj:isMesh() and obj.geometry then
+        if obj.isLine and obj:isLine() and obj.geometry then
+            lines[#lines + 1] = obj
+
+        elseif obj.isMesh and obj:isMesh() and obj.geometry then
             if obj.isSprite and obj:isSprite() then
                 self:_billboard(obj)
             end
@@ -187,6 +193,12 @@ function WebGLRenderer:_collect(scene)
             else
                 ambient:add(self._lightScratch:copy(obj.color):multiplyScalar(obj.intensity))
             end
+
+        elseif obj.isHemisphereLight and obj:isHemisphereLight() then
+            -- brightest wins, same rule as directional -- the shader takes one
+            if hemisphere == nil or obj.intensity > hemisphere.intensity then
+                hemisphere = obj
+            end
         end
     end)
 
@@ -198,7 +210,7 @@ function WebGLRenderer:_collect(scene)
 
     self.info.render.culled = culled
 
-    return static, skinned, directional, ambient
+    return static, skinned, lines, directional, ambient, hemisphere
 end
 
 -- A sprite always faces the camera: three.js overwrites its world rotation
@@ -235,7 +247,7 @@ end
 
 -- Frame-wide uniforms go to every variant that will be bound this frame, since
 -- each is a separate program with its own uniform storage.
-function WebGLRenderer:_sendLights(sh, directional, ambient)
+function WebGLRenderer:_sendLights(sh, directional, ambient, hemisphere)
     if directional then
         local dir = directional:direction()
         local col = Color:new():copy(directional.color):multiplyScalar(directional.intensity)
@@ -252,6 +264,21 @@ function WebGLRenderer:_sendLights(sh, directional, ambient)
         sh:send("u_ambient", { ambient.r, ambient.g, ambient.b })
     else
         sh:send("u_ambient", { 0, 0, 0 })
+    end
+
+    if hemisphere then
+        local sky = self._lightScratch:copy(hemisphere.color):multiplyScalar(hemisphere.intensity)
+        local up = Vector3:new():setFromMatrixPosition(hemisphere.matrixWorld):normalizeSelf()
+        sh:send("u_hasHemi", true)
+        sh:send("u_hemiSkyColor", { sky.r, sky.g, sky.b })
+        sh:send("u_hemiGroundColor", {
+            hemisphere.groundColor.r * hemisphere.intensity,
+            hemisphere.groundColor.g * hemisphere.intensity,
+            hemisphere.groundColor.b * hemisphere.intensity,
+        })
+        sh:send("u_hemiDir", { up.x, up.y, up.z })
+    else
+        sh:send("u_hasHemi", false)
     end
 end
 
@@ -274,6 +301,29 @@ function WebGLRenderer:_sendShadowUniforms(sh, caster)
     local settings = require "three.settings"
     local kernel = math.max(0, math.min(3, math.floor(settings.shadowSoftness)))
     sh:send("u_shadowKernel", kernel)
+end
+
+-- Frame-wide, like lights: one fog per scene, not per mesh.
+function WebGLRenderer:_sendFog(sh, fog)
+    if fog == nil then
+        sh:send("u_hasFog", false)
+        return
+    end
+
+    sh:send("u_hasFog", true)
+    sh:send("u_fogColor", { fog.color.r, fog.color.g, fog.color.b })
+
+    if fog.isFogExp2 and fog:isFogExp2() then
+        sh:send("u_fogMode", 1)
+        sh:send("u_fogDensity", fog.density)
+        sh:send("u_fogNear", 0)
+        sh:send("u_fogFar", 1)
+    else
+        sh:send("u_fogMode", 0)
+        sh:send("u_fogNear", fog.near)
+        sh:send("u_fogFar", fog.far)
+        sh:send("u_fogDensity", 0)
+    end
 end
 
 function WebGLRenderer:_sendMaterial(sh, material)
@@ -516,6 +566,59 @@ function WebGLRenderer:_drawBucket(bucket, variant, override, state, info, hasSh
     return self
 end
 
+-- Draw every Line/LineSegments, unlit and shaderless.
+--
+-- LÖVE has no GL_LINES mesh mode, so each point is projected to screen space
+-- on the CPU (Camera:worldToScreen, the same math the shader's u_viewProj
+-- would do) and drawn with love.graphics.line. A world-space polyline of a
+-- few dozen points costs nothing this way and needs no shader variant.
+function WebGLRenderer:_drawLines(bucket, camera)
+    if #bucket == 0 then return self end
+
+    local width, height = love.graphics.getDimensions()
+    local screen = self._lineScratch or {}
+    self._lineScratch = screen
+
+    for _, line in ipairs(bucket) do
+        local material = line.material
+        local geometry = line.geometry
+        if material and material.visible and geometry and #geometry.points > 0 then
+            line:updateWorldMatrix(true, false)
+
+            for i = #screen, 1, -1 do screen[i] = nil end
+            local anyVisible = false
+            for _, p in ipairs(geometry.points) do
+                local world = p:clone():applyMatrix4(line.matrixWorld)
+                local sx, sy, visible = camera:worldToScreen(world, width, height)
+                screen[#screen + 1] = sx
+                screen[#screen + 1] = sy
+                if visible then anyVisible = true end
+            end
+
+            if anyVisible then
+                local c = material.color
+                love.graphics.setColor(c.r, c.g, c.b, material.opacity)
+                love.graphics.setLineWidth(material.linewidth)
+
+                if line.isLineSegments and line:isLineSegments() then
+                    for i = 1, #screen - 3, 4 do
+                        love.graphics.line(screen[i], screen[i + 1], screen[i + 2], screen[i + 3])
+                    end
+                else
+                    love.graphics.line(screen)
+                end
+
+                self.info.render.calls = self.info.render.calls + 1
+            end
+        end
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setLineWidth(1)
+
+    return self
+end
+
 -- The shadow-casting light for this frame, or nil. Mirrors _collect's
 -- brightest-directional-wins rule for the main light, so the same light that
 -- lights the scene is the one that shadows it.
@@ -602,7 +705,7 @@ function WebGLRenderer:render(scene, camera)
 
     if self.frustumCulling then self:_updateFrustum(self._viewProj) end
 
-    local staticDraws, skinnedDraws, directional, ambient = self:_collect(scene)
+    local staticDraws, skinnedDraws, lineDraws, directional, ambient, hemisphere = self:_collect(scene)
 
     -- The shadow pass renders to its own canvas and must finish (and restore
     -- the real canvas/shader/depth state) before anything below touches the
@@ -626,8 +729,9 @@ function WebGLRenderer:render(scene, camera)
         -- the specular lobe depends on where it is viewed from
         sh:send("u_cameraPos", eye)
         sh:send("u_diffuseWrap", self.diffuseWrap)
-        self:_sendLights(sh, directional, ambient)
+        self:_sendLights(sh, directional, ambient, hemisphere)
         self:_sendShadowUniforms(sh, caster)
+        self:_sendFog(sh, scene.fog)
     end
 
     -- Order within a bucket: renderOrder first, then opaque before transparent
@@ -653,6 +757,11 @@ function WebGLRenderer:render(scene, camera)
     love.graphics.setShader()
     love.graphics.setMeshCullMode("none")
     love.graphics.setDepthMode()
+
+    -- Lines draw last, screen-projected and depth-untested -- gizmos/debug
+    -- overlays are meant to read on top of the scene, as in three.js's
+    -- typical usage (helpers added with no depth write).
+    self:_drawLines(lineDraws, camera)
 
     return self
 end

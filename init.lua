@@ -51,10 +51,13 @@ TL.Frustum    = require "math.frustum"
 TL.Object3D       = require "three.core.Object3D"
 TL.Group          = require "three.core.Group"
 TL.BufferGeometry = require "three.core.BufferGeometry"
+TL.LineGeometry   = require "three.core.LineGeometry"
 TL.Raycaster      = require "three.core.Raycaster"
 
 -- ── scene ────────────────────────────────────────────────────────────────────
-TL.Scene = require "three.scenes.Scene"
+TL.Scene   = require "three.scenes.Scene"
+TL.Fog     = require "three.scenes.Fog"
+TL.FogExp2 = require "three.scenes.FogExp2"
 
 -- ── objects ──────────────────────────────────────────────────────────────────
 TL.Mesh          = require "three.objects.Mesh"
@@ -64,6 +67,8 @@ TL.InstancedMesh = require "three.objects.InstancedMesh"
 TL.LOD           = require "three.objects.LOD"
 TL.Model         = require "three.objects.Model"
 TL.Sprite        = require "three.objects.Sprite"
+TL.Line          = require "three.objects.Line"
+TL.LineSegments  = require "three.objects.LineSegments"
 
 -- ── geometries ───────────────────────────────────────────────────────────────
 -- Generated primitives, so a scene can be built without loading a file.
@@ -77,6 +82,7 @@ TL.TorusGeometry    = require "three.geometries.TorusGeometry"
 -- ── materials ────────────────────────────────────────────────────────────────
 TL.Material             = require "three.materials.Material"
 TL.MeshStandardMaterial = require "three.materials.MeshStandardMaterial"
+TL.LineBasicMaterial    = require "three.materials.LineBasicMaterial"
 
 -- ── cameras ──────────────────────────────────────────────────────────────────
 TL.Camera            = require "three.cameras.Camera"
@@ -87,6 +93,7 @@ TL.OrthographicCamera = require "three.cameras.OrthographicCamera"
 TL.Light            = require "three.lights.Light"
 TL.AmbientLight     = require "three.lights.AmbientLight"
 TL.DirectionalLight = require "three.lights.DirectionalLight"
+TL.HemisphereLight  = require "three.lights.HemisphereLight"
 TL.PointLight       = require "three.lights.PointLight"
 TL.SpotLight        = require "three.lights.SpotLight"
 
