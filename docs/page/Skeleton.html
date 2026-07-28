@@ -59,6 +59,18 @@
     <code>importer.common.palette</code>, or <code>nil</code> if there is no
     skin.</p>
 
+  <h3 class="member">.clone()</h3>
+  <p>Deep-copies the <em>live</em> half only — each node's transform
+    (translation/rotation/scale, <code>localMatrix</code>,
+    <code>worldMatrix</code>) — which is what an <code>AnimationMixer</code>
+    writes into every frame. Hierarchy shape (<code>parent</code>/<code>children</code>
+    links), <code>skin.inverseBind</code>, joint indices, and the owning
+    mesh's geometry/material all stay shared by reference with the source
+    skeleton — the same split three.js's <code>SkeletonUtils.clone</code>
+    makes: share geometry, give each instance its own bones. That split is
+    what lets N animated instances of one model exist without N re-parses
+    of the source file — see <a href="Model.html">Model</a>.</p>
+
   <div class="diff">
     <h4>Differences from three.js</h4>
     <ul>
@@ -70,6 +82,11 @@
         children to independently.</li>
       <li>No <code>.bones</code> / <code>.boneInverses</code> properties —
         use <code>.nodes</code> and <code>.skin.inverseBind</code>.</li>
+      <li><code>.clone()</code> has no direct three.js counterpart on
+        <code>Skeleton</code> itself — three.js clones a rig through the
+        separate <code>SkeletonUtils</code> addon, which walks and
+        duplicates <code>Bone</code> objects. Here it's a plain method,
+        since there are no scene-graph bone objects to walk.</li>
     </ul>
   </div>
 
@@ -129,6 +146,19 @@
     <code>importer.common.palette</code>, либо <code>nil</code>, если
     скина нет.</p>
 
+  <h3 class="member">.clone()</h3>
+  <p>Глубоко копирует только «живую» половину — трансформ каждого узла
+    (translation/rotation/scale, <code>localMatrix</code>,
+    <code>worldMatrix</code>), то есть именно то, что каждый кадр
+    записывает <code>AnimationMixer</code>. Форма иерархии (связи
+    <code>parent</code>/<code>children</code>), <code>skin.inverseBind</code>,
+    индексы суставов и геометрия/материал владеющего меша остаются общими
+    по ссылке с исходным скелетом — то же разделение, что делает
+    <code>SkeletonUtils.clone</code> в three.js: делить геометрию, но дать
+    каждому инстансу свои кости. Именно это разделение позволяет
+    существовать N анимированным инстансам одной модели без N повторных
+    парсингов исходного файла — см. <a href="Model.html">Model</a>.</p>
+
   <div class="diff">
     <h4>Differences from three.js</h4>
     <ul>
@@ -141,6 +171,11 @@
         независимо <code>:add()</code> детей.</li>
       <li>Нет свойств <code>.bones</code> / <code>.boneInverses</code> —
         используйте <code>.nodes</code> и <code>.skin.inverseBind</code>.</li>
+      <li><code>.clone()</code> не имеет прямого аналога у three.js-класса
+        <code>Skeleton</code> — three.js клонирует риг через отдельный
+        аддон <code>SkeletonUtils</code>, который обходит и дублирует
+        объекты <code>Bone</code>. Здесь это обычный метод, так как нет
+        объектов костей в графе сцены, которые нужно было бы обходить.</li>
     </ul>
   </div>
 

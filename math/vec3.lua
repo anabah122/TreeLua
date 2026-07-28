@@ -449,6 +449,18 @@ function Vector3:angleTo(v)
     return self:angle(v)
 end
 
+-- World space -> NDC [-1,1], through the camera's combined view-projection.
+function Vector3:project(camera)
+    return self:applyMatrix4(camera:viewProjectionMatrix())
+end
+
+-- NDC [-1,1] -> world space, the inverse of project().
+function Vector3:unproject(camera)
+    local Matrix4 = require "math.mat4"
+    local inverse = Matrix4:new():multiplyMatrices(camera.matrixWorld, camera.projectionMatrixInverse)
+    return self:applyMatrix4(inverse)
+end
+
 function Vector3:toArray()
     return { self.x, self.y, self.z }
 end

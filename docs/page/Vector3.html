@@ -63,11 +63,23 @@
 <h3 class="member">.transformDirection( m )</h3>
 <p>Transforms the direction of this vector by matrix m and normalizes the result, without applying translation. Returns a new vector.</p>
 
+<h3 class="member">.project( camera )</h3>
+<p>Projects this vector from world space into normalized device coordinates
+  (<code>[-1, 1]</code> on each axis) through <code>camera</code>'s combined
+  view-projection matrix. Mutates self and returns self, matching
+  three.js's <code>Vector3.project</code>.</p>
+
+<h3 class="member">.unproject( camera )</h3>
+<p>The inverse of <code>.project()</code>: takes this vector as normalized
+  device coordinates and turns it into a world-space point as seen by
+  <code>camera</code>. Mutates self and returns self.</p>
+
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
 <li>Vector3 exposes two parallel method families instead of three.js's single mutating API. The <strong>immutable</strong> group (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, and their scalar variants) always returns a <em>new</em> Vector3 and leaves self untouched. The <strong>mutating, three.js-compatible</strong> group — <code>addSelf</code>, <code>subSelf</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — mutates self in place and returns self, matching the behavior of three.js's <code>add</code>/<code>sub</code>/<code>normalize</code>/etc.</li>
 <li>Both groups exist side by side so call sites can opt into whichever style fits: the immutable group avoids aliasing bugs common in hot loops, while the <code>*Self</code> group lets ported three.js code and performance-critical paths mutate without allocating.</li>
+<li><strong>Name collision: two unrelated methods are both called <code>.project()</code>.</strong> An older, immutable helper — <code>project(dir)</code>, projecting this vector onto another vector and returning a new one — shares the name with the three.js-style <code>project(camera)</code> documented above. In <code>math/vec3.lua</code> the later definition wins, so <code>.project()</code> currently resolves to the camera-projection method; the vector-onto-vector helper is unreachable under this name. Use <code>.projectOnVector(v)</code> for the vector-projection behavior instead.</li>
 </ul>
 </div>
 
@@ -213,11 +225,24 @@
 <h3 class="member">.transformDirection( m )</h3>
 <p>Преобразует направление этого вектора матрицей m и нормализует результат, без применения трансляции. Возвращает новый вектор.</p>
 
+<h3 class="member">.project( camera )</h3>
+<p>Проецирует этот вектор из мирового пространства в нормализованные
+  координаты устройства (NDC, <code>[-1, 1]</code> по каждой оси) через
+  объединённую view-projection матрицу <code>camera</code>. Мутирует self и
+  возвращает self, соответствуя <code>Vector3.project</code> из three.js.</p>
+
+<h3 class="member">.unproject( camera )</h3>
+<p>Обратная операция к <code>.project()</code>: принимает этот вектор как
+  нормализованные координаты устройства и превращает его в точку мирового
+  пространства, как её видит <code>camera</code>. Мутирует self и
+  возвращает self.</p>
+
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
 <li>Vector3 предоставляет два параллельных семейства методов вместо единого мутирующего API three.js. <strong>Иммутабельная</strong> группа (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code> и их скалярные варианты) всегда возвращает <em>новый</em> Vector3 и не трогает self. <strong>Мутирующая, совместимая с three.js</strong> группа — <code>addSelf</code>, <code>subSelf</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — изменяет self на месте и возвращает self, соответствуя поведению <code>add</code>/<code>sub</code>/<code>normalize</code>/и т.д. в three.js.</li>
 <li>Обе группы существуют параллельно, чтобы места вызова могли выбрать подходящий стиль: иммутабельная группа избегает багов алиасинга, частых в горячих циклах, а группа <code>*Self</code> позволяет портированному коду three.js и критичным к производительности участкам мутировать без аллокаций.</li>
+<li><strong>Конфликт имён: два несвязанных метода называются <code>.project()</code>.</strong> Старый иммутабельный хелпер — <code>project(dir)</code>, проецирующий этот вектор на другой вектор и возвращающий новый — делит имя с three.js-style методом <code>project(camera)</code>, описанным выше. В <code>math/vec3.lua</code> побеждает более позднее определение, поэтому сейчас <code>.project()</code> ссылается именно на камерную проекцию; хелпер «проекция на вектор» под этим именем недостижим. Используйте <code>.projectOnVector(v)</code> для поведения «проекция на вектор».</li>
 </ul>
 </div>
 

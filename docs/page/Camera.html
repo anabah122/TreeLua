@@ -49,6 +49,24 @@
     three.js's API — three.js sends projection and view separately — but the
     shader wants them premultiplied.</p>
 
+  <h3 class="member">.worldToScreen(v, width, height)</h3>
+  <p>Converts a world-space point to pixel coordinates for a
+    <code>width</code>×<code>height</code> viewport (defaults to the LÖVE
+    window's own dimensions). Internally clones <code>v</code>, calls
+    <code>Vector3:project(self)</code> to get NDC, then maps NDC
+    <code>[-1, 1]</code> onto pixels — flipping <code>Y</code>, since NDC's
+    <code>+Y</code> is up and LÖVE's <code>+Y</code> is down. Returns three
+    values: <code>x, y, visible</code>, where <code>visible</code> is
+    <code>false</code> when the point's NDC <code>z</code> falls outside
+    <code>[-1, 1]</code> — i.e. it's behind the camera or past the far
+    plane, the same test three.js's frustum check makes.</p>
+
+  <h3 class="member">.screenToWorld(x, y, width, height, ndcZ)</h3>
+  <p>The inverse: pixel coordinates (plus an optional NDC depth,
+    <code>ndcZ</code>, defaulting to <code>0</code> — mid-frustum) to a
+    world-space point. Maps the pixel onto NDC, then calls
+    <code>Vector3:unproject(self)</code>.</p>
+
   <h3 class="member">.copy(source, recursive)</h3>
 
   <div class="diff">
@@ -57,6 +75,13 @@
       <li><code>.viewProjectionMatrix(target)</code> is a TreeLua-only
         facade with no three.js equivalent, added because the shader wants
         projection and view premultiplied into one matrix.</li>
+      <li><code>.worldToScreen(v, width, height)</code> and
+        <code>.screenToWorld(x, y, width, height, ndcZ)</code> have no
+        three.js equivalent — the browser DOM already gives three.js code
+        pixel coordinates, so three.js users convert to/from NDC directly
+        with <code>Vector3.project</code>/<code>.unproject</code>. LÖVE has
+        no DOM, so this facade exists to do the pixel math (and the Y flip)
+        in one place instead of at every call site.</li>
     </ul>
   </div>
 
@@ -106,6 +131,25 @@
     входит в API three.js — three.js отправляет projection и view
     отдельно — но шейдеру нужны они перемноженными заранее.</p>
 
+  <h3 class="member">.worldToScreen(v, width, height)</h3>
+  <p>Переводит точку мирового пространства в пиксельные координаты для
+    вьюпорта <code>width</code>×<code>height</code> (по умолчанию — размеры
+    самого окна LÖVE). Внутри клонирует <code>v</code>, вызывает
+    <code>Vector3:project(self)</code>, чтобы получить NDC, затем
+    отображает NDC <code>[-1, 1]</code> на пиксели — с переворотом по
+    <code>Y</code>, так как <code>+Y</code> в NDC смотрит вверх, а
+    <code>+Y</code> в LÖVE — вниз. Возвращает три значения:
+    <code>x, y, visible</code>, где <code>visible</code> равен
+    <code>false</code>, когда <code>z</code> точки в NDC выходит за
+    пределы <code>[-1, 1]</code> — то есть точка позади камеры или за
+    дальней плоскостью, та же проверка, что делает frustum-тест three.js.</p>
+
+  <h3 class="member">.screenToWorld(x, y, width, height, ndcZ)</h3>
+  <p>Обратная операция: пиксельные координаты (плюс необязательная глубина
+    в NDC, <code>ndcZ</code>, по умолчанию <code>0</code> — середина
+    фрустума) в точку мирового пространства. Отображает пиксель на NDC,
+    затем вызывает <code>Vector3:unproject(self)</code>.</p>
+
   <h3 class="member">.copy(source, recursive)</h3>
 
   <div class="diff">
@@ -115,6 +159,14 @@
         только в TreeLua, без аналога в three.js, добавлен потому что
         шейдеру нужны projection и view, перемноженные в одну матрицу
         заранее.</li>
+      <li><code>.worldToScreen(v, width, height)</code> и
+        <code>.screenToWorld(x, y, width, height, ndcZ)</code> не имеют
+        аналога в three.js — DOM браузера уже даёт коду three.js пиксельные
+        координаты, так что пользователи three.js конвертируют в/из NDC
+        напрямую через <code>Vector3.project</code>/<code>.unproject</code>.
+        В LÖVE нет DOM, поэтому этот фасад существует, чтобы делать
+        пиксельную математику (и переворот по Y) в одном месте, а не в
+        каждой точке вызова.</li>
     </ul>
   </div>
 

@@ -64,6 +64,16 @@ function love.mousepressed(x, y)
 end
 ```
 
+`Vector3:project(camera)` / `:unproject(camera)` convert between world space
+and NDC through a camera's view-projection, as in three.js. `Camera` adds the
+facade over LÖVE's actual pixels, since NDC ↔ screen by hand is a common
+source of bugs (the Y flip in particular):
+
+```lua
+local sx, sy, visible = camera:worldToScreen(enemy.position)
+local worldPoint = camera:screenToWorld(mx, my)
+```
+
 ### Geometries
 `BoxGeometry` `SphereGeometry` `PlaneGeometry` `CylinderGeometry` `ConeGeometry`
 `TorusGeometry`
@@ -95,6 +105,30 @@ lod:addLevel(lowDetail, 25)
 
 `InstancedMesh` keeps the three.js surface but is **not** one draw call — see
 [Limitations](#limitations). Indices are 1-based, like everything else here.
+
+### Model
+`Model` — the asset, loaded once, instantiated any number of times. Not a
+three.js class: it exists because a glTF file and a live game object are
+different things, and loading the file per spawn is wasteful.
+
+```lua
+local model = TL.Model:fromLoaderResult(TL.GLTFLoader:new():load(MODEL_PATH))
+
+local enemy = model:createInstance()   -- cheap: no file I/O, no re-parse
+scene:add(enemy.scene)
+enemy.mixer:clipAction(enemy.animations[1]):play()
+enemy.scene.position:set(x, 0, z)
+```
+
+`Model:fromLoaderResult(result)` wraps a loader's `{ scene, animations }`.
+`model:createInstance()` returns `{ scene, animations, mixer }`: a fresh
+`Object3D` shell per primitive (its own transform/`matrixWorld`), a cloned
+`Skeleton` holding just the current pose (joints/inverse-bind stay shared with
+the model), and its own `AnimationMixer`. Geometry, materials and the
+underlying `love.Mesh` objects are never cloned — every instance reads them by
+reference, same as three.js sharing a `BufferGeometry` across copies. That
+split is what makes N animated instances of one model cheap: the source file
+is parsed exactly once.
 
 ### Materials
 `Material` `MeshStandardMaterial`
@@ -250,8 +284,10 @@ its mutating three.js behaviour.
 | `importer/gltf/` | glTF 2.0 / GLB: geometry, materials, skeleton, animation |
 | `importer/dae/` | Collada: same output shape, so both formats feed one path |
 | `importer/common.lua` | transforms, skinning palette, interpolation |
+| `three/objects/Model.lua` | one loaded asset, instantiated cheaply any number of times |
 | `class/` | legacy, superseded by the facade — see the note at the top of each |
 | `lib/util/` | demo scaffolding only; installs globals, not used by the library |
+| `game_test/` | a small game built on the engine as a plain library, used to exercise it end to end — not part of the engine itself |
 
 ## Shaders
 
@@ -275,9 +311,12 @@ guaranteed floor of 1024, so a static mesh must not declare it.
 256 assertions covering the maths, the object graph, the generators, library
 hygiene, and the loaders/animation/renderer against a real graphics context.
 
-## Running the demo
+## Running the test game
 
     love .
 
-WASD moves, QE goes up and down, the mouse looks around, the wheel changes
-speed, space pauses playback.
+`main.lua` delegates entirely to `game_test/`, a small top-down shooter built
+on TreeEngine used strictly as a library — no engine file is touched to make
+it work, so it doubles as an integration check. It is not part of the engine
+and not the place to look for API examples beyond what's already inlined
+above; read `game_test/init.lua` if you want to see a full scene assembled.

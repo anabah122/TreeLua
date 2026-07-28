@@ -11,30 +11,89 @@
 <div lang="en">
 <p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
 <h1 class="title">AnimationClip</h1>
-<p class="lead">A reusable set of keyframe tracks representing an animation. A clip groups <code>tracks</code> (per-property keyframe data) under a <code>name</code> and a total <code>duration</code>, and is played back through an <a href="AnimationAction.html">AnimationAction</a> on an <a href="AnimationMixer.html">AnimationMixer</a>.</p>
+<p class="lead">One named animation — a thin, typed face over an importer's
+  clip record. Played back through an <a href="AnimationAction.html">AnimationAction</a>
+  on an <a href="AnimationMixer.html">AnimationMixer</a>. A clip keeps a
+  reference to the module that can sample it, because glTF and Collada
+  animate different things — glTF writes TRS channels per node, Collada
+  bakes whole matrices — and each importer ships the sampler that
+  understands its own tracks, so the mixer never branches on format.</p>
 
 <h2>Constructor</h2>
-<p><code>AnimationClip.new(name, duration, tracks)</code></p>
-<p>Creates a clip from a name, a duration in seconds and an array of tracks. Each track is a plain table describing a single animated property.</p>
+<h3 class="member"><span class="name">AnimationClip</span>(name, duration, tracks)</h3>
+<p><code>name</code> defaults to <code>""</code>, <code>duration</code> to
+  <code>0</code>, <code>tracks</code> to <code>{}</code>. Ordinary code
+  reaches clips through a loader's <code>animations</code> array (built via
+  <code>.fromImporter</code>), not this constructor directly.</p>
 
 <h2>Properties</h2>
 <table>
 <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
-<tr><td>name</td><td>string</td><td>—</td><td>Clip identifier, used to look it up by name.</td></tr>
-<tr><td>duration</td><td>number</td><td>—</td><td>Clip length in seconds.</td></tr>
-<tr><td>tracks</td><td>table[]</td><td>—</td><td>Array of keyframe tracks. Each track has <code>targetName</code> (node/bone name), <code>type</code> (<code>"translation"</code>, <code>"rotation"</code> or <code>"scale"</code>), <code>times</code> (array of keyframe timestamps) and <code>values</code> (flat array of vector/quaternion components, one entry per keyframe).</td></tr>
+<tr><td><code>type</code></td><td>string</td><td><code>"AnimationClip"</code></td><td></td></tr>
+<tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td>Clip identifier, used to look it up by name.</td></tr>
+<tr><td><code>duration</code></td><td>number</td><td><code>0</code></td><td>Clip length in seconds.</td></tr>
+<tr><td><code>tracks</code></td><td>table[]</td><td><code>{}</code></td><td>Per-node TRS tracks: <code>{ node, path, times, values, interp }</code>, where <code>path</code> is <code>"translation"</code>, <code>"rotation"</code> or <code>"scale"</code>.</td></tr>
+<tr><td><code>fps</code> / <code>frames</code></td><td>number</td><td>—</td><td>Set by <code>.fromImporter</code> when the source clip carries them.</td></tr>
 </table>
 
 <h2>Methods</h2>
 
-<h3 class="member">:getTrackForBone(name, type)</h3>
-<p>Returns the track matching a given target/bone name and property type (<code>"translation"</code>, <code>"rotation"</code> or <code>"scale"</code>), or <code>nil</code> if the clip has no such track.</p>
+<h3 class="member">:isAnimationClip()</h3>
+<p>Returns <code>true</code>. Type-check facade.</p>
+
+<h3 class="member">:fromImporter(clip, sampler, nodes)</h3>
+<p>Wraps an importer clip record. <code>sampler</code> is
+  <code>importer.gltf.animation</code> or <code>importer.dae.animation</code>
+  — whichever module produced <code>clip</code> — and <code>nodes</code> is
+  the flat node list its <code>sample</code>/<code>evaluate</code> read and
+  write. This is how loaders build the clips they hand back.</p>
+
+<h3 class="member">:sample(time, loop)</h3>
+<p>Writes this clip's pose at <code>time</code> directly into
+  <code>.nodes</code> via the stored sampler. <code>loop</code>
+  <code>false</code> clamps at the clip's ends instead of wrapping. This is
+  the pre-blending path: the mixer only calls it when
+  <code>mixer.blending == false</code>, since it writes straight into the
+  shared node list rather than returning a value an accumulator could
+  combine with another clip's.</p>
+
+<h3 class="member">:accumulate(accumulator, time, loop, weight)</h3>
+<p>Evaluates every track at <code>time</code> and hands the values to
+  <code>accumulator</code> (a <a href="PoseAccumulator.html">PoseAccumulator</a>)
+  scaled by <code>weight</code>, instead of writing them into the nodes.
+  This is what makes blending multiple simultaneous clips possible: it
+  relies on the sampler exposing <code>evaluate(track, time)</code>, which
+  returns values rather than mutating anything, so several clips'
+  contributions can be combined before anything is written. No-op if the
+  sampler has no <code>evaluate</code>.</p>
+
+<h3 class="member">:resetDuration()</h3>
+<p>Recomputes <code>.duration</code> from the latest keyframe timestamp
+  across all tracks.</p>
+
+<h3 class="member">:findByName(clips, name)</h3>
+<p>Scans <code>clips</code> for one whose <code>.name</code> matches, or
+  returns <code>nil</code>. three.js's static <code>AnimationClip.findByName</code>,
+  called as a method per this engine's convention.</p>
+
+<h3 class="member">:clone()</h3>
+<p>Returns a new AnimationClip with the same <code>name</code>,
+  <code>duration</code>, <code>tracks</code>, sampler and node reference.
+  Tracks and sampler are shared (read-only), not deep-copied.</p>
+
+<h3 class="member">:withNodes(nodes)</h3>
+<p>Clones this clip and retargets it to write into a different instance's
+  node list. What a <a href="Model.html">Model</a>'s clips need after
+  <code>model:createInstance()</code> gives that instance its own cloned
+  <a href="Skeleton.html">Skeleton</a> nodes — the track data and sampler
+  stay shared, only the destination changes.</p>
 
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
-<li>Tracks are plain Lua tables with <code>targetName</code>/<code>type</code>/<code>times</code>/<code>values</code> fields rather than <code>KeyframeTrack</code> subclass instances (<code>VectorKeyframeTrack</code>, <code>QuaternionKeyframeTrack</code>, etc.).</li>
-<li>No <code>CLIP_STAINS</code> serialization helpers (<code>toJSON</code>, <code>parse</code>, <code>CreateFromMorphTargetSequence</code>, ...) — clips are constructed directly from loader data.</li>
+<li>Tracks are plain Lua tables (<code>{ node, path, times, values, interp }</code>) rather than <code>KeyframeTrack</code> subclass instances (<code>VectorKeyframeTrack</code>, <code>QuaternionKeyframeTrack</code>, etc.).</li>
+<li>No serialization helpers (<code>toJSON</code>, <code>parse</code>, <code>CreateFromMorphTargetSequence</code>, <code>parseAnimation</code>, ...) — clips are constructed directly from loader data via <code>.fromImporter</code>.</li>
+<li><code>:sample()</code>, <code>:accumulate()</code> and <code>:withNodes()</code> have no three.js equivalent — they exist because this engine keeps clip playback format-agnostic through a per-importer sampler module, and because a clip needs to be retargetable across a <a href="Model.html">Model</a>'s independent instances.</li>
 </ul>
 </div>
 
@@ -44,30 +103,94 @@
 <div lang="ru">
 <p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
 <h1 class="title">AnimationClip</h1>
-<p class="lead">Переиспользуемый набор ключевых дорожек (keyframe tracks), представляющий анимацию. Клип группирует <code>tracks</code> (данные ключевых кадров по каждому свойству) под общим <code>name</code> и общей <code>duration</code>, и воспроизводится через <a href="AnimationAction.html">AnimationAction</a> на <a href="AnimationMixer.html">AnimationMixer</a>.</p>
+<p class="lead">Одна именованная анимация — тонкая типизированная обёртка
+  над записью клипа импортёра. Воспроизводится через
+  <a href="AnimationAction.html">AnimationAction</a> на
+  <a href="AnimationMixer.html">AnimationMixer</a>. Клип хранит ссылку на
+  модуль, который умеет его сэмплировать, потому что glTF и Collada
+  анимируют разные вещи — glTF пишет TRS-каналы по узлам, Collada запекает
+  целые матрицы — и каждый импортёр поставляет свой сэмплер, понимающий
+  собственные дорожки, так что миксер никогда не разветвляется по
+  формату.</p>
 
 <h2>Constructor</h2>
-<p><code>AnimationClip.new(name, duration, tracks)</code></p>
-<p>Создаёт клип из имени, длительности в секундах и массива дорожек. Каждая дорожка — обычная таблица, описывающая одно анимируемое свойство.</p>
+<h3 class="member"><span class="name">AnimationClip</span>(name, duration, tracks)</h3>
+<p><code>name</code> по умолчанию <code>""</code>, <code>duration</code> —
+  <code>0</code>, <code>tracks</code> — <code>{}</code>. Обычный код
+  получает клипы через массив <code>animations</code> загрузчика
+  (собранный через <code>.fromImporter</code>), а не напрямую через этот
+  конструктор.</p>
 
 <h2>Properties</h2>
 <table>
 <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
-<tr><td>name</td><td>string</td><td>—</td><td>Идентификатор клипа, используется для поиска по имени.</td></tr>
-<tr><td>duration</td><td>number</td><td>—</td><td>Длительность клипа в секундах.</td></tr>
-<tr><td>tracks</td><td>table[]</td><td>—</td><td>Массив ключевых дорожек. Каждая дорожка содержит <code>targetName</code> (имя узла/кости), <code>type</code> (<code>"translation"</code>, <code>"rotation"</code> или <code>"scale"</code>), <code>times</code> (массив временных меток ключевых кадров) и <code>values</code> (плоский массив компонентов вектора/кватерниона, по одной записи на ключевой кадр).</td></tr>
+<tr><td><code>type</code></td><td>string</td><td><code>"AnimationClip"</code></td><td></td></tr>
+<tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td>Идентификатор клипа, используется для поиска по имени.</td></tr>
+<tr><td><code>duration</code></td><td>number</td><td><code>0</code></td><td>Длительность клипа в секундах.</td></tr>
+<tr><td><code>tracks</code></td><td>table[]</td><td><code>{}</code></td><td>Дорожки TRS по узлам: <code>{ node, path, times, values, interp }</code>, где <code>path</code> — <code>"translation"</code>, <code>"rotation"</code> или <code>"scale"</code>.</td></tr>
+<tr><td><code>fps</code> / <code>frames</code></td><td>number</td><td>—</td><td>Устанавливаются <code>.fromImporter</code>, если исходный клип их несёт.</td></tr>
 </table>
 
 <h2>Methods</h2>
 
-<h3 class="member">:getTrackForBone(name, type)</h3>
-<p>Возвращает дорожку, соответствующую заданному имени цели/кости и типу свойства (<code>"translation"</code>, <code>"rotation"</code> или <code>"scale"</code>), либо <code>nil</code>, если у клипа нет такой дорожки.</p>
+<h3 class="member">:isAnimationClip()</h3>
+<p>Возвращает <code>true</code>. Фасад проверки типа.</p>
+
+<h3 class="member">:fromImporter(clip, sampler, nodes)</h3>
+<p>Оборачивает запись клипа импортёра. <code>sampler</code> — это
+  <code>importer.gltf.animation</code> или <code>importer.dae.animation</code>
+  — какой модуль произвёл <code>clip</code> — а <code>nodes</code> — плоский
+  список узлов, который читают и пишут его <code>sample</code>/<code>evaluate</code>.
+  Именно так загрузчики собирают клипы, которые возвращают наружу.</p>
+
+<h3 class="member">:sample(time, loop)</h3>
+<p>Записывает позу этого клипа в момент <code>time</code> напрямую в
+  <code>.nodes</code> через сохранённый сэмплер. <code>loop</code>
+  равный <code>false</code> зажимает по краям клипа вместо зацикливания.
+  Это путь до появления блендинга: миксер вызывает его только когда
+  <code>mixer.blending == false</code>, поскольку он пишет прямо в общий
+  список узлов, а не возвращает значение, которое аккумулятор мог бы
+  объединить со значением другого клипа.</p>
+
+<h3 class="member">:accumulate(accumulator, time, loop, weight)</h3>
+<p>Вычисляет каждую дорожку в момент <code>time</code> и передаёт значения
+  в <code>accumulator</code> (<a href="PoseAccumulator.html">PoseAccumulator</a>),
+  масштабируя на <code>weight</code>, вместо записи их в узлы. Именно это
+  делает возможным блендинг нескольких одновременных клипов: метод
+  полагается на то, что сэмплер предоставляет <code>evaluate(track, time)</code>,
+  которая возвращает значения, а не что-то мутирует, так что вклад
+  нескольких клипов можно объединить до того, как что-либо будет
+  записано. Ничего не делает, если у сэмплера нет <code>evaluate</code>.</p>
+
+<h3 class="member">:resetDuration()</h3>
+<p>Пересчитывает <code>.duration</code> по последней метке времени
+  ключевого кадра среди всех дорожек.</p>
+
+<h3 class="member">:findByName(clips, name)</h3>
+<p>Ищет в <code>clips</code> клип с совпадающим <code>.name</code>, либо
+  возвращает <code>nil</code>. Статический метод three.js
+  <code>AnimationClip.findByName</code>, вызываемый как обычный метод по
+  конвенции этого движка.</p>
+
+<h3 class="member">:clone()</h3>
+<p>Возвращает новый AnimationClip с теми же <code>name</code>,
+  <code>duration</code>, <code>tracks</code>, сэмплером и ссылкой на узлы.
+  Дорожки и сэмплер общие (только для чтения), не копируются глубоко.</p>
+
+<h3 class="member">:withNodes(nodes)</h3>
+<p>Клонирует этот клип и ретаргетит его на запись в список узлов другого
+  инстанса. То, что нужно клипам <a href="Model.html">Model</a> после
+  того, как <code>model:createInstance()</code> даёт этому инстансу
+  собственные клонированные узлы <a href="Skeleton.html">Skeleton</a> —
+  данные дорожек и сэмплер остаются общими, меняется только пункт
+  назначения записи.</p>
 
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
-<li>Дорожки — обычные Lua-таблицы с полями <code>targetName</code>/<code>type</code>/<code>times</code>/<code>values</code>, а не экземпляры подклассов <code>KeyframeTrack</code> (<code>VectorKeyframeTrack</code>, <code>QuaternionKeyframeTrack</code> и т.д.).</li>
-<li>Нет вспомогательных средств сериализации <code>CLIP_STAINS</code> (<code>toJSON</code>, <code>parse</code>, <code>CreateFromMorphTargetSequence</code>, ...) — клипы создаются напрямую из данных загрузчика.</li>
+<li>Дорожки — обычные Lua-таблицы (<code>{ node, path, times, values, interp }</code>), а не экземпляры подклассов <code>KeyframeTrack</code> (<code>VectorKeyframeTrack</code>, <code>QuaternionKeyframeTrack</code> и т.д.).</li>
+<li>Нет средств сериализации (<code>toJSON</code>, <code>parse</code>, <code>CreateFromMorphTargetSequence</code>, <code>parseAnimation</code>, ...) — клипы создаются напрямую из данных загрузчика через <code>.fromImporter</code>.</li>
+<li><code>:sample()</code>, <code>:accumulate()</code> и <code>:withNodes()</code> не имеют аналога в three.js — они существуют потому, что этот движок держит воспроизведение клипа независимым от формата через модуль-сэмплер на каждый импортёр, и потому что клип должен быть ретаргетируемым между независимыми инстансами <a href="Model.html">Model</a>.</li>
 </ul>
 </div>
 

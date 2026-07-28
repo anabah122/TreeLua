@@ -63,9 +63,13 @@ function SkinnedMesh:palette()
     return pal
 end
 
+-- Cloning gives this mesh its OWN skeleton (deep-copied nodes), not a
+-- reference to the source's -- otherwise every clone's AnimationMixer would
+-- write into the same node list and their poses would fight each other.
+-- Geometry/material/skin stay shared via Mesh.copy, as in three.js.
 function SkinnedMesh:copy(source, recursive)
     Mesh.copy(self, source, recursive)
-    self.skeleton          = source.skeleton
+    self.skeleton          = source.skeleton and source.skeleton:clone()
     self.bindMatrix        = source.bindMatrix
     self.bindMatrixInverse = source.bindMatrixInverse
     return self

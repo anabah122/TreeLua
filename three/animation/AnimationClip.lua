@@ -116,6 +116,15 @@ function AnimationClip:clone()
     return c
 end
 
+-- Same clip data (tracks/sampler are read-only, shared), retargeted to write
+-- into a different instance's node list -- what a Model's clips need after
+-- Model:createInstance() gives that instance its own cloned Skeleton nodes.
+function AnimationClip:withNodes(nodes)
+    local c = self:clone()
+    c._nodes = nodes
+    return c
+end
+
 function AnimationClip:__tostring()
     return string.format("AnimationClip(%s, %.3fs, %d tracks)",
         self.name, self.duration, #self.tracks)

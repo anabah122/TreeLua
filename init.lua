@@ -59,6 +59,7 @@ TL.SkinnedMesh   = require "three.objects.SkinnedMesh"
 TL.Skeleton      = require "three.objects.Skeleton"
 TL.InstancedMesh = require "three.objects.InstancedMesh"
 TL.LOD           = require "three.objects.LOD"
+TL.Model         = require "three.objects.Model"
 
 -- ── geometries ───────────────────────────────────────────────────────────────
 -- Generated primitives, so a scene can be built without loading a file.

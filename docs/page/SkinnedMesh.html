@@ -49,8 +49,15 @@ mesh:bind(skeleton)</code></pre>
     multiplied onto every bone.</p>
 
   <h3 class="member">.copy(source, recursive)</h3>
-  <p>Extends <code>Mesh.copy</code>; carries over <code>skeleton</code>,
-    <code>bindMatrix</code>, <code>bindMatrixInverse</code> by reference.</p>
+  <p>Extends <code>Mesh.copy</code>. Gives this mesh its <strong>own</strong>
+    skeleton — <code>source.skeleton:clone()</code>, a deep copy of the pose
+    (see <a href="Skeleton.html">Skeleton.clone()</a>) — rather than sharing
+    the source's by reference; otherwise every copy's
+    <code>AnimationMixer</code> would write into the same node list and
+    their poses would fight each other. <code>bindMatrix</code> and
+    <code>bindMatrixInverse</code> are still carried over by reference, and
+    geometry/material stay shared via <code>Mesh.copy</code>, as in
+    three.js.</p>
 
   <div class="diff">
     <h4>Differences from three.js</h4>
@@ -65,6 +72,11 @@ mesh:bind(skeleton)</code></pre>
       <li>No <code>boneTexture</code>/uniform-array split — the palette is a
         plain Lua array of <code>Matrix4</code>, handed to the shader by the
         renderer.</li>
+      <li><code>.copy()</code> deep-clones <code>.skeleton</code> rather
+        than sharing it by reference — closer to three.js's own
+        <code>SkinnedMesh.clone()</code>, which (via <code>Object3D.copy</code>
+        cloning children) ends up giving each clone independent
+        <code>Bone</code> objects too.</li>
     </ul>
   </div>
 
@@ -113,8 +125,15 @@ mesh:bind(skeleton)</code></pre>
     (Collada), он умножается на каждую кость.</p>
 
   <h3 class="member">.copy(source, recursive)</h3>
-  <p>Расширяет <code>Mesh.copy</code>; переносит <code>skeleton</code>,
-    <code>bindMatrix</code>, <code>bindMatrixInverse</code> по ссылке.</p>
+  <p>Расширяет <code>Mesh.copy</code>. Даёт этому мешу <strong>собственный</strong>
+    скелет — <code>source.skeleton:clone()</code>, глубокую копию позы (см.
+    <a href="Skeleton.html">Skeleton.clone()</a>) — вместо совместного
+    использования скелета источника по ссылке; иначе
+    <code>AnimationMixer</code> каждой копии писал бы в один и тот же
+    список узлов, и их позы конфликтовали бы друг с другом.
+    <code>bindMatrix</code> и <code>bindMatrixInverse</code> по-прежнему
+    переносятся по ссылке, а геометрия/материал остаются общими через
+    <code>Mesh.copy</code>, как в three.js.</p>
 
   <div class="diff">
     <h4>Differences from three.js</h4>
@@ -129,6 +148,11 @@ mesh:bind(skeleton)</code></pre>
       <li>Нет разделения <code>boneTexture</code>/uniform-массив —
         палитра — это обычный Lua-массив <code>Matrix4</code>,
         передаваемый шейдеру рендерером.</li>
+      <li><code>.copy()</code> глубоко клонирует <code>.skeleton</code>,
+        а не делится им по ссылке — ближе к собственному
+        <code>SkinnedMesh.clone()</code> в three.js, который (через
+        клонирование детей в <code>Object3D.copy</code>) в итоге тоже
+        даёт каждому клону независимые объекты <code>Bone</code>.</li>
     </ul>
   </div>
 

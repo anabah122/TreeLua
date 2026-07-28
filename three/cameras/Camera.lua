@@ -54,6 +54,29 @@ function Camera:viewProjectionMatrix(target)
     return target:multiplyMatrices(self.projectionMatrix, self.matrixWorldInverse)
 end
 
+-- World point -> pixel coords for a `width`x`height` viewport (defaults to the
+-- LÖVE window). Third return is visible: false when the point is behind the
+-- camera (NDC z outside [-1,1]), same test as three.js's frustum check.
+function Camera:worldToScreen(v, width, height)
+    if not width then width, height = love.graphics.getDimensions() end
+
+    local ndc = v:clone():project(self)
+    local sx = (ndc.x * 0.5 + 0.5) * width
+    local sy = (1 - (ndc.y * 0.5 + 0.5)) * height
+    return sx, sy, ndc.z > -1 and ndc.z < 1
+end
+
+-- Pixel coords (+ NDC depth, default mid-frustum) -> world point.
+function Camera:screenToWorld(x, y, width, height, ndcZ)
+    if not width then width, height = love.graphics.getDimensions() end
+    ndcZ = ndcZ or 0
+
+    local Vector3 = require "math.vec3"
+    local ndcX = (x / width) * 2 - 1
+    local ndcY = 1 - (y / height) * 2
+    return Vector3:new(ndcX, ndcY, ndcZ):unproject(self)
+end
+
 function Camera:copy(source, recursive)
     Object3D.copy(self, source, recursive)
     self.matrixWorldInverse:copy(source.matrixWorldInverse)

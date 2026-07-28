@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Model — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Model" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Model</h1>
+  <p class="lead">The asset, loaded once, used by any number of game
+    objects. Not a three.js class, and not a scene-graph node — it exists
+    because a loaded file and a live game object are different things.
+    Geometry, material and the joint hierarchy/inverse-bind matrices
+    describe the asset once and never change per spawn — the
+    <strong>static</strong> half. Position/rotation/scale, the current
+    animation pose and which clip is playing belong to whichever game
+    object is using the model right now — the <strong>dynamic</strong>
+    half, and there can be any number of them live at once against one
+    loaded Model.</p>
+
+  <pre><code>local model = Model:fromLoaderResult(TL.GLTFLoader:new():load(MODEL_PATH))
+local enemy = model:createInstance()   -- cheap: no file I/O, no re-parse
+scene:add(enemy.scene)
+enemy.mixer:clipAction(enemy.animations[1]):play()
+enemy.scene.position:set(x, 0, z)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Model</span>(scene, animations, userData)</h3>
+  <p>Ordinary code does not call this directly — use
+    <code>:fromLoaderResult()</code>. <code>scene</code> is the root
+    <code>Object3D</code> of the loaded asset, <code>animations</code> an
+    array of <a href="AnimationClip.html">AnimationClip</a>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Model"</code></td><td></td></tr>
+    <tr><td><code>scene</code></td><td>Object3D</td><td>—</td><td>The asset's own root, as returned by a loader. Never added to a rendered scene directly — every live use goes through <code>:createInstance()</code>.</td></tr>
+    <tr><td><code>animations</code></td><td>AnimationClip[]</td><td><code>{}</code></td><td>The asset's clips, shared read-only across all instances.</td></tr>
+    <tr><td><code>userData</code></td><td>table</td><td>—</td><td>Passed through from the loader result.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">:isModel()</h3>
+  <p>Returns <code>true</code>. Type-check facade.</p>
+
+  <h3 class="member">:fromLoaderResult(result)</h3>
+  <p>Wraps whatever a loader handed back: <code>{ scene, animations, userData }</code>
+    (as returned by <a href="GLTFLoader.html">GLTFLoader</a> or
+    <a href="ColladaLoader.html">ColladaLoader</a>). This is the normal way
+    to build a Model.</p>
+
+  <h3 class="member">:createInstance()</h3>
+  <p>One live, independently animatable use of this model: its own
+    transform, its own skeleton pose, its own
+    <a href="AnimationMixer.html">AnimationMixer</a>. Returns
+    <code>{ scene, animations, mixer }</code>.</p>
+  <p>Never clones geometry, materials, or the source <code>love.Mesh</code>
+    objects — those are read straight off the model's own
+    <a href="Mesh.html">Mesh</a>/<a href="SkinnedMesh.html">SkinnedMesh</a>
+    instances by reference, same as three.js sharing a
+    <code>BufferGeometry</code> across copies. What <em>is</em> per
+    instance: a fresh <code>Object3D</code> shell for every primitive in
+    the source hierarchy (so each has its own <code>matrixWorld</code> to
+    draw at), and — for skinned primitives — one shared cloned
+    <a href="Skeleton.html">Skeleton</a> holding just the current pose
+    (joints/inverse-bind still point at the model's own skin data; see
+    <a href="Skeleton.html#clone">Skeleton.clone()</a>). All skinned
+    primitives in one source file share a single skeleton (they're rigged
+    to the same skin), so one clone covers however many skinned meshes the
+    model has. The returned <code>animations</code> are the model's own
+    clips retargeted onto that cloned skeleton's nodes via
+    <a href="AnimationClip.html#withNodes">AnimationClip.withNodes()</a>,
+    so playing them animates this instance and no other.</p>
+  <p>That split — parse the file once, spawn shells cheaply — is what makes
+    N animated instances of one model affordable.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>No three.js equivalent.</strong> three.js code typically
+        calls <code>object.clone()</code> on a loaded scene root per spawn,
+        or reaches for the separate <code>SkeletonUtils.clone</code> addon
+        for skinned rigs. Model exists because this engine treats "the
+        loaded asset" and "one live use of it" as two distinct concerns
+        instead of leaning on generic <code>Object3D.clone()</code>, which
+        would deep-copy the whole hierarchy (and, for a skinned mesh,
+        share one skeleton across every clone unless the caller remembers
+        to fix that up by hand).</li>
+      <li>Not an <code>Object3D</code> — a <code>Model</code> itself is
+        never added to a scene. Only what <code>:createInstance()</code>
+        returns (<code>.scene</code>) is.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/Model.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Model</h1>
+  <p class="lead">Ассет, загружаемый один раз и используемый любым числом
+    игровых объектов. Не класс three.js и не узел графа сцены — существует
+    потому, что загруженный файл и живой игровой объект — разные вещи.
+    Геометрия, материал и иерархия суставов/обратные bind-матрицы
+    описывают ассет один раз и никогда не меняются на спавн —
+    <strong>статичная</strong> половина. Position/rotation/scale, текущая
+    поза анимации и то, какой клип играет, принадлежат тому игровому
+    объекту, который сейчас использует модель — <strong>динамическая</strong>
+    половина, и их может быть живо любое число одновременно против одной
+    загруженной Model.</p>
+
+  <pre><code>local model = Model:fromLoaderResult(TL.GLTFLoader:new():load(MODEL_PATH))
+local enemy = model:createInstance()   -- дёшево: без чтения файла, без повторного парсинга
+scene:add(enemy.scene)
+enemy.mixer:clipAction(enemy.animations[1]):play()
+enemy.scene.position:set(x, 0, z)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Model</span>(scene, animations, userData)</h3>
+  <p>Обычный код не вызывает это напрямую — используйте
+    <code>:fromLoaderResult()</code>. <code>scene</code> — корневой
+    <code>Object3D</code> загруженного ассета, <code>animations</code> —
+    массив <a href="AnimationClip.html">AnimationClip</a>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Model"</code></td><td></td></tr>
+    <tr><td><code>scene</code></td><td>Object3D</td><td>—</td><td>Собственный корень ассета, как его вернул загрузчик. Никогда не добавляется в рендеримую сцену напрямую — каждое живое использование идёт через <code>:createInstance()</code>.</td></tr>
+    <tr><td><code>animations</code></td><td>AnimationClip[]</td><td><code>{}</code></td><td>Клипы ассета, общие только для чтения между всеми инстансами.</td></tr>
+    <tr><td><code>userData</code></td><td>table</td><td>—</td><td>Проброшено из результата загрузчика.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">:isModel()</h3>
+  <p>Возвращает <code>true</code>. Фасад проверки типа.</p>
+
+  <h3 class="member">:fromLoaderResult(result)</h3>
+  <p>Оборачивает то, что вернул загрузчик:
+    <code>{ scene, animations, userData }</code> (как возвращает
+    <a href="GLTFLoader.html">GLTFLoader</a> или
+    <a href="ColladaLoader.html">ColladaLoader</a>). Обычный способ
+    построить Model.</p>
+
+  <h3 class="member">:createInstance()</h3>
+  <p>Одно живое, независимо анимируемое использование этой модели: свой
+    трансформ, своя поза скелета, свой
+    <a href="AnimationMixer.html">AnimationMixer</a>. Возвращает
+    <code>{ scene, animations, mixer }</code>.</p>
+  <p>Никогда не клонирует геометрию, материалы или исходные объекты
+    <code>love.Mesh</code> — они читаются прямо с собственных инстансов
+    <a href="Mesh.html">Mesh</a>/<a href="SkinnedMesh.html">SkinnedMesh</a>
+    модели по ссылке, так же как three.js делит <code>BufferGeometry</code>
+    между копиями. Что <em>действительно</em> своё для инстанса: свежий
+    <code>Object3D</code>-shell на каждый примитив исходной иерархии (у
+    каждого свой <code>matrixWorld</code> для отрисовки), и — для
+    скиннированных примитивов — один общий клонированный
+    <a href="Skeleton.html">Skeleton</a>, хранящий только текущую позу
+    (joints/inverse-bind по-прежнему указывают на собственные skin-данные
+    модели; см. <a href="Skeleton.html#clone">Skeleton.clone()</a>). Все
+    скиннированные примитивы в одном исходном файле делят один скелет (они
+    привязаны к одному skin), так что одного клонирования хватает на любое
+    число скиннированных мешей модели. Возвращаемые <code>animations</code>
+    — это собственные клипы модели, ретаргетированные на узлы этого
+    клонированного скелета через
+    <a href="AnimationClip.html#withNodes">AnimationClip.withNodes()</a>,
+    так что их воспроизведение анимирует именно этот инстанс и никакой
+    другой.</p>
+  <p>Именно это разделение — распарсить файл один раз, дёшево спавнить
+    shell'ы — делает доступными N анимированных инстансов одной модели.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Нет аналога в three.js.</strong> Код на three.js обычно
+        вызывает <code>object.clone()</code> на корне загруженной сцены
+        на каждый спавн, либо использует отдельный аддон
+        <code>SkeletonUtils.clone</code> для скиннированных ригов. Model
+        существует потому, что этот движок трактует «загруженный ассет» и
+        «одно живое использование его» как два разных понятия вместо
+        опоры на обобщённый <code>Object3D.clone()</code>, который
+        глубоко скопировал бы всю иерархию (а для скиннированного меша —
+        разделил бы один скелет между всеми клонами, если вызывающий код
+        не исправит это вручную).</li>
+      <li>Не <code>Object3D</code> — сама <code>Model</code> никогда не
+        добавляется в сцену. В сцену добавляется только то, что вернул
+        <code>:createInstance()</code> (<code>.scene</code>).</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/Model.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>
