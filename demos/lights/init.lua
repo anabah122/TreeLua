@@ -23,7 +23,7 @@ function M.init()
 
     controls = TL.FlyControls:new(camera, { movementSpeed = 5 })
 
-    renderer = TL.WebGLRenderer:new()
+    renderer = TL.WebGLRenderer:new{ diffuseWrap = 0 }
 
     -- Floor: a wide flat box, so every shadow has something to land on.
     local floor = TL.Mesh:new(

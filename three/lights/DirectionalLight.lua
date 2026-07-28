@@ -32,7 +32,10 @@ function DirectionalLight:new(color, intensity)
     l.castShadow = false
     l.shadow = {
         mapSize = 1024,
-        bias    = 0.003,
+        -- Normalised NDC depth, so this is bias * (far - near) in world units:
+        -- 0.0003 over the default 50-unit frustum is ~1.5cm, small enough to
+        -- keep a shadow attached where its caster meets the ground.
+        bias    = 0.0003,
         camera  = OrthographicCamera:new(-10, 10, 10, -10, 0.1, 50),
     }
 
