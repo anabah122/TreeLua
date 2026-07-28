@@ -27,20 +27,41 @@
 
 <h2>Methods</h2>
 
-<h3 class="member">:clipAction(clip)</h3>
-<p>Returns the AnimationAction for <code>clip</code> on this mixer, creating and caching it on first call.</p>
+<h3 class="member">:isAnimationMixer()</h3>
+<p>Returns <code>true</code>. Type-check facade.</p>
+
+<h3 class="member">:getRoot()</h3>
+<p>Returns the root object this mixer was constructed with.</p>
+
+<h3 class="member">:clipAction(clip, root)</h3>
+<p>Returns the AnimationAction for <code>clip</code> on this mixer, creating and caching it on first call. An optional <code>root</code> overrides the mixer's own root for that action.</p>
+
+<h3 class="member">:existingAction(clip)</h3>
+<p>Returns the cached AnimationAction for <code>clip</code>, or <code>nil</code> if <code>clipAction</code> was never called for it.</p>
+
+<h3 class="member">:uncacheClip(clip)</h3>
+<p>Stops and drops the cached action for <code>clip</code>, so a later <code>clipAction</code> call creates a fresh one.</p>
 
 <h3 class="member">:update(delta)</h3>
 <p>Advances every action's time by <code>delta</code>, then applies the resulting pose to <code>root</code>. When <code>blending</code> is true this runs all enabled actions with non-zero weight through the PoseAccumulator and writes the combined pose; when <code>blending</code> is false it samples only the single highest-weight enabled action and applies it directly.</p>
 
+<h3 class="member">:setTime(time)</h3>
+<p>Sets the mixer's clock and every active action's clock to <code>time</code>, then immediately re-poses by calling <code>update(0)</code> — useful for scrubbing without waiting for the next frame.</p>
+
 <h3 class="member">:stopAllAction()</h3>
 <p>Stops every action created on this mixer.</p>
+
+<h3 class="member">:addEventListener(type, listener)</h3>
+<p>Registers <code>listener</code> for events of <code>type</code> (currently <code>"finished"</code>, dispatched by AnimationAction when a non-looping clip completes).</p>
+
+<h3 class="member">:removeEventListener(type, listener)</h3>
+<p>Removes a previously registered listener.</p>
 
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
 <li>Exposes a <code>blending</code> flag with no three.js equivalent: it toggles between the default multi-action accumulation path (matching three.js's per-frame blending behavior) and a legacy single-clip path retained for cheaper playback when only one clip is ever active.</li>
-<li>No <code>AnimationObjectGroup</code> support, time-scale-on-mixer, or clip-event listeners (<code>finished</code>/<code>loop</code>).</li>
+<li>No <code>AnimationObjectGroup</code> support or time-scale-on-mixer beyond the plain <code>timeScale</code> property. The <code>"loop"</code> event is not dispatched — only <code>"finished"</code> is.</li>
 </ul>
 </div>
 
@@ -66,20 +87,41 @@
 
 <h2>Methods</h2>
 
-<h3 class="member">:clipAction(clip)</h3>
-<p>Возвращает AnimationAction для <code>clip</code> на этом миксере, создавая и кэшируя его при первом вызове.</p>
+<h3 class="member">:isAnimationMixer()</h3>
+<p>Возвращает <code>true</code>. Фасад проверки типа.</p>
+
+<h3 class="member">:getRoot()</h3>
+<p>Возвращает корневой объект, с которым был создан миксер.</p>
+
+<h3 class="member">:clipAction(clip, root)</h3>
+<p>Возвращает AnimationAction для <code>clip</code> на этом миксере, создавая и кэшируя его при первом вызове. Необязательный <code>root</code> переопределяет корень миксера для этого экшена.</p>
+
+<h3 class="member">:existingAction(clip)</h3>
+<p>Возвращает кэшированный AnimationAction для <code>clip</code>, либо <code>nil</code>, если <code>clipAction</code> для него ещё не вызывался.</p>
+
+<h3 class="member">:uncacheClip(clip)</h3>
+<p>Останавливает и удаляет кэшированный экшен для <code>clip</code>, чтобы следующий вызов <code>clipAction</code> создал новый.</p>
 
 <h3 class="member">:update(delta)</h3>
 <p>Продвигает время каждого экшена на <code>delta</code>, затем применяет полученную позу к <code>root</code>. Когда <code>blending</code> равен true, это прогоняет все включённые экшены с ненулевым весом через PoseAccumulator и записывает объединённую позу; когда <code>blending</code> равен false, сэмплируется только один включённый экшен с наибольшим весом и применяется напрямую.</p>
 
+<h3 class="member">:setTime(time)</h3>
+<p>Устанавливает время миксера и всех активных экшенов в <code>time</code>, затем сразу пересчитывает позу вызовом <code>update(0)</code> — полезно для скраббинга без ожидания следующего кадра.</p>
+
 <h3 class="member">:stopAllAction()</h3>
 <p>Останавливает все экшены, созданные на этом миксере.</p>
+
+<h3 class="member">:addEventListener(type, listener)</h3>
+<p>Регистрирует <code>listener</code> для событий типа <code>type</code> (сейчас есть только <code>"finished"</code>, отправляемое AnimationAction по завершении неповторяющегося клипа).</p>
+
+<h3 class="member">:removeEventListener(type, listener)</h3>
+<p>Удаляет ранее зарегистрированный слушатель.</p>
 
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
 <li>Предоставляет флаг <code>blending</code>, не имеющий аналога в three.js: он переключает между стандартным путём накопления нескольких экшенов (соответствующим поведению покадрового смешивания в three.js) и устаревшим путём с одним клипом, сохранённым ради более дешёвого воспроизведения, когда активен только один клип.</li>
-<li>Нет поддержки <code>AnimationObjectGroup</code>, масштаба времени на уровне миксера или слушателей событий клипа (<code>finished</code>/<code>loop</code>).</li>
+<li>Нет поддержки <code>AnimationObjectGroup</code> или масштаба времени сверх обычного свойства <code>timeScale</code>. Событие <code>"loop"</code> не отправляется — только <code>"finished"</code>.</li>
 </ul>
 </div>
 

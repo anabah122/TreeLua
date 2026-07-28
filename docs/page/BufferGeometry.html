@@ -44,6 +44,11 @@
   <h3 class="member">.isBufferGeometry()</h3>
   <p>Returns <code>true</code>.</p>
 
+  <h3 class="member">.extend(typeName)</h3>
+  <p>TreeLua's subclassing hook — the geometry generators in
+    <code>three/geometries/</code> use it to derive a subclass whose
+    <code>.type</code> is set automatically. Has no three.js equivalent.</p>
+
   <h3 class="member">.computeBoundingBox()</h3>
   <p>Computes and caches the axis-aligned bounds from <code>.vertices</code>.</p>
 
@@ -116,6 +121,12 @@
 
   <h3 class="member">.isBufferGeometry()</h3>
   <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.extend(typeName)</h3>
+  <p>Хук наследования TreeLua — генераторы геометрии в
+    <code>three/geometries/</code> используют его, чтобы породить
+    подкласс с автоматически проставленным <code>.type</code>. Не имеет
+    аналога в three.js.</p>
 
   <h3 class="member">.computeBoundingBox()</h3>
   <p>Вычисляет и кэширует границы по осям из <code>.vertices</code>.</p>

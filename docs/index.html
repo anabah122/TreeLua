@@ -54,6 +54,38 @@ mixer:clipAction(gltf.animations[1]):play()
 function love.update(dt) mixer:update(dt) end
 function love.draw()     renderer:render(scene, camera) end</code></pre>
 
+  <h2>Constants</h2>
+  <table>
+    <tr><th>Name</th><th>Value</th><th>Used by</th></tr>
+    <tr><td><code>TL.FrontSide</code></td><td><code>"front"</code></td><td>Material <code>.side</code></td></tr>
+    <tr><td><code>TL.BackSide</code></td><td><code>"back"</code></td><td>Material <code>.side</code></td></tr>
+    <tr><td><code>TL.DoubleSide</code></td><td><code>"double"</code></td><td>Material <code>.side</code></td></tr>
+    <tr><td><code>TL.LoopOnce</code></td><td><code>"once"</code></td><td>AnimationAction <code>.loop</code></td></tr>
+    <tr><td><code>TL.LoopRepeat</code></td><td><code>"repeat"</code></td><td>AnimationAction <code>.loop</code></td></tr>
+    <tr><td><code>TL.LoopPingPong</code></td><td><code>"pingpong"</code></td><td>AnimationAction <code>.loop</code></td></tr>
+  </table>
+
+  <h2>TL.MathUtils</h2>
+  <p>three.js's <code>MathUtils</code>, called with <code>:</code> like
+    everything else in the facade (the object itself is ignored):</p>
+  <table>
+    <tr><th>Method</th><th>Description</th></tr>
+    <tr><td><code>:degToRad(degrees)</code></td><td>Degrees to radians.</td></tr>
+    <tr><td><code>:radToDeg(radians)</code></td><td>Radians to degrees.</td></tr>
+    <tr><td><code>:clamp(value, min, max)</code></td><td>Clamps <code>value</code> to <code>[min, max]</code>.</td></tr>
+    <tr><td><code>:lerp(a, b, t)</code></td><td>Linear interpolation between <code>a</code> and <code>b</code>.</td></tr>
+  </table>
+
+  <h2>Internals</h2>
+  <p>
+    <code>TL.internal</code> exposes the importer layer
+    (<code>importer.common</code>, <code>importer.gltf</code>,
+    <code>importer.dae</code>, <code>importer.obj</code>) for anything the
+    facade above doesn't cover. Its shape is not part of the stable API and
+    is deliberately not documented here class-by-class — read the source
+    under <code>importer/</code> directly if you need it.
+  </p>
+
   <h2>Limitations compared to three.js</h2>
   <ul>
     <li>The shader takes one directional light plus an ambient term —
@@ -108,6 +140,38 @@ mixer:clipAction(gltf.animations[1]):play()
 
 function love.update(dt) mixer:update(dt) end
 function love.draw()     renderer:render(scene, camera) end</code></pre>
+
+  <h2>Constants</h2>
+  <table>
+    <tr><th>Имя</th><th>Значение</th><th>Используется в</th></tr>
+    <tr><td><code>TL.FrontSide</code></td><td><code>"front"</code></td><td>Material <code>.side</code></td></tr>
+    <tr><td><code>TL.BackSide</code></td><td><code>"back"</code></td><td>Material <code>.side</code></td></tr>
+    <tr><td><code>TL.DoubleSide</code></td><td><code>"double"</code></td><td>Material <code>.side</code></td></tr>
+    <tr><td><code>TL.LoopOnce</code></td><td><code>"once"</code></td><td>AnimationAction <code>.loop</code></td></tr>
+    <tr><td><code>TL.LoopRepeat</code></td><td><code>"repeat"</code></td><td>AnimationAction <code>.loop</code></td></tr>
+    <tr><td><code>TL.LoopPingPong</code></td><td><code>"pingpong"</code></td><td>AnimationAction <code>.loop</code></td></tr>
+  </table>
+
+  <h2>TL.MathUtils</h2>
+  <p>MathUtils three.js, вызывается через <code>:</code>, как и всё
+    остальное в фасаде (сам объект игнорируется):</p>
+  <table>
+    <tr><th>Метод</th><th>Описание</th></tr>
+    <tr><td><code>:degToRad(degrees)</code></td><td>Градусы в радианы.</td></tr>
+    <tr><td><code>:radToDeg(radians)</code></td><td>Радианы в градусы.</td></tr>
+    <tr><td><code>:clamp(value, min, max)</code></td><td>Ограничивает <code>value</code> диапазоном <code>[min, max]</code>.</td></tr>
+    <tr><td><code>:lerp(a, b, t)</code></td><td>Линейная интерполяция между <code>a</code> и <code>b</code>.</td></tr>
+  </table>
+
+  <h2>Internals</h2>
+  <p>
+    <code>TL.internal</code> открывает доступ к слою импортёров
+    (<code>importer.common</code>, <code>importer.gltf</code>,
+    <code>importer.dae</code>, <code>importer.obj</code>) для всего, что
+    не покрыто фасадом выше. Его форма не является частью стабильного API
+    и намеренно не документируется здесь по классам — если нужно, читайте
+    исходники напрямую в <code>importer/</code>.
+  </p>
 
   <h2>Ограничения по сравнению с three.js</h2>
   <ul>
