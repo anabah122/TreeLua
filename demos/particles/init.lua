@@ -185,13 +185,6 @@ function M.init()
     sun.position:set(3, 6, 2)
     scene:add(sun)
 
-    local floor = TL.Mesh:new(
-        TL.PlaneGeometry:new(SPACING * GRID_COLS + 10, SPACING * GRID_ROWS + 10),
-        TL.MeshStandardMaterial:new{ color = 0x22242c, roughness = 1 }
-    )
-    floor:rotateX(-math.pi / 2)
-    scene:add(floor)
-
     -- Rows 1-4: 20 continuous emitters, one distinct definition per cell.
     -- Row 5: 5 burst emitters, one full lifecycle per cycleDuration.
     for row = 1, GRID_ROWS do

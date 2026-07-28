@@ -27,7 +27,9 @@ local Group       = require "three.core.Group"
 local Mesh        = require "three.objects.Mesh"
 local SkinnedMesh = require "three.objects.SkinnedMesh"
 local Skeleton    = require "three.objects.Skeleton"
-local AnimationMixer = require "three.animation.AnimationMixer"
+local AnimationMixer  = require "three.animation.AnimationMixer"
+local LOD             = require "three.objects.LOD"
+local SimplifyModifier = require "three.modifiers.SimplifyModifier"
 
 local Model = {}
 Model.__index = Model
@@ -103,6 +105,56 @@ function Model:createInstance()
         animations = animations,
         mixer      = AnimationMixer:new(root),
     }
+end
+
+-- Generate LOD levels for every static Mesh in the model, in place, once.
+-- Levels: 100% / 50% / 25% / 10% of triangle count, shown at opts.distances
+-- (default {0, 15, 40, 80}). SkinnedMesh primitives are left untouched -- QEM
+-- here doesn't account for skin weights -- and get a console warning per
+-- occurrence.
+--
+--   model:autoLOD()                             -- default distances
+--   model:autoLOD{ distances = {0, 20, 60, 120} }
+--
+-- Idempotent: a second call is a no-op once autoLODGenerated is set, so
+-- calling this from spawn code repeatedly costs nothing after the first time.
+function Model:autoLOD(opts)
+    if self.autoLODGenerated then return self end
+    opts = opts or {}
+    local distances = opts.distances or {0, 15, 40, 80}
+    local ratios     = {1, 0.5, 0.25, 0.1}
+
+    -- collect first: traverse walks self.children live, so mutating the tree
+    -- (remove/add) mid-traversal would skip or duplicate siblings
+    local targets = {}
+    self.scene:traverse(function(node)
+        if node.isSkinnedMesh and node:isSkinnedMesh() then
+            print("Model:autoLOD — skipping SkinnedMesh '" .. (node.name or "") .. "' (skinning not supported)")
+        elseif node.isMesh and node:isMesh() then
+            targets[#targets+1] = node
+        end
+    end)
+
+    for _, node in ipairs(targets) do
+        local lod = LOD:new()
+        lod.name = node.name
+        lod.position:copy(node.position)
+        lod.quaternion:copy(node.quaternion)
+        lod.scale:copy(node.scale)
+
+        for i, ratio in ipairs(ratios) do
+            local geo = ratio == 1 and node.geometry or SimplifyModifier.simplify(node.geometry, ratio)
+            local levelMesh = Mesh:new(geo, node.material)
+            lod:addLevel(levelMesh, distances[i])
+        end
+
+        local parent = node.parent
+        parent:remove(node)
+        parent:add(lod)
+    end
+
+    self.autoLODGenerated = true
+    return self
 end
 
 return Model
