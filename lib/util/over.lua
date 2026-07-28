@@ -1,7 +1,7 @@
 
 -- TABLE 
 
-local serpent = require'engine.libs.serpent'
+local serpent = _G.serpent
 
 function table.ser( t, s )
 	return serpent.block( t , s or {comment=false} )
