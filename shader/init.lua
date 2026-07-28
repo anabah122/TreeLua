@@ -33,10 +33,11 @@ local PART_PATH = "shader.parts."
 local ShaderLib = {}
 ShaderLib.__index = ShaderLib
 
--- Parts always present, in application order. Only `skinning` is optional --
--- see the note in its file about the 2048 uniform components a bone array
--- costs, which is the whole reason variants exist.
-local ALWAYS = { "pbr" }
+-- Parts always present, in application order: normalmap writes shadingNormal
+-- and ambientOcclusion, pbr reads them. Only `skinning` is optional -- see the
+-- note in its file about the 2048 uniform components a bone array costs, which
+-- is the whole reason variants exist.
+local ALWAYS = { "normalmap", "pbr" }
 
 local cache = {}
 local loaded = {}
@@ -114,6 +115,15 @@ local function assemble(parts)
         "    vec4 baseColor = u_baseColor;",
         "    if (u_hasTexture) { baseColor *= Texel(tex, uv); }",
         "    vec4 outColor = baseColor;",
+        "",
+        -- The normal lighting is evaluated against. Starts as the interpolated
+        -- geometric normal; a part that perturbs it (normalmap) overwrites this
+        -- in its calc slot, and shading parts read it rather than v_normal, so
+        -- the order in ALWAYS decides who sees what.
+        "    vec3 shadingNormal = normalize(v_normal);",
+        "",
+        -- Scalar multiplier on the ambient term, for parts that occlude it.
+        "    float ambientOcclusion = 1.0;",
         "",
         slot(parts, "fragmentCalc"),
         slot(parts, "fragmentMix"),

@@ -717,6 +717,86 @@ function T.integration()
     ok("FlyControls runs without lib.util globals", moved, tostring(cerr))
 end
 
+-- ── normal and occlusion maps ────────────────────────────────────────────────
+
+function T.normalmap()
+    local TL = require "init"
+    local ShaderLib = require "shader"
+
+    print("\n-- normal maps --")
+
+    local m = TL.MeshStandardMaterial:new()
+    ok("normalScale defaults to 1", m.normalScale == 1)
+    ok("aoMapIntensity defaults to 1", m.aoMapIntensity == 1)
+    ok("normalMap is absent by default", m.normalMap == nil)
+    ok("aoMap is absent by default", m.aoMap == nil)
+
+    -- the importer's own names must land on the three.js ones
+    local imported = TL.MeshStandardMaterial:fromImporter{
+        baseColor        = { 1, 1, 1, 1 },
+        normalTexture    = "N",
+        normalScale      = 0.5,
+        occlusionTexture = "AO",
+        occlusionStrength = 0.25,
+    }
+    ok("importer normal map becomes normalMap", imported.normalMap == "N")
+    ok("importer normal scale becomes normalScale", near(imported.normalScale, 0.5))
+    ok("importer occlusion becomes aoMap", imported.aoMap == "AO")
+    ok("importer occlusion strength becomes aoMapIntensity",
+        near(imported.aoMapIntensity, 0.25))
+
+    -- copy must carry the new fields, or clone() would silently drop the maps
+    local clone = TL.MeshStandardMaterial:new():copy(imported)
+    ok("copy carries the normal map", clone.normalMap == "N")
+    ok("copy carries the occlusion map", clone.aoMap == "AO")
+    ok("copy carries normalScale", near(clone.normalScale, 0.5))
+
+    -- both variants must declare the part and still compile
+    for _, opts in ipairs({ {}, { skinning = true } }) do
+        local key = ShaderLib:keyFor(opts)
+        local src = ShaderLib:sourceFor(opts)
+
+        ok(key .. " variant declares the normal map", src:find("u_hasNormalMap", 1, true) ~= nil)
+        ok(key .. " variant declares the occlusion map",
+            src:find("u_hasOcclusionMap", 1, true) ~= nil)
+
+        -- the whole point of the derived basis: no new vertex attribute
+        ok(key .. " variant needs no tangent attribute",
+            src:find("VertexTangent", 1, true) == nil)
+
+        -- normalmap must write shadingNormal before pbr reads it, or the
+        -- perturbation is computed and thrown away
+        local writes = src:find("shadingNormal = normalize%(cotangentFrame")
+        local reads  = src:find("_n = shadingNormal", 1, true)
+        ok(key .. " variant perturbs the normal before shading",
+            writes and reads and writes < reads)
+
+        ok(key .. " variant occludes the ambient term",
+            src:find("ambientOcclusion", 1, true) ~= nil)
+
+        local built, berr = pcall(function() return ShaderLib:get(opts) end)
+        ok(key .. " variant compiles with normal mapping", built, tostring(berr))
+    end
+
+    -- and a material carrying maps must actually render
+    local scene = TL.Scene:new()
+    local cam = TL.PerspectiveCamera:new(60, 1, 0.1, 100)
+    cam.position:set(0, 0, 4)
+    cam:updateMatrixWorld(true)
+
+    local blank = love.graphics.newImage(love.image.newImageData(2, 2))
+    local mapped = TL.MeshStandardMaterial:new()
+    mapped.normalMap = blank
+    mapped.aoMap     = blank
+
+    scene:add(TL.Mesh:new(TL.BoxGeometry:new(1, 1, 1), mapped))
+    scene:add(TL.DirectionalLight:new(0xffffff, 1))
+
+    local renderer = TL.WebGLRenderer:new()
+    local drew, derr = pcall(function() renderer:render(scene, cam) end)
+    ok("a mapped material renders", drew, tostring(derr))
+end
+
 -- ── weighted blending of several clips ───────────────────────────────────────
 
 function T.blending()
@@ -1185,6 +1265,7 @@ function T.run()
     T.geometry()
     T.hygiene()
     T.integration()
+    T.normalmap()
     T.blending()
     T.additions()
 

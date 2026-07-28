@@ -39,6 +39,12 @@ function Material:new(params)
     m.roughness   = params.roughness or 1
     m.emissive    = Color:new(params.emissive or 0x000000)
     m.emissiveIntensity = params.emissiveIntensity or 1
+
+    m.normalMap       = params.normalMap or nil
+    m.normalScale     = params.normalScale == nil and 1 or params.normalScale
+    m.aoMap           = params.aoMap or nil
+    m.aoMapIntensity  = params.aoMapIntensity == nil and 1 or params.aoMapIntensity
+
     m.transparent = params.transparent or false
     m.visible     = params.visible ~= false
     m.side        = params.side or "front"   -- "front" | "back" | "double"
@@ -107,6 +113,10 @@ function Material:copy(source)
     self.roughness   = source.roughness
     self.emissive:copy(source.emissive)
     self.emissiveIntensity = source.emissiveIntensity
+    self.normalMap      = source.normalMap
+    self.normalScale    = source.normalScale
+    self.aoMap          = source.aoMap
+    self.aoMapIntensity = source.aoMapIntensity
     return self
 end
 

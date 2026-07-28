@@ -228,6 +228,16 @@ function WebGLRenderer:_sendMaterial(sh, material)
     sh:send("u_hasEmissiveMap", em ~= nil)
     sh:send("u_emissiveMap", em or self._blankTexture)
 
+    local nm = material.normalMap
+    sh:send("u_hasNormalMap", nm ~= nil)
+    sh:send("u_normalMap", nm or self._blankTexture)
+    sh:send("u_normalScale", material.normalScale)
+
+    local ao = material.aoMap
+    sh:send("u_hasOcclusionMap", ao ~= nil)
+    sh:send("u_occlusionMap", ao or self._blankTexture)
+    sh:send("u_occlusionStrength", material.aoMapIntensity)
+
     return tex
 end
 

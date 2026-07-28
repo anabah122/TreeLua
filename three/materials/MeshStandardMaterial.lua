@@ -1,9 +1,8 @@
--- three/materials/MeshStandardMaterial.lua — PBR-shaped material
+-- three/materials/MeshStandardMaterial.lua — PBR material
 --
 -- Named for the three.js class the glTF importer's output maps onto: glTF
 -- materials are metallic-roughness, and so is this field set. The bundled
--- shader is a simpler forward lambert, so `metalness` and `roughness` are
--- carried but not yet consumed -- see Material for why they are kept anyway.
+-- shader is Cook-Torrance, so every field here reaches it.
 
 local Material = require "three.materials.Material"
 
@@ -14,7 +13,6 @@ function MeshStandardMaterial:new(params)
     local m = Material.new(self, params)
     m.type = "MeshStandardMaterial"
 
-    m.normalMap    = params.normalMap or nil
     m.roughnessMap = params.roughnessMap or nil
     m.metalnessMap = params.metalnessMap or nil
     m.emissiveMap  = params.emissiveMap or nil
@@ -24,10 +22,9 @@ end
 
 function MeshStandardMaterial:copy(source)
     Material.copy(self, source)
-    self.normalMap         = source.normalMap
-    self.roughnessMap      = source.roughnessMap
-    self.metalnessMap      = source.metalnessMap
-    self.emissiveMap       = source.emissiveMap
+    self.roughnessMap = source.roughnessMap
+    self.metalnessMap = source.metalnessMap
+    self.emissiveMap  = source.emissiveMap
     return self
 end
 
@@ -61,7 +58,12 @@ function MeshStandardMaterial:fromImporter(mat)
     m.metalnessMap = mrMap
     m.roughnessMap = mrMap
     m.emissiveMap  = mat.emissiveTexture
-    m.normalMap    = mat.normalTexture
+
+    m.normalMap   = mat.normalTexture
+    m.normalScale = mat.normalScale or 1
+
+    m.aoMap          = mat.occlusionTexture
+    m.aoMapIntensity = mat.occlusionStrength or 1
 
     -- glTF alphaMode: BLEND means read opacity, MASK means cut out
     if mat.alphaMode == "BLEND" then

@@ -74,7 +74,7 @@ return {
         _roughness = clamp(_roughness, 0.04, 1.0);
         _metalness = clamp(_metalness, 0.0, 1.0);
 
-        vec3 _n = normalize(v_normal);
+        vec3 _n = shadingNormal;
         vec3 _v = normalize(u_cameraPos - v_worldPos);
         vec3 _l = -normalize(u_lightDir);
         vec3 _h = normalize(_v + _l);
@@ -126,8 +126,9 @@ return {
         // wider cone, so roughness does not dim it the way a mirror lobe would.
         //
         // A real IBL probe would replace these two lines.
-        vec3 _ambient = u_ambient * baseColor.rgb * (1.0 - _metalness)
-                      + u_ambient * _f0 * mix(1.0, 0.5, _roughness);
+        vec3 _ambient = (u_ambient * baseColor.rgb * (1.0 - _metalness)
+                      +  u_ambient * _f0 * mix(1.0, 0.5, _roughness))
+                      * ambientOcclusion;
 
         vec3 _emissive = u_emissive;
         if (u_hasEmissiveMap) {
