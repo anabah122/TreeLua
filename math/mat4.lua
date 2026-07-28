@@ -305,5 +305,287 @@ function matrix:mulVec3(vec)
     return {x = nx, y = ny, z = nz}
 end
 
+--------------------------------------------------------------------------
+-- three.js-compatible surface
+--
+-- One thing does NOT carry over unchanged: storage order. This matrix is
+-- row-major -- translation sits at [4],[8],[12] -- while three.js documents
+-- `Matrix4.elements` as column-major, translation at [13],[14],[15]. Rather
+-- than restage the whole engine (the shader, the skinning palette and the
+-- importers all read the row-major layout), `elements()` transposes on the way
+-- out so anything written against the three.js docs sees what it expects.
+--
+-- `set()` mirrors it: three.js takes arguments in visual row order and stores
+-- them transposed, so the argument list below reads exactly like the docs.
+--------------------------------------------------------------------------
+
+-- three.js `Matrix4.elements`: 16 values, column-major.
+function matrix:elements()
+    local m = self
+    return {
+        m[1], m[5], m[ 9], m[13],
+        m[2], m[6], m[10], m[14],
+        m[3], m[7], m[11], m[15],
+        m[4], m[8], m[12], m[16],
+    }
+end
+
+-- Vector3:applyMatrix4 and friends read matrices through this name.
+matrix.asLinearArray = matrix.elements
+
+-- Arguments in visual row order, as three.js `Matrix4.set` documents them.
+function matrix:set(n11, n12, n13, n14,
+                    n21, n22, n23, n24,
+                    n31, n32, n33, n34,
+                    n41, n42, n43, n44)
+    self[1],  self[2],  self[3],  self[4]  = n11, n12, n13, n14
+    self[5],  self[6],  self[7],  self[8]  = n21, n22, n23, n24
+    self[9],  self[10], self[11], self[12] = n31, n32, n33, n34
+    self[13], self[14], self[15], self[16] = n41, n42, n43, n44
+    return self
+end
+
+function matrix:identity()
+    return self:set(1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    0, 0, 0, 1)
+end
+
+function matrix:copy(m)
+    for i = 1, 16 do self[i] = m[i] end
+    return self
+end
+
+-- three.js `clone`; the original had no equivalent.
+function matrix:clone()
+    return matrix:new():copy(self)
+end
+
+-- three.js mutates in place and returns self, where the original `mul(A, B)`
+-- writes the product of two *other* matrices into self. Both are useful, so
+-- `multiplyMatrices` keeps the original's signature and `multiply` is the
+-- self-mutating one the docs describe.
+function matrix:multiplyMatrices(a, b)
+    return self:mul(a, b)
+end
+
+function matrix:multiply(m)
+    return self:mul(self:clone(), m)
+end
+
+function matrix:premultiply(m)
+    return self:mul(m, self:clone())
+end
+
+function matrix:multiplyScalar(s)
+    for i = 1, 16 do self[i] = self[i] * s end
+    return self
+end
+
+-- three.js `transpose` mutates; the original returns a new matrix, so keep
+-- both under their own names.
+function matrix:transposeSelf()
+    return self:copy(self:transpose())
+end
+
+-- three.js `invert` mutates and collapses to identity when singular, rather
+-- than returning nil the way the original `inverse` does.
+function matrix:invert()
+    local inv = self:inverse()
+    if not inv then return self:identity() end
+    return self:copy(inv)
+end
+
+function matrix:makePerspective(fov, aspect, near, far)
+    return self:setProjectionMatrix(fov, near, far, aspect)
+end
+
+-- three.js takes the frustum edges directly, where the original
+-- setOrthographicMatrix derives them from a fov and a size.
+function matrix:makeOrthographic(left, right, top, bottom, near, far)
+    local w, h, p = right - left, top - bottom, far - near
+    return self:set(
+        2 / w, 0,     0,      -(right + left) / w,
+        0,     2 / h, 0,      -(top + bottom) / h,
+        0,     0,    -2 / p,  -(far + near) / p,
+        0,     0,     0,       1
+    )
+end
+
+-- three.js `Matrix4.lookAt` builds a ROTATION basis -- the orientation an
+-- object needs to face `target` -- and leaves translation alone. That is the
+-- inverse of a view matrix, so it cannot delegate to setViewMatrix(): that one
+-- returns the already-inverted camera transform, with the basis transposed and
+-- the eye dotted into the fourth column. Callers wanting the view matrix
+-- should keep using setViewMatrix.
+function matrix:lookAt(eye, target, up)
+    local ex = eye.x    or eye[1];    local ey = eye.y    or eye[2];    local ez = eye.z    or eye[3]
+    local tx = target.x or target[1]; local ty = target.y or target[2]; local tz = target.z or target[3]
+    local ux = up.x     or up[1];     local uy = up.y     or up[2];     local uz = up.z     or up[3]
+
+    -- z points from the target back to the eye: three.js looks down -Z
+    local zx, zy, zz = vectorNormalize(ex - tx, ey - ty, ez - tz)
+    if zx == 0 and zy == 0 and zz == 0 then zz = 1 end
+
+    local xx, xy, xz = vectorCrossProduct(ux, uy, uz, zx, zy, zz)
+    if xx == 0 and xy == 0 and xz == 0 then
+        -- up is parallel to z; nudge it so the cross product has a direction
+        if math.abs(uz) == 1 then
+            xx, xy, xz = vectorCrossProduct(ux + 1e-4, uy, uz, zx, zy, zz)
+        else
+            xx, xy, xz = vectorCrossProduct(ux, uy, uz + 1e-4, zx, zy, zz)
+        end
+    end
+    xx, xy, xz = vectorNormalize(xx, xy, xz)
+
+    local yx, yy, yz = vectorCrossProduct(zx, zy, zz, xx, xy, xz)
+
+    -- basis vectors go in the columns; row-major storage puts them here
+    self[1],  self[2],  self[3]  = xx, yx, zx
+    self[5],  self[6],  self[7]  = xy, yy, zy
+    self[9],  self[10], self[11] = xz, yz, zz
+    self[4],  self[8],  self[12] = 0, 0, 0
+    self[13], self[14], self[15], self[16] = 0, 0, 0, 1
+    return self
+end
+
+function matrix:makeTranslation(x, y, z)
+    return self:set(1, 0, 0, x,
+                    0, 1, 0, y,
+                    0, 0, 1, z,
+                    0, 0, 0, 1)
+end
+
+function matrix:makeScale(x, y, z)
+    return self:set(x, 0, 0, 0,
+                    0, y, 0, 0,
+                    0, 0, z, 0,
+                    0, 0, 0, 1)
+end
+
+function matrix:makeRotationX(theta)
+    local c, s = math.cos(theta), math.sin(theta)
+    return self:set(1, 0,  0, 0,
+                    0, c, -s, 0,
+                    0, s,  c, 0,
+                    0, 0,  0, 1)
+end
+
+function matrix:makeRotationY(theta)
+    local c, s = math.cos(theta), math.sin(theta)
+    return self:set( c, 0, s, 0,
+                     0, 1, 0, 0,
+                    -s, 0, c, 0,
+                     0, 0, 0, 1)
+end
+
+function matrix:makeRotationZ(theta)
+    local c, s = math.cos(theta), math.sin(theta)
+    return self:set(c, -s, 0, 0,
+                    s,  c, 0, 0,
+                    0,  0, 1, 0,
+                    0,  0, 0, 1)
+end
+
+-- three.js `makeRotationFromQuaternion` / the rotation half of `compose`.
+function matrix:makeRotationFromQuaternion(q)
+    return self:compose({ 0, 0, 0 }, q, { 1, 1, 1 })
+end
+
+-- Position/quaternion/scale into a single matrix, the standard three.js
+-- `compose`. Accepts either {x,y,z} objects or plain arrays so it composes
+-- with both the facade and the importers' raw tables.
+function matrix:compose(position, quaternion, scale)
+    local px = position.x or position[1]
+    local py = position.y or position[2]
+    local pz = position.z or position[3]
+
+    local qx, qy, qz, qw = quaternion.x, quaternion.y, quaternion.z, quaternion.w
+    if qx == nil then
+        qx, qy, qz, qw = quaternion[1], quaternion[2], quaternion[3], quaternion[4]
+    end
+
+    local sx = scale.x or scale[1]
+    local sy = scale.y or scale[2]
+    local sz = scale.z or scale[3]
+
+    local x2, y2, z2 = qx + qx, qy + qy, qz + qz
+    local xx, xy, xz = qx * x2, qx * y2, qx * z2
+    local yy, yz, zz = qy * y2, qy * z2, qz * z2
+    local wx, wy, wz = qw * x2, qw * y2, qw * z2
+
+    return self:set(
+        (1 - (yy + zz)) * sx, (xy - wz)       * sy, (xz + wy)       * sz, px,
+        (xy + wz)       * sx, (1 - (xx + zz)) * sy, (yz - wx)       * sz, py,
+        (xz - wy)       * sx, (yz + wx)       * sy, (1 - (xx + yy)) * sz, pz,
+        0,                    0,                    0,                    1
+    )
+end
+
+-- Inverse of compose(), writing into the three objects passed in. Mirrors
+-- three.js, which also returns the matrix rather than the parts.
+function matrix:decompose(position, quaternion, scale)
+    local m = self
+
+    local sx = math.sqrt(m[1] * m[1] + m[5] * m[5] + m[ 9] * m[ 9])
+    local sy = math.sqrt(m[2] * m[2] + m[6] * m[6] + m[10] * m[10])
+    local sz = math.sqrt(m[3] * m[3] + m[7] * m[7] + m[11] * m[11])
+
+    -- a negative determinant means one axis is mirrored; three.js folds that
+    -- sign into x so the quaternion stays a pure rotation
+    if self:determinant() < 0 then sx = -sx end
+
+    position:set(m[4], m[8], m[12])
+    scale:set(sx, sy, sz)
+
+    local ix = sx == 0 and 0 or 1 / sx
+    local iy = sy == 0 and 0 or 1 / sy
+    local iz = sz == 0 and 0 or 1 / sz
+
+    local r11, r12, r13 = m[1] * ix, m[2] * iy, m[3]  * iz
+    local r21, r22, r23 = m[5] * ix, m[6] * iy, m[7]  * iz
+    local r31, r32, r33 = m[9] * ix, m[10] * iy, m[11] * iz
+
+    local trace = r11 + r22 + r33
+    if trace > 0 then
+        local s = 0.5 / math.sqrt(trace + 1)
+        quaternion:set((r32 - r23) * s, (r13 - r31) * s, (r21 - r12) * s, 0.25 / s)
+    elseif r11 > r22 and r11 > r33 then
+        local s = 2 * math.sqrt(1 + r11 - r22 - r33)
+        quaternion:set(0.25 * s, (r12 + r21) / s, (r13 + r31) / s, (r32 - r23) / s)
+    elseif r22 > r33 then
+        local s = 2 * math.sqrt(1 + r22 - r11 - r33)
+        quaternion:set((r12 + r21) / s, 0.25 * s, (r23 + r32) / s, (r13 - r31) / s)
+    else
+        local s = 2 * math.sqrt(1 + r33 - r11 - r22)
+        quaternion:set((r13 + r31) / s, (r23 + r32) / s, 0.25 * s, (r21 - r12) / s)
+    end
+
+    return self
+end
+
+function matrix:setPosition(x, y, z)
+    if type(x) == "table" then
+        x, y, z = x.x or x[1], x.y or x[2], x.z or x[3]
+    end
+    self[4], self[8], self[12] = x, y, z
+    return self
+end
+
+function matrix:toArray()
+    return self:elements()
+end
+
+function matrix:fromArray(a, offset)
+    offset = offset or 0
+    -- incoming data is column-major, matching elements()
+    return self:set(
+        a[offset +  1], a[offset +  5], a[offset +  9], a[offset + 13],
+        a[offset +  2], a[offset +  6], a[offset + 10], a[offset + 14],
+        a[offset +  3], a[offset +  7], a[offset + 11], a[offset + 15],
+        a[offset +  4], a[offset +  8], a[offset + 12], a[offset + 16]
+    )
+end
 
 return matrix

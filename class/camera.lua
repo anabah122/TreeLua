@@ -1,3 +1,13 @@
+-- class/camera.lua — LEGACY, superseded by the public API
+--
+-- Replaced by three.cameras.PerspectiveCamera (the camera) plus
+-- three.controls.FlyControls (the input handling this file actually is).
+-- Kept because it predates the facade and nothing in the library depends on
+-- it; new code should not use it.
+--
+-- It reads the globals `LK` and `LG`, so it only works after
+-- `require "lib.util"`. FlyControls reads love.keyboard directly instead.
+
 local mat4 = require 'math.mat4'
 local vec3 = require 'math.vec3'
 

@@ -1,4 +1,4 @@
--- class/model.lua — a loaded model with playback state
+-- class/model.lua — LEGACY, superseded by the public API
 --
 --   local m = Model:new("assets/model/x.glb", { scale = 1 })
 --   m:update(dt)
@@ -6,6 +6,12 @@
 --
 -- Wraps either importer so the caller never branches on file format: both
 -- produce the same node/skin/clip shapes.
+--
+-- Replaced by GLTFLoader/ColladaLoader (loading), AnimationMixer (playback)
+-- and WebGLRenderer (drawing), which split those three jobs apart. This file
+-- does all three at once and draws itself into a shader the caller has to set
+-- up, which is exactly what the facade exists to hide. Kept because nothing in
+-- the library depends on it; new code should not use it.
 
 local common   = require "importer.common"
 local matClass = require "math.mat4"
@@ -13,7 +19,7 @@ local matClass = require "math.mat4"
 local Model = {}
 Model.__index = Model
 
--- must match MAX_BONES in assets/shader/skinned.glsl
+-- must match MAX_BONES in shader/parts/skinning.lua
 Model.MAX_BONES = 128
 
 function Model:new(path, opts)

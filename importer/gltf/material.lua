@@ -59,11 +59,14 @@ function material.build(j, buffers, mat_idx, ctx)
 
     local pbr = mat.pbrMetallicRoughness or {}
 
+    -- metallic/roughness stay nil when the file omits them, so the facade can
+    -- tell an unauthored material from one that states a value. Substituting
+    -- the spec default here would erase that distinction.
     local out = {
         name        = mat.name,
         baseColor   = pbr.baseColorFactor or {1,1,1,1},
-        metallic    = pbr.metallicFactor  or 1,
-        roughness   = pbr.roughnessFactor or 1,
+        metallic    = pbr.metallicFactor,
+        roughness   = pbr.roughnessFactor,
         emissive    = mat.emissiveFactor  or {0,0,0},
         alphaMode   = mat.alphaMode       or "OPAQUE",
         alphaCutoff = mat.alphaCutoff     or 0.5,

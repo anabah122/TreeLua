@@ -1,36 +1,72 @@
-require 'lib.util'
+-- Demo: an animated glTF character.
+--
+-- Written entirely against the public API, so it doubles as the worked example
+-- for it. Nothing here reaches into importer/ or class/ -- if something needs
+-- to, that is a gap in the facade.
 
-local Camera = require 'class.camera'
-local Model  = require 'class.model'
+-- `love . --tests` runs the suite instead of the demo. Checked before
+-- lib/util loads, because that replaces love.run and the runner needs the
+-- stock one to quit cleanly.
+for _, a in ipairs(arg or {}) do
+    if a == "--tests" then
+        require "tests.main"
+        return
+    end
+end
 
-local camera, sh
-local models = {}
+-- lib/util is demo scaffolding, not part of the library: it installs globals
+-- (LG, LK, serpent), replaces love.run to measure a pre-sleep FPS, and
+-- overwrites several table.*/math.* functions. Nothing under three/, math/ or
+-- importer/ touches any of it -- `require "TreeEngine"` defines no globals.
+-- Loaded here only for the realFPS readout, and tolerated if absent.
+pcall(require, 'lib.util')
+
+local TL = require 'init'
+
+local scene, camera, renderer, controls
+local mixers = {}
 local paused = false
 
 function love.load()
-    love.window.setTitle("TreeEngine")
+    love.window.setTitle("TreeLua")
 
-    sh = love.graphics.newShader("assets/shader/skinned.glsl")
-    camera = Camera:new{ x = 0, y = 1.2, z = 3.5, yaw = math.pi, speed = 3 }
+    local w, h = love.graphics.getDimensions()
 
-    -- Same character from both importers. Neither needs a scale fudge: the
-    -- glTF is authored in metres, and the DAE's <unit meter="0.01"> is folded
-    -- into its root transform at load time.
-    models[1] = Model:new("assets/model/model3dtest.glb",
-        { position = { -0.8, 0, 0 } })
-    models[2] = Model:new("assets/model/model3dtest/Dancing.dae",
-        { position = {  0.8, 0, 0 } })
+    scene = TL.Scene:new()
+    scene:setBackground(0x171a21)
 
-    -- the two exports differ by 17ms of clip length, enough to visibly drift
-    -- apart after a few loops; pin the second to the first
-    models[2].duration = models[1].clip.duration
+    camera = TL.PerspectiveCamera:new(60, w / h, 0.1, 1024)
+    camera.position:set(0, 1.2, 3.5)
+
+    controls = TL.FlyControls:new(camera, { movementSpeed = 3 })
+
+    renderer = TL.WebGLRenderer:new()
+
+    -- Direction comes from where the light sits relative to its target, so
+    -- placing it up and to one side is what aims it; the distance is ignored.
+    local sun = TL.DirectionalLight:new(0xfff7eb, 1)
+    sun.position:set(0.4, 1.0, 0.6)
+    scene:add(sun)
+
+    scene:add(TL.AmbientLight:new(0x474d5c, 1))
+
+    local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
+    scene:add(gltf.scene)
+
+    local mixer = TL.AnimationMixer:new(gltf.scene)
+    mixer:clipAction(gltf.animations[1]):play()
+    mixers[#mixers + 1] = mixer
 end
 
 function love.update(dt)
-    camera:update(dt)
+    controls:update(dt)
     if not paused then
-        for _, m in ipairs(models) do m:update(dt) end
+        for _, m in ipairs(mixers) do m:update(dt) end
     end
+end
+
+function love.resize(w, h)
+    renderer:setSize(w, h, camera)
 end
 
 function love.keypressed(k)
@@ -38,36 +74,23 @@ function love.keypressed(k)
     if k == "space"  then paused = not paused end
 end
 
-function love.mousemoved(x, y, dx, dy) camera:mousemoved(dx, dy) end
-function love.wheelmoved(dx, dy)       camera:wheelmoved(dy)     end
+function love.mousemoved(x, y, dx, dy) controls:mousemoved(dx, dy) end
+function love.wheelmoved(dx, dy)       controls:wheelmoved(dy)     end
 
 function love.draw()
-    love.graphics.clear(0.09, 0.10, 0.13, 1)
-
-    love.graphics.setDepthMode("lequal", true)
-    love.graphics.setMeshCullMode("back")
-
-    love.graphics.setShader(sh)
-    sh:send("u_viewProj",   camera:viewproj())
-    sh:send("u_lightDir",   { -0.4, -1.0, -0.6 })
-    sh:send("u_lightColor", { 1.0, 0.97, 0.92 })
-    sh:send("u_ambient",    { 0.28, 0.30, 0.36 })
-
-    for _, m in ipairs(models) do m:draw(sh) end
-
-    love.graphics.setShader()
-    love.graphics.setMeshCullMode("none")
-    love.graphics.setDepthMode()
+    renderer:render(scene, camera)
 
     love.graphics.setColor(0, 0, 0, 0.6)
-    love.graphics.rectangle("fill", 0, 0, 400, 62)
+    love.graphics.rectangle("fill", 0, 0, 400, 50)
     love.graphics.setColor(1, 1, 1, 1)
     -- getFPS() reflects the frame loop's sleep, not the engine's speed;
-    -- realFPS is measured before that sleep (see lib/util/FRAMELOOP.lua)
+    -- realFPS is measured before that sleep (see lib/util/FRAMELOOP.lua) and
+    -- is absent when that scaffolding is not loaded
+    local real = love.timer.realFPS
     love.graphics.print(
         ("WASD move  QE up/down  mouse look  wheel speed\nSPACE %s   ESC quit\n" ..
-         "left: GLB   right: DAE\nfps %d   real %d")
-            :format(paused and "paused" or "playing",
-                    love.timer.getFPS(), math.floor(love.timer.realFPS)),
+         "fps %d%s")
+            :format(paused and "paused" or "playing", love.timer.getFPS(),
+                    real and ("   real %d"):format(math.floor(real)) or ""),
         10, 10)
 end
