@@ -39,19 +39,26 @@ TL.Quaternion = require "math.quat"
 TL.Euler      = require "math.euler"
 TL.Color      = require "math.color"
 TL.Box3       = require "math.box3"
+TL.Sphere     = require "math.sphere"
+TL.Plane      = require "math.plane"
+TL.Ray        = require "math.ray"
+TL.Frustum    = require "math.frustum"
 
 -- ── core ─────────────────────────────────────────────────────────────────────
 TL.Object3D       = require "three.core.Object3D"
 TL.Group          = require "three.core.Group"
 TL.BufferGeometry = require "three.core.BufferGeometry"
+TL.Raycaster      = require "three.core.Raycaster"
 
 -- ── scene ────────────────────────────────────────────────────────────────────
 TL.Scene = require "three.scenes.Scene"
 
 -- ── objects ──────────────────────────────────────────────────────────────────
-TL.Mesh        = require "three.objects.Mesh"
-TL.SkinnedMesh = require "three.objects.SkinnedMesh"
-TL.Skeleton    = require "three.objects.Skeleton"
+TL.Mesh          = require "three.objects.Mesh"
+TL.SkinnedMesh   = require "three.objects.SkinnedMesh"
+TL.Skeleton      = require "three.objects.Skeleton"
+TL.InstancedMesh = require "three.objects.InstancedMesh"
+TL.LOD           = require "three.objects.LOD"
 
 -- ── geometries ───────────────────────────────────────────────────────────────
 -- Generated primitives, so a scene can be built without loading a file.
@@ -60,6 +67,7 @@ TL.SphereGeometry   = require "three.geometries.SphereGeometry"
 TL.PlaneGeometry    = require "three.geometries.PlaneGeometry"
 TL.CylinderGeometry = require "three.geometries.CylinderGeometry"
 TL.ConeGeometry     = require "three.geometries.ConeGeometry"
+TL.TorusGeometry    = require "three.geometries.TorusGeometry"
 
 -- ── materials ────────────────────────────────────────────────────────────────
 TL.Material             = require "three.materials.Material"
@@ -74,6 +82,8 @@ TL.OrthographicCamera = require "three.cameras.OrthographicCamera"
 TL.Light            = require "three.lights.Light"
 TL.AmbientLight     = require "three.lights.AmbientLight"
 TL.DirectionalLight = require "three.lights.DirectionalLight"
+TL.PointLight       = require "three.lights.PointLight"
+TL.SpotLight        = require "three.lights.SpotLight"
 
 -- ── renderers ────────────────────────────────────────────────────────────────
 TL.WebGLRenderer = require "three.renderers.WebGLRenderer"
@@ -82,6 +92,7 @@ TL.WebGLRenderer = require "three.renderers.WebGLRenderer"
 TL.Loader        = require "three.loaders.Loader"
 TL.GLTFLoader    = require "three.loaders.GLTFLoader"
 TL.ColladaLoader = require "three.loaders.ColladaLoader"
+TL.TextureLoader = require "three.loaders.TextureLoader"
 
 -- ── animation ────────────────────────────────────────────────────────────────
 TL.AnimationClip   = require "three.animation.AnimationClip"
@@ -89,7 +100,8 @@ TL.AnimationAction = require "three.animation.AnimationAction"
 TL.AnimationMixer  = require "three.animation.AnimationMixer"
 
 -- ── controls ─────────────────────────────────────────────────────────────────
-TL.FlyControls = require "three.controls.FlyControls"
+TL.FlyControls   = require "three.controls.FlyControls"
+TL.OrbitControls = require "three.controls.OrbitControls"
 
 -- ── constants ────────────────────────────────────────────────────────────────
 TL.FrontSide  = "front"

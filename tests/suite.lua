@@ -717,12 +717,288 @@ function T.integration()
     ok("FlyControls runs without lib.util globals", moved, tostring(cerr))
 end
 
+-- ── the classes added to close the three.js gap ──────────────────────────────
+
+function T.additions()
+    local TL = require "init"
+    local V  = TL.Vector3
+
+    print("\n-- additions --")
+
+    -- Sphere
+    local s = TL.Sphere:new(V:new(0, 0, 0), 2)
+    ok("sphere contains an inside point", s:containsPoint(V:new(1, 0, 0)))
+    ok("sphere rejects an outside point", not s:containsPoint(V:new(3, 0, 0)))
+    ok("sphere distance is signed", near(s:distanceToPoint(V:new(5, 0, 0)), 3))
+
+    -- a non-uniform scale must grow the radius by the LARGEST axis, so the
+    -- result still encloses the true shape
+    local scaled = TL.Sphere:new(V:new(0, 0, 0), 1)
+                            :applyMatrix4(TL.Matrix4:new():makeScale(3, 1, 1))
+    ok("sphere takes the largest axis scale", near(scaled.radius, 3))
+
+    local grown = TL.Sphere:new(V:new(0, 0, 0), 1):expandByPoint(V:new(3, 0, 0))
+    ok("sphere expands to swallow a point", grown:containsPoint(V:new(3, 0, 0)))
+    ok("sphere does not over-expand", near(grown.radius, 2))
+
+    -- Plane
+    local ground = TL.Plane:new(V:new(0, 1, 0), 0)
+    ok("plane distance is positive above", near(ground:distanceToPoint(V:new(0, 5, 0)), 5))
+    ok("plane distance is negative below", near(ground:distanceToPoint(V:new(0, -2, 0)), -2))
+    ok("plane projects onto itself",
+        near(ground:projectPoint(V:new(1, 7, 2)).y, 0))
+
+    local fromPoints = TL.Plane:new():setFromCoplanarPoints(
+        V:new(0, 0, 0), V:new(1, 0, 0), V:new(0, 0, 1))
+    ok("plane from three points is horizontal", near(math.abs(fromPoints.normal.y), 1))
+
+    -- Ray
+    local ray = TL.Ray:new(V:new(0, 0, 5), V:new(0, 0, -1))
+    local hit = ray:intersectTriangle(
+        V:new(-1, -1, 0), V:new(1, -1, 0), V:new(0, 1, 0), false, V:new())
+    ok("ray hits a triangle", hit ~= nil and near(hit.z, 0))
+
+    local miss = ray:intersectTriangle(
+        V:new(5, 5, 0), V:new(6, 5, 0), V:new(5, 6, 0), false, V:new())
+    ok("ray misses a triangle beside it", miss == nil)
+
+    -- a triangle behind the origin is not on the ray
+    local behind = TL.Ray:new(V:new(0, 0, -5), V:new(0, 0, -1)):intersectTriangle(
+        V:new(-1, -1, 0), V:new(1, -1, 0), V:new(0, 1, 0), false, V:new())
+    ok("ray ignores geometry behind it", behind == nil)
+
+    ok("ray hits a sphere",
+        ray:intersectSphere(TL.Sphere:new(V:new(0, 0, 0), 1), V:new()) ~= nil)
+    ok("ray hits a box",
+        ray:intersectBox(TL.Box3:new(V:new(-1, -1, -1), V:new(1, 1, 1)), V:new()) ~= nil)
+    ok("ray hits a plane",
+        near(ray:intersectPlane(TL.Plane:new(V:new(0, 0, 1), 0), V:new()).z, 0))
+
+    -- applyMatrix4 must keep the direction a unit vector under scale
+    local moved = TL.Ray:new(V:new(0, 0, 0), V:new(0, 0, -1))
+                       :applyMatrix4(TL.Matrix4:new():makeScale(4, 4, 4))
+    ok("ray direction stays normalised", near(moved.direction:length(), 1))
+
+    -- Frustum
+    local fcam = TL.PerspectiveCamera:new(60, 1, 0.1, 100)
+    fcam.position:set(0, 0, 5)
+    fcam:lookAt(0, 0, 0)
+    fcam:updateMatrixWorld(true)
+
+    local frustum = TL.Frustum:new():setFromProjectionMatrix(fcam:viewProjectionMatrix())
+    ok("frustum contains a point ahead", frustum:containsPoint(V:new(0, 0, 0)))
+    ok("frustum rejects a point behind", not frustum:containsPoint(V:new(0, 0, 50)))
+    ok("frustum rejects a point far to the side", not frustum:containsPoint(V:new(500, 0, 0)))
+    ok("frustum intersects a sphere at the origin",
+        frustum:intersectsSphere(TL.Sphere:new(V:new(0, 0, 0), 1)))
+    ok("frustum intersects a box at the origin",
+        frustum:intersectsBox(TL.Box3:new(V:new(-1, -1, -1), V:new(1, 1, 1))))
+
+    -- a sphere just outside still counts if its radius reaches in
+    ok("frustum honours the radius",
+        frustum:intersectsSphere(TL.Sphere:new(V:new(0, 0, 40), 45)))
+
+    -- Raycaster
+    local caster = TL.Raycaster:new()
+    local target = TL.Mesh:new(TL.BoxGeometry:new(2, 2, 2),
+                               TL.MeshStandardMaterial:new())
+    local pickScene = TL.Scene:new()
+    pickScene:add(target)
+    pickScene:updateMatrixWorld(true)
+
+    caster:set(V:new(0, 0, 10), V:new(0, 0, -1))
+    local hits = caster:intersectObject(target, false)
+    ok("raycaster hits a box", #hits > 0)
+    ok("raycaster reports the object", hits[1] and hits[1].object == target)
+    ok("raycaster measures to the near face", hits[1] and near(hits[1].distance, 9))
+    ok("raycaster reports a uv", hits[1] and hits[1].uv ~= nil)
+
+    -- hits arrive nearest first whatever order the geometry was walked in
+    local sorted = true
+    for i = 2, #hits do
+        if hits[i].distance < hits[i - 1].distance then sorted = false end
+    end
+    ok("raycaster sorts nearest first", sorted)
+
+    caster:set(V:new(0, 20, 10), V:new(0, 0, -1))
+    ok("raycaster misses when aimed past", #caster:intersectObject(target, false) == 0)
+
+    -- near/far must clip
+    caster:set(V:new(0, 0, 10), V:new(0, 0, -1))
+    caster.far = 5
+    ok("raycaster honours far", #caster:intersectObject(target, false) == 0)
+    caster.far = math.huge
+
+    -- an invisible object is not picked
+    target.visible = false
+    ok("raycaster skips invisible objects", #caster:intersectObject(target, false) == 0)
+    target.visible = true
+
+    -- setFromCamera takes NDC, as in three.js; the centre of the screen must
+    -- hit a box sitting on the camera's axis
+    local pickCam = TL.PerspectiveCamera:new(60, 1, 0.1, 100)
+    pickCam.position:set(0, 0, 10)
+    pickCam:lookAt(0, 0, 0)
+    pickCam:updateMatrixWorld(true)
+
+    caster:setFromCamera({ x = 0, y = 0 }, pickCam)
+    ok("setFromCamera aims through the screen centre",
+        #caster:intersectObject(target, false) > 0)
+
+    caster:setFromCamera({ x = 0.99, y = 0.99 }, pickCam)
+    ok("setFromCamera misses at the corner",
+        #caster:intersectObject(target, false) == 0)
+
+    -- TorusGeometry
+    local torus = TL.TorusGeometry:new(1, 0.3, 8, 16)
+    ok("torus builds a mesh", torus.mesh ~= nil)
+    ok("torus has vertices", #torus.vertices > 0)
+    ok("torus indices are whole triangles", #torus.indices % 3 == 0)
+
+    local tbox = torus:computeBoundingBox()
+    ok("torus spans radius plus tube", near(tbox.max.x, 1.3, 1e-3))
+    ok("torus is flat in the tube axis", near(tbox.max.z, 0.3, 1e-3))
+
+    -- normals must point away from the tube centre, not from the origin: at the
+    -- inner wall those two disagree, which is why the torus opts out of the
+    -- convex orientation rule
+    local inward = false
+    for _, v in ipairs(torus.vertices) do
+        local d = v[1] * v[6] + v[2] * v[7] + v[3] * v[8]
+        if d < -0.5 then inward = true end
+    end
+    ok("torus has genuinely inward-facing normals", inward)
+
+    -- lights
+    local point = TL.PointLight:new(0xffffff, 2, 10)
+    ok("point light carries distance", point.distance == 10)
+    ok("point light decays by inverse square", point.decay == 2)
+    ok("point light is a light", point:isLight() and point:isPointLight())
+
+    local spot = TL.SpotLight:new(0xffffff, 1, 20, math.pi / 6, 0.3)
+    ok("spot light carries its cone", near(spot.angle, math.pi / 6))
+    spot.position:set(0, 5, 0)
+    spot.target.position:set(0, 0, 0)
+    ok("spot light aims at its target", near(spot:direction().y, -1))
+
+    -- an unshaded light must still be safe to put in a scene
+    local litScene = TL.Scene:new()
+    litScene:add(point)
+    litScene:add(spot)
+    litScene:add(TL.Mesh:new(TL.BoxGeometry:new(1, 1, 1), TL.MeshStandardMaterial:new()))
+
+    local renderer = TL.WebGLRenderer:new()
+    local drew, derr = pcall(function() renderer:render(litScene, fcam) end)
+    ok("a scene with unshaded lights still renders", drew, tostring(derr))
+
+    -- InstancedMesh
+    local field = TL.InstancedMesh:new(TL.BoxGeometry:new(1, 1, 1),
+                                       TL.MeshStandardMaterial:new(), 4)
+    ok("instanced mesh reports its count", field.count == 4)
+    ok("instanced mesh is a mesh", field:isMesh() and field:isInstancedMesh())
+
+    local im = TL.Matrix4:new():makeTranslation(5, 0, 0)
+    field:setMatrixAt(2, im)
+    ok("instance matrix round-trips", near(field:getMatrixAt(2)[4], 5))
+
+    -- out-of-range writes are ignored rather than growing the set silently
+    field:setMatrixAt(99, im)
+    ok("instance index is bounded", field.instanceMatrix[99] == nil)
+
+    local instScene = TL.Scene:new()
+    instScene:add(field)
+    renderer:render(instScene, fcam)
+    ok("instanced mesh draws once per instance", renderer.info.render.calls == 4)
+    ok("instanced mesh counts as one mesh", renderer.info.render.meshes == 1)
+
+    -- the object's own transform must carry the whole set
+    field.position:set(100, 0, 0)
+    instScene:updateMatrixWorld(true)
+    local composed = renderer:_instanceMatrices(field)
+    ok("instance transform composes onto the object", near(composed[2][4], 105))
+
+    -- LOD
+    local lod = TL.LOD:new()
+    local hi = TL.Mesh:new(TL.BoxGeometry:new(1, 1, 1), TL.MeshStandardMaterial:new())
+    local lo = TL.Mesh:new(TL.BoxGeometry:new(1, 1, 1), TL.MeshStandardMaterial:new())
+    lod:addLevel(hi, 0)
+    lod:addLevel(lo, 10)
+
+    local lodCam = TL.PerspectiveCamera:new(60, 1, 0.1, 100)
+
+    lodCam.position:set(0, 0, 2)
+    lodCam:updateMatrixWorld(true)
+    lod:update(lodCam)
+    ok("LOD picks the near level up close", hi.visible and not lo.visible)
+
+    lodCam.position:set(0, 0, 50)
+    lodCam:updateMatrixWorld(true)
+    lod:update(lodCam)
+    ok("LOD picks the far level at distance", lo.visible and not hi.visible)
+
+    -- only the chosen level is drawn, which is what makes LOD need no renderer
+    -- support at all
+    local lodScene = TL.Scene:new()
+    lodScene:add(lod)
+    renderer:render(lodScene, lodCam)
+    ok("LOD draws one level", renderer.info.render.meshes == 1)
+
+    -- OrbitControls
+    local ocam = TL.PerspectiveCamera:new(60, 1, 0.1, 100)
+    ocam.position:set(0, 0, 5)
+    local orbit = TL.OrbitControls:new(ocam, { enableDamping = false })
+    ok("orbit seeds its radius from the camera", near(orbit.radius, 5))
+
+    orbit:mousepressed(0, 0, 1)
+    orbit:mousemoved(0, 0, 100, 0)
+    orbit:update(1 / 60)
+    ok("orbit keeps its distance while rotating",
+        near(ocam.position:distanceTo(orbit.target), 5, 1e-3))
+    ok("orbit actually moved the camera", math.abs(ocam.position.x) > 0.1)
+    orbit:mousereleased(0, 0, 1)
+
+    -- with no button held nothing should move
+    local still = ocam.position:clone()
+    orbit:mousemoved(0, 0, 100, 0)
+    orbit:update(1 / 60)
+    ok("orbit ignores movement with no button held",
+        ocam.position:distanceTo(still) < 1e-6)
+
+    orbit:wheelmoved(1)
+    orbit:update(1 / 60)
+    ok("wheel dollies in", ocam.position:distanceTo(orbit.target) < 5)
+
+    -- the polar clamp must stop the camera reaching the pole, where the up
+    -- vector flips and the view rolls over
+    orbit:mousepressed(0, 0, 1)
+    for _ = 1, 100 do orbit:mousemoved(0, 0, 0, -100) end
+    orbit:update(1 / 60)
+    orbit:mousereleased(0, 0, 1)
+    ok("orbit clamps the polar angle", orbit.phi > 0 and orbit.phi < math.pi)
+
+    orbit.enablePan = true
+    local before = orbit.target:clone()
+    orbit._dragging = "pan"
+    orbit:mousemoved(0, 0, 50, 0)
+    ok("right drag pans the target", orbit.target:distanceTo(before) > 0)
+
+    -- TextureLoader
+    local tex = TL.TextureLoader:new():load("assets/model/nothing-here.png")
+    ok("texture loader returns nil for a missing file", tex == nil)
+
+    local errored = false
+    TL.TextureLoader:new():load("assets/model/nothing-here.png", nil, nil,
+        function() errored = true end)
+    ok("texture loader reports the error", errored)
+end
+
 function T.run()
     T.math()
     T.object3d()
     T.geometry()
     T.hygiene()
     T.integration()
+    T.additions()
 
     print(("\n%d passed, %d failed"):format(passed, failed))
     for _, f in ipairs(failures) do print("  FAILED: " .. f) end

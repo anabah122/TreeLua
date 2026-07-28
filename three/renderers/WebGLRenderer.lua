@@ -20,6 +20,7 @@
 local Matrix4   = require "math.mat4"
 local Color     = require "math.color"
 local Vector3   = require "math.vec3"
+local Frustum   = require "math.frustum"
 local ShaderLib = require "shader"
 
 local WebGLRenderer = {}
@@ -64,8 +65,9 @@ function WebGLRenderer:new(params)
     r._skinnedList = {}
     r._lightScratch = Color:new()
     r._depthScratch = {}
-    r._frustum = {}
-    for i = 1, 6 do r._frustum[i] = { 0, 0, 0, 0 } end
+    r._frustum = Frustum:new()
+    r._instanceScratch  = {}
+    r._instanceComposed = {}
 
     -- three.js's flag of the same name; off draws everything
     r.frustumCulling = params.frustumCulling ~= false
@@ -318,6 +320,9 @@ end
 -- Skinned meshes are exempt: their bounds are the BIND pose, and an animation
 -- routinely swings limbs outside it, so testing that box would cull a
 -- character mid-stride.
+--
+-- The sphere is expanded inline rather than through Frustum:intersectsObject
+-- so the hot path allocates nothing per mesh per frame.
 function WebGLRenderer:_inFrustum(mesh)
     if not mesh.frustumCulled then return true end
 
@@ -340,8 +345,9 @@ function WebGLRenderer:_inFrustum(mesh)
     local radius = sphere.radius * math.sqrt(math.max(sx, sy, sz))
 
     for i = 1, 6 do
-        local p = self._frustum[i]
-        if p[1] * cx + p[2] * cy + p[3] * cz + p[4] < -radius then
+        local p = self._frustum.planes[i]
+        local n = p.normal
+        if n.x * cx + n.y * cy + n.z * cz + p.constant < -radius then
             return false
         end
     end
@@ -349,37 +355,40 @@ function WebGLRenderer:_inFrustum(mesh)
     return true
 end
 
--- Extract the six frustum planes from the view-projection matrix (Gribb-
--- Hartmann): each plane is a sum or difference of two rows, normalised so the
--- plane equation yields a true signed distance.
 function WebGLRenderer:_updateFrustum(viewProj)
-    local m = viewProj
-    local planes = self._frustum
+    self._frustum:setFromProjectionMatrix(viewProj)
+    return self
+end
 
-    -- row-major storage: m[1..4] is row 1, m[13..16] is row 4
-    local r1 = { m[1],  m[2],  m[3],  m[4]  }
-    local r2 = { m[5],  m[6],  m[7],  m[8]  }
-    local r3 = { m[9],  m[10], m[11], m[12] }
-    local r4 = { m[13], m[14], m[15], m[16] }
+-- The model matrices to draw this mesh at: one for an ordinary mesh, one per
+-- instance for an InstancedMesh, each composed onto the object's own world
+-- transform so a moved InstancedMesh carries its whole set with it.
+--
+-- The result table and its matrices are reused between meshes and frames, so
+-- the common single-matrix case allocates nothing.
+function WebGLRenderer:_instanceMatrices(mesh)
+    local out = self._instanceScratch
 
-    local function setPlane(idx, a, b, sign)
-        local p = planes[idx]
-        for k = 1, 4 do p[k] = a[k] + sign * b[k] end
-
-        local len = math.sqrt(p[1] * p[1] + p[2] * p[2] + p[3] * p[3])
-        if len > 0 then
-            for k = 1, 4 do p[k] = p[k] / len end
-        end
+    if not (mesh.isInstancedMesh and mesh:isInstancedMesh()) then
+        out[1] = mesh.matrixWorld
+        for i = #out, 2, -1 do out[i] = nil end
+        return out
     end
 
-    setPlane(1, r4, r1,  1)   -- left
-    setPlane(2, r4, r1, -1)   -- right
-    setPlane(3, r4, r2,  1)   -- bottom
-    setPlane(4, r4, r2, -1)   -- top
-    setPlane(5, r4, r3,  1)   -- near
-    setPlane(6, r4, r3, -1)   -- far
+    for i = #out, mesh.count + 1, -1 do out[i] = nil end
 
-    return self
+    for i = 1, mesh.count do
+        local composed = self._instanceComposed[i]
+        if not composed then
+            composed = Matrix4:new()
+            self._instanceComposed[i] = composed
+        end
+
+        composed:multiplyMatrices(mesh.matrixWorld, mesh.instanceMatrix[i])
+        out[i] = composed
+    end
+
+    return out
 end
 
 function WebGLRenderer:_drawBucket(bucket, variant, override, state, info)
@@ -401,7 +410,6 @@ function WebGLRenderer:_drawBucket(bucket, variant, override, state, info)
                 info.shaderSwaps = info.shaderSwaps + 1
             end
 
-            sh:send("u_model", mesh.matrixWorld)
             if variant == "skinned" then self:_sendSkin(sh, mesh) end
             local tex = self:_sendMaterial(sh, material)
 
@@ -409,12 +417,17 @@ function WebGLRenderer:_drawBucket(bucket, variant, override, state, info)
             -- unbinding rather than just muting the sample
             geometry.mesh:setTexture(tex)
 
-            love.graphics.draw(geometry.mesh)
+            local instances = self:_instanceMatrices(mesh)
 
-            info.calls  = info.calls + 1
+            for _, model in ipairs(instances) do
+                sh:send("u_model", model)
+                love.graphics.draw(geometry.mesh)
+                info.calls = info.calls + 1
+            end
+
             info.meshes = info.meshes + 1
             if geometry.indices then
-                info.triangles = info.triangles + #geometry.indices / 3
+                info.triangles = info.triangles + #geometry.indices / 3 * #instances
             end
         end
     end

@@ -67,6 +67,8 @@ function BufferGeometry:computeBoundingBox()
 end
 
 function BufferGeometry:computeBoundingSphere()
+    local Sphere = require "math.sphere"
+
     local box = self.boundingBox or self:computeBoundingBox()
     local center = Vector3:new(
         (box.min.x + box.max.x) / 2,
@@ -81,7 +83,7 @@ function BufferGeometry:computeBoundingSphere()
         if d > r2 then r2 = d end
     end
 
-    self.boundingSphere = { center = center, radius = math.sqrt(r2) }
+    self.boundingSphere = Sphere:new(center, math.sqrt(r2))
     return self.boundingSphere
 end
 
