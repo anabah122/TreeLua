@@ -1,4 +1,4 @@
--- Entry point: delegates to game_test_shadows, the test scene built on top
+-- Entry point: delegates to demos/shadows, the test scene built on top
 -- of TreeEngine (used strictly as a library — engine files are not modified).
 
 for _, a in ipairs(arg or {}) do
@@ -8,7 +8,7 @@ for _, a in ipairs(arg or {}) do
     end
 end
 
-local game = require "game_test_shadows.init"
+local game = require "demos.shadows.init"
 
 function love.load()    game.init() end
 function love.update(dt) game.update(dt) end

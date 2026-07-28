@@ -1,24 +1,22 @@
 -- Тестовая игра на TreeEngine: минималистичный клон Айзека с 3D-визуализацией.
 -- Движок используется только как библиотека (require "init"), файлы движка не меняются.
 local TL = require "init"
-local Vector3 = require "math.vec3"
 
-local cfg      = require "game_test.config"
-local Room     = require "game_test.room"
-local Player   = require "game_test.player"
-local Tears    = require "game_test.tears"
-local Enemies  = require "game_test.enemies"
-local HpBar    = require "game_test.hpbar"
-local Aim      = require "game_test.aim"
-local Boss     = require "game_test.boss"
-local Decor    = require "game_test.decor"
+local cfg         = require "demos.isaac.config"
+local Room        = require "demos.isaac.room"
+local Player      = require "demos.isaac.player"
+local Tears       = require "demos.isaac.tears"
+local Enemies     = require "demos.isaac.enemies"
+local HpBar       = require "demos.isaac.hpbar"
+local Boss        = require "demos.isaac.boss"
+local Decor       = require "demos.isaac.decor"
+local Pickups     = require "demos.isaac.pickups"
+local FpsControls = require "demos.isaac.fpscontrols"
 
 local M = {}
 
 local scene, camera, renderer
-local room, player, tears, enemies, aim, boss
-local orbitControls
-local debugCamera = false
+local room, player, tears, enemies, boss, pickups, controls
 local keys = { up = false, down = false, left = false, right = false }
 local roomCleared = false
 local gameOver = false
@@ -31,16 +29,14 @@ local function spawnWave()
 end
 
 function M.init()
-    love.window.setTitle("TreeEngine test game — Isaac-like")
+    love.window.setTitle("TreeEngine test game — FPS maze")
 
     local w, h = love.graphics.getDimensions()
 
     scene = TL.Scene:new()
     scene:setBackground(0x0e1016)
 
-    camera = TL.PerspectiveCamera:new(50, w / h, 0.1, 100)
-    camera.position:set(0, cfg.camHeight, cfg.camBack)
-    camera:lookAt(0, 0, 0)
+    camera = TL.PerspectiveCamera:new(70, w / h, 0.1, 100)
 
     renderer = TL.WebGLRenderer:new()
 
@@ -49,16 +45,20 @@ function M.init()
     scene:add(sun)
     scene:add(TL.AmbientLight:new(0x4a4f5c, 1))
 
-    room    = Room:new(TL, scene)
+    room = Room:new(TL, scene)
+    local startX, startZ = room:buildMaze(TL, scene, 2)
+
     player  = Player:new(TL, scene)
+    player.x, player.z = startX, startZ
+
     tears   = Tears:new(TL, scene)
     enemies = Enemies:new(TL, scene)
-    aim     = Aim:new()
     boss    = Boss:new(TL, scene)
+    pickups = Pickups:new(TL, scene)
     Decor:spawn(TL, scene)
 
-    orbitControls = TL.OrbitControls:new(camera, { target = Vector3:new(0, 0, 0) })
-    debugCamera = false
+    controls = FpsControls:new(camera)
+    controls.camera.position:set(player.x, cfg.eyeHeight, player.z)
 
     spawnWave()
 end
@@ -71,27 +71,22 @@ local function restart()
 end
 
 function M.update(dt)
-    if debugCamera then
-        orbitControls:update(dt)
-        boss.lod:update(camera) -- LOD still needs an up-to-date camera distance
-        return
-    end
-
     if gameOver then return end
 
-    player:update(dt, room, keys)
+    player:update(dt)
     if not player.alive then
         gameOver = true
         return
     end
 
-    local mx, mz = aim:groundPointUnderCursor(camera)
-    if mx then player:aimAt(mx, mz) end
+    controls:update(dt, room, player, keys)
 
     enemies:update(dt, room, player)
     boss:update(dt, room, player, camera)
+    pickups:update(dt, player)
     tears:update(dt, room, function(x, z, r)
-        return enemies:damageAt(x, z, r) or boss:damageAt(x, z, r)
+        local dropPickup = function(dx, dz) pickups:spawn(dx, dz) end
+        return enemies:damageAt(x, z, r, dropPickup) or boss:damageAt(x, z, r, dropPickup)
     end)
 
     if enemies:count() == 0 and not boss.alive then
@@ -110,16 +105,9 @@ function M.keypressed(k)
     if k == "a" or k == "left"  then keys.left  = true end
     if k == "d" or k == "right" then keys.right = true end
     if k == "r" and (gameOver or roomCleared) then restart() end
-    if k == "space" and player:canFire() and not gameOver and not debugCamera then
+    if k == "space" and player:canFire() and not gameOver then
         local x, z, dx, dz = player:fire()
         tears:spawn(x, z, dx, dz)
-    end
-    if k == "tab" then
-        debugCamera = not debugCamera
-        if not debugCamera then
-            camera.position:set(0, cfg.camHeight, cfg.camBack)
-            camera:lookAt(0, 0, 0)
-        end
     end
 end
 
@@ -131,22 +119,17 @@ function M.keyreleased(k)
 end
 
 function M.mousemoved(x, y, dx, dy)
-    if debugCamera then orbitControls:mousemoved(x, y, dx, dy) end
+    controls:mousemoved(dx, dy)
 end
 
-function M.wheelmoved(dx, dy)
-    if debugCamera then orbitControls:wheelmoved(dy) end
+function M.mousepressed(button)
+    if button == 1 and player:canFire() and not gameOver then
+        local x, z, dx, dz = player:fire()
+        tears:spawn(x, z, dx, dz)
+    end
 end
 
 local function drawHpBars()
-    if player.alive then
-        local sx, sy, visible = HpBar.worldToScreen(
-            player.x, player.mesh.position.y + 0.7, player.z, camera)
-        if visible then
-            HpBar.draw(sx, sy, player.hp / cfg.playerHp, 60)
-        end
-    end
-
     for _, e in ipairs(enemies.list) do
         local sx, sy, visible = HpBar.worldToScreen(e.x, 1.2, e.z, camera)
         if visible then
@@ -167,7 +150,7 @@ local function drawHud()
     love.graphics.rectangle("fill", 0, 0, 420, 60)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.print(
-        ("WASD move   mouse aim   SPACE shoot   TAB debug camera   R restart   ESC quit\nHP %d/%d   enemies left: %d"):format(
+        ("WASD move   mouse look   SPACE/click shoot   R restart   ESC quit\nHP %d/%d   enemies left: %d"):format(
             player.hp, cfg.playerHp, enemies:count()),
         10, 10)
 

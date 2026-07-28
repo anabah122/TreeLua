@@ -1,6 +1,6 @@
 -- Босс: анимированная glTF-модель (LOD "high") + примитивный заменитель
 -- ("low"), переключаемые вручную через LOD:update(camera), как требует README.
-local cfg = require "game_test.config"
+local cfg = require "demos.isaac.config"
 local Vector3 = require "math.vec3"
 local Quaternion = require "math.quat"
 
@@ -26,8 +26,9 @@ function Boss:new(TL, scene)
     self.TL = TL
     self.scene = scene
 
-    local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
-    self.highDetail = gltf.scene
+    local model = TL.Model:fromLoaderResult(TL.GLTFLoader:new():load("assets/model/model3dtest.glb"))
+    local instance = model:createInstance()
+    self.highDetail = instance.scene
     self.highDetail.scale:set(bossCfg.scale, bossCfg.scale, bossCfg.scale)
 
     local lowMat = TL.MeshStandardMaterial:new{ color = 0x8a2a6b, metalness = 0, roughness = 0.9 }
@@ -39,9 +40,9 @@ function Boss:new(TL, scene)
     self.lod:addLevel(self.lowDetail, bossCfg.lowDistance)
     scene:add(self.lod)
 
-    self.mixer = TL.AnimationMixer:new(self.highDetail)
-    if gltf.animations[1] then
-        self.mixer:clipAction(gltf.animations[1]):play()
+    self.mixer = instance.mixer
+    if instance.animations[1] then
+        self.mixer:clipAction(instance.animations[1]):play()
     end
 
     self.x, self.z = 0, -4.5
@@ -90,7 +91,7 @@ function Boss:update(dt, room, player, camera)
     end
 end
 
-function Boss:damageAt(x, z, radius)
+function Boss:damageAt(x, z, radius, onDeath)
     if not self.alive then return false end
     local dx, dz = x - self.x, z - self.z
     local rr = radius + bossCfg.radius
@@ -100,6 +101,7 @@ function Boss:damageAt(x, z, radius)
             self.hp = 0
             self.alive = false
             self.scene:remove(self.lod)
+            if onDeath then onDeath(self.x, self.z) end
         end
         return true
     end

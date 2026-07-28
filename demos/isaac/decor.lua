@@ -1,5 +1,5 @@
 -- Декоративные камни по периметру комнаты, отрисованные одним InstancedMesh.
-local cfg     = require "game_test.config"
+local cfg     = require "demos.isaac.config"
 local Matrix4 = require "math.mat4"
 local Quaternion = require "math.quat"
 local Vector3 = require "math.vec3"

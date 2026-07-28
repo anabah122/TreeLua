@@ -22,4 +22,6 @@ return {
 
     camHeight      = 9,
     camBack        = 6,
+
+    eyeHeight      = 1.6, -- высота камеры от пола в FPS-режиме
 }

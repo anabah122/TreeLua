@@ -1,5 +1,5 @@
 -- Пул снарядов игрока ("слёзы").
-local cfg = require "game_test.config"
+local cfg = require "demos.isaac.config"
 
 local Tears = {}
 Tears.__index = Tears

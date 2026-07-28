@@ -5,7 +5,7 @@
 -- AnimationMixer. Скелет/скиннинг у инстансов независимы, поэтому миксеры не
 -- конкурируют за одни и те же кости, а сама модель при этом не парсится
 -- заново на каждого врага.
-local cfg = require "game_test.config"
+local cfg = require "demos.isaac.config"
 local Vector3 = require "math.vec3"
 local Quaternion = require "math.quat"
 
@@ -79,7 +79,8 @@ function Enemies:update(dt, room, player)
 end
 
 -- Наносит урон первому врагу, чей круг пересекает (x,z,radius); возвращает true при попадании.
-function Enemies:damageAt(x, z, radius)
+-- onDeath(x, z), если задан, вызывается с координатами врага в момент смерти.
+function Enemies:damageAt(x, z, radius, onDeath)
     for i = #self.list, 1, -1 do
         local e = self.list[i]
         local dx, dz = x - e.x, z - e.z
@@ -89,6 +90,7 @@ function Enemies:damageAt(x, z, radius)
             if e.hp <= 0 then
                 self.scene:remove(e.model)
                 table.remove(self.list, i)
+                if onDeath then onDeath(e.x, e.z) end
             end
             return true
         end
