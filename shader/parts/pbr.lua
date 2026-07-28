@@ -146,7 +146,7 @@ return {
                       +  _envLight * _f0 * mix(1.0, 0.5, _roughness))
                       * ambientOcclusion;
 
-        vec3 _emissive = u_emissive;
+        _emissive = u_emissive;
         if (u_hasEmissiveMap) {
             _emissive *= Texel(u_emissiveMap, uv).rgb;
         }

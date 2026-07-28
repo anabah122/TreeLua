@@ -763,7 +763,14 @@ function WebGLRenderer:clear(scene)
     return self
 end
 
-function WebGLRenderer:render(scene, camera)
+-- `renderTarget`, if given, is whatever love.graphics.setCanvas accepts: a
+-- single canvas, or a MRT table like { sceneCanvas, brightCanvas, depth =
+-- true }. Every part/particle shader writes love_Canvases[0] (lit colour) and
+-- love_Canvases[1] (bloom's bright-pass source) unconditionally -- LÖVE simply
+-- drops the second write when only one canvas is bound, so this needs no
+-- separate code path for "no post-processing". Omit it to draw straight to
+-- the screen, same as before EffectComposer existed.
+function WebGLRenderer:render(scene, camera, renderTarget)
     local info = self.info.render
     info.calls, info.triangles, info.meshes = 0, 0, 0
     info.shaderSwaps = 0
@@ -798,6 +805,7 @@ function WebGLRenderer:render(scene, camera)
         self:_renderShadowMap(scene, caster, self.shadowTarget)
     end
 
+    love.graphics.setCanvas(renderTarget)
     if self.autoClear then self:clear(scene) end
 
     love.graphics.setDepthMode("lequal", true)
@@ -849,6 +857,8 @@ function WebGLRenderer:render(scene, camera)
     -- overlays are meant to read on top of the scene, as in three.js's
     -- typical usage (helpers added with no depth write).
     self:_drawLines(lineDraws, camera)
+
+    love.graphics.setCanvas()
 
     return self
 end

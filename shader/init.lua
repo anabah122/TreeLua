@@ -106,15 +106,29 @@ local function assemble(parts)
         "#endif",
         "",
         "#ifdef PIXEL",
+        -- Naming this uniform MainTex is a LÖVE convention: declaring it under
+        -- that exact name makes the engine auto-bind whatever texture the
+        -- current draw call is using, the same texture the old effect(color,
+        -- Image tex, ...) signature received as its `tex` parameter.
+        "uniform Image MainTex;",
         slot(parts, "fragmentUniforms"),
         slot(parts, "fragmentFunctions"),
         "",
-        "vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)",
+        -- MRT: love_Canvases[0] is the lit scene, [1] is bloom's bright-pass
+        -- source. LÖVE only reads the extra target when setCanvas was actually
+        -- given more than one canvas (WebGLRenderer:_renderMain sets up the
+        -- pair only when bloom is on) -- with a single canvas bound it simply
+        -- ignores the second write, so this shader needs no separate variant
+        -- for the non-bloom path.
+        "void effect()",
         "{",
-        -- `uv` and `tex` come from love: mesh:setTexture() binds the image and
-        -- the interpolated VertexTexCoord arrives here, so no varying of ours
+        "    vec4 color = VaryingColor;",
+        "    vec2 uv = VaryingTexCoord.xy;",
+        "",
+        -- `uv` comes from love: mesh:setTexture() binds the image and the
+        -- interpolated VertexTexCoord arrives here, so no varying of ours
         "    vec4 baseColor = u_baseColor;",
-        "    if (u_hasTexture) { baseColor *= Texel(tex, uv); }",
+        "    if (u_hasTexture) { baseColor *= Texel(MainTex, uv); }",
         "    vec4 outColor = baseColor;",
         "",
         -- The normal lighting is evaluated against. Starts as the interpolated
@@ -126,10 +140,16 @@ local function assemble(parts)
         -- Scalar multiplier on the ambient term, for parts that occlude it.
         "    float ambientOcclusion = 1.0;",
         "",
+        -- filled by pbr's fragmentCalc slot; bloom reads only this, not the
+        -- lit result, so a bright diffuse/specular highlight does not bloom --
+        -- only material-authored emissive does (see pbr.lua)
+        "    vec3 _emissive = vec3(0.0);",
+        "",
         slot(parts, "fragmentCalc"),
         slot(parts, "fragmentMix"),
         "",
-        "    return outColor * color;",
+        "    love_Canvases[0] = outColor * color;",
+        "    love_Canvases[1] = vec4(_emissive, 1.0);",
         "}",
         "#endif",
     }, "\n")

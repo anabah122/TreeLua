@@ -212,11 +212,18 @@ local function source()
         "uniform Image u_map;",
         "uniform bool  u_hasMap;",
         "",
-        "vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen)",
+        -- MRT, matching shader/init.lua's main shader: [0] is the lit scene,
+        -- [1] feeds bloom's bright-pass. Particles are unlit and always meant
+        -- to read as glowing, so the whole particle colour blooms, not just an
+        -- emissive sub-term the way a PBR material's lit surface does.
+        "void effect()",
         "{",
+        "    vec2 uv = VaryingTexCoord.xy;",
         "    vec4 base = v_color;",
         "    if (u_hasMap) { base *= Texel(u_map, uv); }",
-        "    return base * color;",
+        "    vec4 result = base * VaryingColor;",
+        "    love_Canvases[0] = result;",
+        "    love_Canvases[1] = vec4(result.rgb, 1.0);",
         "}",
         "#endif",
     }, "\n")

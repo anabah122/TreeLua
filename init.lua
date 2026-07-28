@@ -101,6 +101,11 @@ TL.SpotLight        = require "three.lights.SpotLight"
 -- ── renderers ────────────────────────────────────────────────────────────────
 TL.WebGLRenderer = require "three.renderers.WebGLRenderer"
 
+-- ── postprocessing ───────────────────────────────────────────────────────────
+TL.EffectComposer = require "three.postprocessing.EffectComposer"
+TL.RenderPass      = require "three.postprocessing.RenderPass"
+TL.BloomPass       = require "three.postprocessing.BloomPass"
+
 -- ── loaders ──────────────────────────────────────────────────────────────────
 TL.Loader        = require "three.loaders.Loader"
 TL.GLTFLoader    = require "three.loaders.GLTFLoader"
