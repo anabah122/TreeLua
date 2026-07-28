@@ -39,11 +39,11 @@ end
 
 function Ray:at(t, target)
     target = target or Vector3:new()
-    return target:copy(self.direction):multiplyScalar(t):addV(self.origin)
+    return target:copy(self.direction):multiplyScalar(t):addSelf(self.origin)
 end
 
 function Ray:lookAt(v)
-    self.direction:copy(v):subV(self.origin):normalizeSelf()
+    self.direction:copy(v):subSelf(self.origin):normalizeSelf()
     return self
 end
 
@@ -61,7 +61,7 @@ function Ray:closestPointToPoint(point, target)
     local t = target:dot(self.direction)
     if t < 0 then return target:copy(self.origin) end
 
-    return target:copy(self.direction):multiplyScalar(t):addV(self.origin)
+    return target:copy(self.direction):multiplyScalar(t):addSelf(self.origin)
 end
 
 function Ray:distanceToPoint(point)

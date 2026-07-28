@@ -126,7 +126,7 @@ function Sphere:applyMatrix4(m)
 end
 
 function Sphere:translate(offset)
-    self.center:addV(offset)
+    self.center:addSelf(offset)
     return self
 end
 

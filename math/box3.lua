@@ -75,8 +75,8 @@ function Box3:expandByScalar(scalar)
 end
 
 function Box3:expandByVector(v)
-    self.min:subV(v)
-    self.max:addV(v)
+    self.min:subSelf(v)
+    self.max:addSelf(v)
     return self
 end
 
@@ -111,7 +111,7 @@ end
 
 function Box3:distanceToPoint(point)
     local clamped = self:clampPoint(point, Vector3:new())
-    return clamped:subV(point):length()
+    return clamped:subSelf(point):length()
 end
 
 function Box3:setFromPoints(points)

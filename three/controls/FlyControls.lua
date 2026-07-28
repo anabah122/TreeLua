@@ -123,12 +123,12 @@ function FlyControls:update(dt)
     local k    = self.keys
     local move = Vector3:new(0, 0, 0)
 
-    if isDown(k.forward) then move:addV(self:forwardFlat()) end
-    if isDown(k.back)    then move:subV(self:forwardFlat()) end
-    if isDown(k.right)   then move:addV(self:right())       end
-    if isDown(k.left)    then move:subV(self:right())       end
-    if isDown(k.up)      then move:addV(UP)                 end
-    if isDown(k.down)    then move:subV(UP)                 end
+    if isDown(k.forward) then move:addSelf(self:forwardFlat()) end
+    if isDown(k.back)    then move:subSelf(self:forwardFlat()) end
+    if isDown(k.right)   then move:addSelf(self:right())       end
+    if isDown(k.left)    then move:subSelf(self:right())       end
+    if isDown(k.up)      then move:addSelf(UP)                 end
+    if isDown(k.down)    then move:subSelf(UP)                 end
 
     if move:lengthSq() > 0 then
         local speed = self.movementSpeed

@@ -88,7 +88,7 @@ function Plane:projectPoint(point, target)
     target = target or Vector3:new()
     return target:copy(self.normal)
                  :multiplyScalar(-self:distanceToPoint(point))
-                 :addV(point)
+                 :addSelf(point)
 end
 
 function Plane:coplanarPoint(target)

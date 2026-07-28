@@ -249,7 +249,7 @@ function Vector3:distanceToSquared(v)
     return dx * dx + dy * dy + dz * dz
 end
 
-function Vector3:addV(v)
+function Vector3:addSelf(v)
     self.x, self.y, self.z = self.x + v.x, self.y + v.y, self.z + v.z
     return self
 end
@@ -266,7 +266,7 @@ function Vector3:addVectors(a, b)
     return self:set(a.x + b.x, a.y + b.y, a.z + b.z)
 end
 
-function Vector3:subV(v)
+function Vector3:subSelf(v)
     return self:set(self.x - v.x, self.y - v.y, self.z - v.z)
 end
 

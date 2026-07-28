@@ -66,7 +66,7 @@
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
-<li>Vector3 exposes two parallel method families instead of three.js's single mutating API. The <strong>immutable</strong> group (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, and their scalar variants) always returns a <em>new</em> Vector3 and leaves self untouched. The <strong>mutating, three.js-compatible</strong> group — <code>addV</code>, <code>subV</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — mutates self in place and returns self, matching the behavior of three.js's <code>add</code>/<code>sub</code>/<code>normalize</code>/etc.</li>
+<li>Vector3 exposes two parallel method families instead of three.js's single mutating API. The <strong>immutable</strong> group (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, and their scalar variants) always returns a <em>new</em> Vector3 and leaves self untouched. The <strong>mutating, three.js-compatible</strong> group — <code>addSelf</code>, <code>subSelf</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — mutates self in place and returns self, matching the behavior of three.js's <code>add</code>/<code>sub</code>/<code>normalize</code>/etc.</li>
 <li>Both groups exist side by side so call sites can opt into whichever style fits: the immutable group avoids aliasing bugs common in hot loops, while the <code>*Self</code> group lets ported three.js code and performance-critical paths mutate without allocating.</li>
 </ul>
 </div>
@@ -125,10 +125,10 @@
 <h3 class="member">.cross( v )</h3>
 <p>Returns a new vector: the cross product of this and v.</p>
 
-<h3 class="member">.addV( v )</h3>
+<h3 class="member">.addSelf( v )</h3>
 <p>Adds v to this vector in place. Returns self.</p>
 
-<h3 class="member">.subV( v )</h3>
+<h3 class="member">.subSelf( v )</h3>
 <p>Subtracts v from this vector in place. Returns self.</p>
 
 <h3 class="member">.normalizeSelf()</h3>
@@ -216,7 +216,7 @@
 <div class="diff">
 <h4>Differences from three.js</h4>
 <ul>
-<li>Vector3 предоставляет два параллельных семейства методов вместо единого мутирующего API three.js. <strong>Иммутабельная</strong> группа (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code> и их скалярные варианты) всегда возвращает <em>новый</em> Vector3 и не трогает self. <strong>Мутирующая, совместимая с three.js</strong> группа — <code>addV</code>, <code>subV</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — изменяет self на месте и возвращает self, соответствуя поведению <code>add</code>/<code>sub</code>/<code>normalize</code>/и т.д. в three.js.</li>
+<li>Vector3 предоставляет два параллельных семейства методов вместо единого мутирующего API three.js. <strong>Иммутабельная</strong> группа (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code> и их скалярные варианты) всегда возвращает <em>новый</em> Vector3 и не трогает self. <strong>Мутирующая, совместимая с three.js</strong> группа — <code>addSelf</code>, <code>subSelf</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — изменяет self на месте и возвращает self, соответствуя поведению <code>add</code>/<code>sub</code>/<code>normalize</code>/и т.д. в three.js.</li>
 <li>Обе группы существуют параллельно, чтобы места вызова могли выбрать подходящий стиль: иммутабельная группа избегает багов алиасинга, частых в горячих циклах, а группа <code>*Self</code> позволяет портированному коду three.js и критичным к производительности участкам мутировать без аллокаций.</li>
 </ul>
 </div>
@@ -275,10 +275,10 @@
 <h3 class="member">.cross( v )</h3>
 <p>Возвращает новый вектор: векторное произведение this и v.</p>
 
-<h3 class="member">.addV( v )</h3>
+<h3 class="member">.addSelf( v )</h3>
 <p>Прибавляет v к этому вектору на месте. Возвращает self.</p>
 
-<h3 class="member">.subV( v )</h3>
+<h3 class="member">.subSelf( v )</h3>
 <p>Вычитает v из этого вектора на месте. Возвращает self.</p>
 
 <h3 class="member">.normalizeSelf()</h3>

@@ -21,7 +21,7 @@
 --   * Methods are called with ':' and take the object as the first argument.
 --     three.js statics (AnimationClip.findByName) are methods here.
 --   * Where a three.js name was already taken by an older immutable method,
---     the mutating version carries a suffix: addV, subV, normalizeSelf,
+--     the mutating version carries a suffix: addSelf, subSelf, normalizeSelf,
 --     lerpSelf, minSelf/maxSelf, clampSelf, floorSelf/ceilSelf/roundSelf,
 --     transposeSelf. Everything else keeps its three.js spelling.
 --

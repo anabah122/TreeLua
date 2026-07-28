@@ -26,7 +26,7 @@
       <code>AnimationClip.findByName</code>) are methods here too.</li>
     <li>Where a three.js name was already taken by an older immutable
       method on the engine, the mutating version carries a suffix:
-      <code>addV</code>, <code>subV</code>, <code>normalizeSelf</code>,
+      <code>addSelf</code>, <code>subSelf</code>, <code>normalizeSelf</code>,
       <code>lerpSelf</code>, <code>minSelf</code>/<code>maxSelf</code>,
       <code>clampSelf</code>,
       <code>floorSelf</code>/<code>ceilSelf</code>/<code>roundSelf</code>,
@@ -114,8 +114,8 @@ function love.draw()     renderer:render(scene, camera) end</code></pre>
       аргументом — статики three.js (например
       <code>AnimationClip.findByName</code>) здесь тоже методы.</li>
     <li>Там, где three.js-имя уже было занято старым immutable-методом
-      движка, мутирующая версия получает суффикс: <code>addV</code>,
-      <code>subV</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>,
+      движка, мутирующая версия получает суффикс: <code>addSelf</code>,
+      <code>subSelf</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>,
       <code>minSelf</code>/<code>maxSelf</code>, <code>clampSelf</code>,
       <code>floorSelf</code>/<code>ceilSelf</code>/<code>roundSelf</code>,
       <code>transposeSelf</code>. Остальное сохраняет написание three.js.</li>

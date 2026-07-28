@@ -199,7 +199,7 @@ mutates. Where both had to coexist the three.js one is suffixed:
 
 | three.js | here |
 |---|---|
-| `Vector3.add` / `.sub` | `addV` / `subV` |
+| `Vector3.add` / `.sub` | `addSelf` / `subSelf` |
 | `Vector3.normalize` | `normalizeSelf` |
 | `Vector3.lerp` | `lerpSelf` |
 | `Vector3.min` / `.max` | `minSelf` / `maxSelf` |

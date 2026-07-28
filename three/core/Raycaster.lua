@@ -57,7 +57,7 @@ function Raycaster:setFromCamera(coords, camera)
             :set(ndcX, ndcY, 0.5)
             :applyMatrix4(camera.projectionMatrixInverse)
             :applyMatrix4(camera.matrixWorld)
-            :subV(self.ray.origin)
+            :subSelf(self.ray.origin)
             :normalizeSelf()
     else
         -- orthographic: parallel rays, so the origin slides across the near
