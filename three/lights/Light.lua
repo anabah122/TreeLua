@@ -6,7 +6,8 @@
 --
 -- The bundled shader takes exactly one directional light plus one ambient
 -- term. The scene may hold more; the renderer picks (see WebGLRenderer) and
--- says so rather than silently dropping them.
+-- says so rather than silently dropping them. PointLight and SpotLight sit in
+-- the graph but are not sampled at all yet.
 
 local Object3D = require "three.core.Object3D"
 local Color    = require "math.color"

@@ -30,7 +30,7 @@ function love.load()
     scene:add(sun)
     scene:add(TL.AmbientLight:new(0x474d5c, 1))
 
-    local gltf = TL.GLTFLoader:new():load("assets/model/hero.glb")
+    local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
     scene:add(gltf.scene)
 
     mixer = TL.AnimationMixer:new(gltf.scene)
@@ -46,13 +46,27 @@ Requiring the library defines no globals and installs no hooks.
 ## API
 
 ### Math
-`Vector3` `Vector4` `Matrix4` `Quaternion` `Euler` `Color` `Box3` `MathUtils`
+`Vector3` `Vector4` `Matrix4` `Quaternion` `Euler` `Color` `Box3` `Sphere`
+`Plane` `Ray` `Frustum` `MathUtils`
 
 ### Core
-`Object3D` `Group` `BufferGeometry` `Scene`
+`Object3D` `Group` `BufferGeometry` `Scene` `Raycaster`
+
+Picking follows three.js, with one addition. `setFromCamera` takes normalised
+device coordinates as it does there; `setFromScreen` is the facade over it for
+the pixels `love.mousepressed` actually hands you:
+
+```lua
+function love.mousepressed(x, y)
+    local caster = TL.Raycaster:new():setFromScreen(x, y, camera)
+    local hit = caster:intersectObjects(scene.children, true)[1]
+    if hit then print(hit.object.name, hit.distance) end
+end
+```
 
 ### Geometries
 `BoxGeometry` `SphereGeometry` `PlaneGeometry` `CylinderGeometry` `ConeGeometry`
+`TorusGeometry`
 
 Generated primitives, so a scene can be built without loading a file:
 
@@ -66,19 +80,43 @@ local mesh = TL.Mesh:new(
 `mesh:rotateX(-math.pi / 2)`.
 
 ### Objects
-`Mesh` `SkinnedMesh` `Skeleton`
+`Mesh` `SkinnedMesh` `Skeleton` `InstancedMesh` `LOD`
+
+`LOD` needs no renderer support — it only toggles which child is visible, which
+the renderer's traversal already respects. Call `lod:update(camera)` yourself,
+next to `controls:update`, since this renderer does not walk the scene looking
+for them:
+
+```lua
+local lod = TL.LOD:new()
+lod:addLevel(highDetail, 0)
+lod:addLevel(lowDetail, 25)
+```
+
+`InstancedMesh` keeps the three.js surface but is **not** one draw call — see
+[Limitations](#limitations). Indices are 1-based, like everything else here.
 
 ### Materials
 `Material` `MeshStandardMaterial`
 
 Shading is metallic-roughness PBR — Cook-Torrance with a GGX distribution,
-Smith geometry and Schlick Fresnel — so `metalness`, `roughness`, `emissive`
-and glTF's packed metallic-roughness map all reach the shader:
+Smith geometry and Schlick Fresnel — so `metalness`, `roughness`, `emissive`,
+`normalMap`, `aoMap` and glTF's packed metallic-roughness map all reach the
+shader:
 
 ```lua
 local m = TL.MeshStandardMaterial:new{ color = 0xc84a3a, metalness = 0, roughness = 0.35 }
 m.emissive:set(0x220800)
 ```
+
+A model with no metallic-roughness map is a matte dielectric: `metalness` 0,
+`roughness` 1. Factors written alongside no map are ignored, because exporters
+write them whether or not anyone authored PBR — Mixamo puts 0.5/0.5 on every
+material it touches, which would otherwise make skin half metal. Both are
+ordinary fields, so a loaded material can still be adjusted by hand.
+
+Normal maps need no tangent attribute: the tangent basis is derived per
+fragment from screen-space derivatives, so the vertex format stays as it is.
 
 Two departures from strict PBR, both deliberate and both adjustable:
 
@@ -92,21 +130,63 @@ Two departures from strict PBR, both deliberate and both adjustable:
 `Camera` `PerspectiveCamera` `OrthographicCamera`
 
 ### Lights
-`Light` `AmbientLight` `DirectionalLight`
+`Light` `AmbientLight` `DirectionalLight` `PointLight` `SpotLight`
+
+`PointLight` and `SpotLight` sit in the graph and carry their three.js fields,
+but the bundled shader takes one directional light plus ambient, so they are
+not yet sampled — they are there so scene code written against three.js loads.
 
 ### Renderer
 `WebGLRenderer` — `render(scene, camera)`, `setClearColor`, `setSize`, `info.render`
 
+Drawing is batched into two buckets by shader variant, filled during the single
+scene traversal: static meshes first, then skinned, so each program binds once
+per frame. Within a bucket, draws are ordered by `renderOrder`, then opaque
+before transparent, then by distance — near-to-far for opaque, so the depth test
+rejects occluded fragments early, and far-to-near for transparent, where
+blending demands it.
+
+Frustum culling happens in that same traversal, against each geometry's bounding
+sphere. Skinned meshes are exempt: their bounds describe the bind pose, and an
+animation routinely swings limbs outside it. Turn it off with
+`renderer.frustumCulling = false`; `info.render.culled` reports what it dropped.
+
 ### Loaders
-`GLTFLoader` `ColladaLoader` — `load(url, onLoad, onProgress, onError)` returns
-`{ scene, animations }`. LÖVE reads from disk synchronously, so the callback
-fires immediately; the return value works just as well.
+`GLTFLoader` `ColladaLoader` `TextureLoader` — `load(url, onLoad, onProgress,
+onError)`. The model loaders return `{ scene, animations }`. LÖVE reads from
+disk synchronously, so the callback fires immediately; the return value works
+just as well.
 
 ### Animation
 `AnimationClip` `AnimationAction` `AnimationMixer`
 
+Every running action is blended by weight, so `crossFadeTo` is a real
+transition:
+
+```lua
+walk:play()
+run:play()
+walk:crossFadeTo(run, 0.4)
+```
+
+Set `mixer.blending = false` for the cheaper path, where the highest-weight
+action writes the pose outright.
+
 ### Controls
 `FlyControls` — WASD/QE movement, mouse look, wheel to change speed.
+
+`OrbitControls` — left drag orbits, right drag pans, wheel dollies. Unlike
+three.js there is no DOM element to attach to, so the application forwards
+LÖVE's callbacks:
+
+```lua
+function love.update(dt)             controls:update(dt) end
+function love.mousemoved(x,y,dx,dy)  controls:mousemoved(x, y, dx, dy) end
+function love.wheelmoved(x,y)        controls:wheelmoved(y) end
+```
+
+It owns the camera's position, deriving it from `target` plus a spherical
+offset every update — move `target`, not `camera.position`.
 
 ## Differences from three.js
 
@@ -133,25 +213,29 @@ its mutating three.js behaviour.
 
 ## Limitations
 
-- The bundled shader takes **one** directional light plus an ambient term.
-- `AnimationMixer` samples the highest-weight running action rather than
-  blending several. `crossFadeTo` ramps weights, so the switch lands at the
-  crossover point, but it is a cut and not a blend.
+- The bundled shader takes **one** directional light plus an ambient term. A
+  scene with more gets the brightest directional and the sum of the ambients,
+  and says so rather than silently dropping the rest. `PointLight` and
+  `SpotLight` are not sampled at all yet.
+- `InstancedMesh` is not one draw call. The shader takes a single `u_model`, so
+  the renderer walks the instances and issues one draw each — the saving is in
+  the shared geometry, material and bounds. The API is three.js's, so this
+  changes underneath without touching calling code.
 - No environment map or IBL probe, so reflections have nothing to reflect —
   see the ambient substitute described under Materials.
-- `normalMap` and the occlusion map are imported but not yet sampled; that
-  needs tangents, which the vertex format does not carry.
-- glTF defaults `metallicFactor` to 1. A file that leaves it at exactly 1 with
-  no metallic-roughness map is read as never having authored PBR and treated as
-  a dielectric — otherwise every such model turns to chrome. An explicit value,
-  or a 1 alongside a map, is taken at face value.
+- The derived tangent basis is exact wherever UVs are locally affine, which is
+  nearly everywhere that is not a deliberately warped unwrap.
+- `Raycaster` tests skinned meshes against their **bind pose**: the vertex data
+  it reads is what the GPU deforms, not the result. A moving character picks
+  roughly.
 - The primitive generators assume a shape convex about the origin: triangles
   are wound outward by comparing each one against its centroid, in one place,
-  rather than by hand per face. Partial sweeps (`thetaLength` short of a full
-  turn) fall outside that assumption and may come out inside-out; give them
-  `side = "double"` if it shows.
-- No `Raycaster`, `Frustum`, `TextureLoader`, `PointLight`/`SpotLight`,
-  `InstancedMesh`, `LOD`, `TorusGeometry` or `OrbitControls`.
+  rather than by hand per face. `TorusGeometry` opts out, being the one
+  primitive with a genuine inner wall. Partial sweeps (`thetaLength` short of a
+  full turn) fall outside that assumption and may come out inside-out; give
+  them `side = "double"` if it shows.
+- No `Texture` class — LÖVE's `Image` already carries the filter and wrap state
+  three.js keeps on one.
 - Skeletons are capped at 128 bones, matching `MAX_BONES` in the shader.
 
 ## Layout
@@ -160,18 +244,40 @@ its mutating three.js behaviour.
 |---|---|
 | `init.lua` | the public API; everything below is reached through it |
 | `three/` | the facade: core, objects, materials, cameras, lights, renderers, loaders, animation, controls |
-| `math/` | vec3, vec4, mat4, quat, euler, color |
+| `math/` | vec3, vec4, mat4, quat, euler, color, box3, sphere, plane, ray, frustum |
+| `shader/init.lua` | assembles shader variants from parts |
+| `shader/parts/` | one file per feature: skinning, normalmap, pbr |
 | `importer/gltf/` | glTF 2.0 / GLB: geometry, materials, skeleton, animation |
 | `importer/dae/` | Collada: same output shape, so both formats feed one path |
 | `importer/common.lua` | transforms, skinning palette, interpolation |
-| `assets/shader/skinned.glsl` | forward lighting with GPU skinning |
 | `class/` | legacy, superseded by the facade — see the note at the top of each |
 | `lib/util/` | demo scaffolding only; installs globals, not used by the library |
+
+## Shaders
+
+LÖVE builds a shader from a string, so a variant is a different concatenation.
+Each part in `shader/parts/` supplies GLSL grouped by the slot it fills, and
+`shader/init.lua` holds the only copy of the overall shape.
+
+Parts are split by **feature**, not by stage: skinning lives in exactly one
+file, covering both its vertex uniforms and its vertex maths. Cutting by stage
+instead would scatter every feature across several files and make each edit a
+hunt.
+
+There are two compiled variants, `static` and `skinned`. The split is not
+cosmetic — a 128-bone array is 2048 vertex uniform components, against a
+guaranteed floor of 1024, so a static mesh must not declare it.
+
+## Tests
+
+    lovec . --tests
+
+256 assertions covering the maths, the object graph, the generators, library
+hygiene, and the loaders/animation/renderer against a real graphics context.
 
 ## Running the demo
 
     love .
 
 WASD moves, QE goes up and down, the mouse looks around, the wheel changes
-speed, space pauses playback. The same character is loaded twice, through both
-importers, to show they produce the same result.
+speed, space pauses playback.

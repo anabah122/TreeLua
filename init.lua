@@ -6,7 +6,7 @@
 --   local camera   = TL.PerspectiveCamera:new(60, w / h, 0.1, 1000)
 --   local renderer = TL.WebGLRenderer:new()
 --
---   local gltf = TL.GLTFLoader:new():load("assets/model/hero.glb")
+--   local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
 --   scene:add(gltf.scene)
 --
 --   local mixer = TL.AnimationMixer:new(gltf.scene)

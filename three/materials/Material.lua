@@ -1,14 +1,13 @@
 -- three/materials/Material.lua — base material
 --
 -- three.js materials are a description of a shader program plus its uniforms;
--- this engine ships one forward-lit shader (shader/), so a
--- material here is purely the uniform side. The renderer reads these fields
--- and sends them; nothing swaps programs per material.
+-- this engine ships one forward-lit shader (shader/), so a material here is
+-- purely the uniform side. The renderer reads these fields and sends them; the
+-- variant is chosen by whether the mesh is skinned, never by the material.
 --
--- Fields that the shader has no equivalent for (metalness, roughness, the
--- emissive term) are still stored, because the importers extract them and
--- dropping them at the facade would lose data the shader may later grow to
--- use. They are inert until then.
+-- Every PBR field is declared here with its default rather than on
+-- MeshStandardMaterial, so the renderer can send them unconditionally: an
+-- absent map means a plain matte dielectric, not a nil check at the send site.
 
 local Color = require "math.color"
 

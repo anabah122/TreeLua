@@ -1,7 +1,7 @@
 -- three/loaders/GLTFLoader.lua — glTF 2.0 / GLB
 --
 --   local loader = GLTFLoader:new()
---   loader:load("assets/model/hero.glb", function(gltf)
+--   loader:load("assets/model/model3dtest.glb", function(gltf)
 --       scene:add(gltf.scene)
 --       mixer:clipAction(gltf.animations[1]):play()
 --   end)
