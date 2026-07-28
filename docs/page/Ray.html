@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ray — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Ray" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Ray</h1>
+<p class="lead">A ray defined by an origin and a direction. The direction is assumed to be normalized — the intersection methods return a distance measured along it, so a non-unit direction silently rescales every result.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Ray( origin, direction )</h3>
+<p>origin, direction — Vector3s, cloned in. Default to (0,0,0) and (0,0,-1).</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>origin</td><td>Vector3</td><td>(0,0,0)</td><td></td></tr>
+<tr><td>direction</td><td>Vector3</td><td>(0,0,-1)</td><td>Assumed unit length.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isRay()</h3>
+<p>Returns true. Type-check facade.</p>
+
+<h3 class="member">.set( origin, direction )</h3>
+<p>Sets origin and direction by copying. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Ray with the same origin and direction.</p>
+
+<h3 class="member">.copy( ray )</h3>
+<p>Copies ray's origin and direction into this ray. Returns self.</p>
+
+<h3 class="member">.at( t, target )</h3>
+<p>Writes the point at distance t along this ray into target and returns it.</p>
+
+<h3 class="member">.lookAt( v )</h3>
+<p>Points this ray's direction at v, normalized. Returns self.</p>
+
+<h3 class="member">.recast( t )</h3>
+<p>Moves the ray's origin to the point at distance t along it, keeping the same direction. Returns self.</p>
+
+<h3 class="member">.closestPointToPoint( point, target )</h3>
+<p>Writes the nearest point on this ray to point into target and returns it. Clamped at the origin — a point behind the ray is not on it.</p>
+
+<h3 class="member">.distanceToPoint( point )</h3>
+<p>Returns the distance from point to this ray.</p>
+
+<h3 class="member">.distanceSqToPoint( point )</h3>
+<p>Returns the squared distance from point to this ray.</p>
+
+<h3 class="member">.applyMatrix4( m )</h3>
+<p>Transforms this ray by matrix m, in place. Transforms the tip (origin + direction) as a point before moving the origin, then rebuilds and renormalizes the direction, so translation cancels out and any scale is normalized away. Returns self.</p>
+
+<h3 class="member">.intersectSphere( sphere, target )</h3>
+<p>Writes the nearest intersection point with sphere into target and returns it, or nil if there is none.</p>
+
+<h3 class="member">.intersectsSphere( sphere )</h3>
+<p>Returns true if this ray intersects sphere.</p>
+
+<h3 class="member">.distanceToPlane( plane )</h3>
+<p>Returns the distance along this ray to plane, or nil if parallel and not coincident, or if the intersection is behind the origin.</p>
+
+<h3 class="member">.intersectPlane( plane, target )</h3>
+<p>Writes the intersection point with plane into target and returns it, or nil if none.</p>
+
+<h3 class="member">.intersectsPlane( plane )</h3>
+<p>Returns true if this ray intersects plane.</p>
+
+<h3 class="member">.intersectBox( box, target )</h3>
+<p>Writes the nearest intersection point with box into target and returns it, or nil if none. Implemented as a slab test against each pair of parallel box faces.</p>
+
+<h3 class="member">.intersectsBox( box )</h3>
+<p>Returns true if this ray intersects box.</p>
+
+<h3 class="member">.intersectTriangle( a, b, c, backfaceCulling, target )</h3>
+<p>Writes the intersection point with triangle (a, b, c) into target and returns it, or nil if none. Uses the Moeller-Trumbore algorithm. When backfaceCulling is true, triangles whose winding faces away from the ray are skipped.</p>
+
+<h3 class="member">.equals( ray )</h3>
+<p>Returns true if this ray and ray have equal origin and direction.</p>
+
+<p class="source-link">Source: <code>math/ray.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Ray</h1>
+<p class="lead">Луч, заданный точкой начала и направлением. Направление считается нормализованным — методы пересечения возвращают расстояние, измеренное вдоль него, поэтому неединичное направление незаметно масштабирует все результаты.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Ray( origin, direction )</h3>
+<p>origin, direction — Vector3, клонируются при передаче. По умолчанию (0,0,0) и (0,0,-1).</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>origin</td><td>Vector3</td><td>(0,0,0)</td><td></td></tr>
+<tr><td>direction</td><td>Vector3</td><td>(0,0,-1)</td><td>Предполагается единичной длины.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isRay()</h3>
+<p>Возвращает true. Фасад проверки типа.</p>
+
+<h3 class="member">.set( origin, direction )</h3>
+<p>Устанавливает origin и direction копированием. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Ray с той же точкой начала и направлением.</p>
+
+<h3 class="member">.copy( ray )</h3>
+<p>Копирует origin и direction из ray в этот луч. Возвращает self.</p>
+
+<h3 class="member">.at( t, target )</h3>
+<p>Записывает точку на расстоянии t вдоль этого луча в target и возвращает его.</p>
+
+<h3 class="member">.lookAt( v )</h3>
+<p>Направляет направление этого луча на v, нормализуя. Возвращает self.</p>
+
+<h3 class="member">.recast( t )</h3>
+<p>Переносит начало луча в точку на расстоянии t вдоль него, сохраняя то же направление. Возвращает self.</p>
+
+<h3 class="member">.closestPointToPoint( point, target )</h3>
+<p>Записывает ближайшую к point точку на этом луче в target и возвращает его. Ограничена началом луча — точка позади луча ему не принадлежит.</p>
+
+<h3 class="member">.distanceToPoint( point )</h3>
+<p>Возвращает расстояние от point до этого луча.</p>
+
+<h3 class="member">.distanceSqToPoint( point )</h3>
+<p>Возвращает квадрат расстояния от point до этого луча.</p>
+
+<h3 class="member">.applyMatrix4( m )</h3>
+<p>Трансформирует этот луч матрицей m на месте. Трансформирует конец луча (origin + direction) как точку до переноса начала, затем пересчитывает и заново нормализует направление, так что перенос сокращается, а любой масштаб нормализуется. Возвращает self.</p>
+
+<h3 class="member">.intersectSphere( sphere, target )</h3>
+<p>Записывает ближайшую точку пересечения со sphere в target и возвращает его, либо nil, если пересечения нет.</p>
+
+<h3 class="member">.intersectsSphere( sphere )</h3>
+<p>Возвращает true, если этот луч пересекает sphere.</p>
+
+<h3 class="member">.distanceToPlane( plane )</h3>
+<p>Возвращает расстояние вдоль этого луча до plane, либо nil, если луч параллелен и не совпадает с плоскостью, либо если пересечение находится позади начала луча.</p>
+
+<h3 class="member">.intersectPlane( plane, target )</h3>
+<p>Записывает точку пересечения с plane в target и возвращает его, либо nil, если пересечения нет.</p>
+
+<h3 class="member">.intersectsPlane( plane )</h3>
+<p>Возвращает true, если этот луч пересекает plane.</p>
+
+<h3 class="member">.intersectBox( box, target )</h3>
+<p>Записывает ближайшую точку пересечения с box в target и возвращает его, либо nil, если пересечения нет. Реализовано как slab-тест по каждой паре параллельных граней параллелепипеда.</p>
+
+<h3 class="member">.intersectsBox( box )</h3>
+<p>Возвращает true, если этот луч пересекает box.</p>
+
+<h3 class="member">.intersectTriangle( a, b, c, backfaceCulling, target )</h3>
+<p>Записывает точку пересечения с треугольником (a, b, c) в target и возвращает его, либо nil, если пересечения нет. Использует алгоритм Мёллера-Трумбора. Если backfaceCulling равен true, треугольники, обход которых направлен от луча, пропускаются.</p>
+
+<h3 class="member">.equals( ray )</h3>
+<p>Возвращает true, если у этого луча и ray равны origin и direction.</p>
+
+<p class="source-link">Source: <code>math/ray.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>MeshStandardMaterial — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="MeshStandardMaterial" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Materials</div>
+  <h1 class="title">MeshStandardMaterial</h1>
+  <p class="lead">Extends <code>Material</code>, inherits its API. Named for
+    the three.js class the glTF importer's output maps onto: glTF materials
+    are metallic-roughness, and so is this field set. The bundled shader is
+    Cook-Torrance, so every field here reaches it. Adds the three texture
+    slots (<code>roughnessMap</code>, <code>metalnessMap</code>,
+    <code>emissiveMap</code>) that only make sense alongside PBR factors.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">MeshStandardMaterial</span>(params)</h3>
+  <p>Same <code>params</code> table as <code>Material</code>, plus
+    <code>roughnessMap</code>, <code>metalnessMap</code>, <code>emissiveMap</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>roughnessMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>metalnessMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>emissiveMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+  </table>
+  <p>Inherits <code>color</code>, <code>metalness</code>, <code>roughness</code>,
+    <code>emissive</code>, <code>normalMap</code>, <code>aoMap</code>, and the
+    rest of <code>Material</code>'s fields.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.copy(source)</h3>
+  <p>Calls <code>Material.copy</code>, then copies the three map fields.</p>
+
+  <h3 class="member">.fromImporter(mat)</h3>
+  <p>Builds a <code>MeshStandardMaterial</code> from an importer material
+    record (the shared shape both the engine's importers emit:
+    <code>{ name, baseColor, texture, metallic, roughness, emissive,
+    emissiveTexture, normalTexture, occlusionTexture, alphaMode, doubleSided,
+    ... }</code>). glTF packs metalness and roughness into one texture,
+    channels B and G, so <code>metalnessMap</code> and <code>roughnessMap</code>
+    both point at it. <code>alphaMode == "BLEND"</code> sets
+    <code>transparent = true</code>; <code>"MASK"</code> sets
+    <code>alphaTest</code> from <code>alphaCutoff</code> (default
+    <code>0.5</code>). <code>doubleSided</code> sets <code>side = "double"</code>.
+    Has no three.js equivalent — it is TreeLua's importer glue.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><code>.fromImporter(mat)</code> is a TreeLua-only factory with no
+        three.js counterpart.</li>
+      <li>In <code>.fromImporter</code>, the metallic/roughness factors from
+        the source material are only applied when a metallic-roughness map
+        is present (<code>metalness = mrMap and mat.metallic or 0</code>,
+        <code>roughness = mrMap and mat.roughness or 1</code>). Without a
+        map the surface is forced to a plain matte dielectric regardless of
+        what factor values the exporter left behind — a deliberate
+        workaround for exporters (Mixamo is called out in the source) that
+        write non-trivial metallic/roughness factors onto every material
+        even when no map backs them, which would otherwise render skin as
+        half metal.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/materials/MeshStandardMaterial.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Materials</div>
+  <h1 class="title">MeshStandardMaterial</h1>
+  <p class="lead">Наследует <code>Material</code>, наследует её API.
+    Названа в честь класса three.js, на который отображается вывод
+    glTF-импортёра: материалы glTF — metallic-roughness, и этот набор полей
+    тоже. Встроенный шейдер — Cook-Torrance, поэтому каждое поле здесь
+    доходит до него. Добавляет три текстурных слота
+    (<code>roughnessMap</code>, <code>metalnessMap</code>,
+    <code>emissiveMap</code>), которые имеют смысл только вместе с
+    PBR-факторами.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">MeshStandardMaterial</span>(params)</h3>
+  <p>Та же таблица <code>params</code>, что и у <code>Material</code>, плюс
+    <code>roughnessMap</code>, <code>metalnessMap</code>, <code>emissiveMap</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>roughnessMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>metalnessMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>emissiveMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+  </table>
+  <p>Наследует <code>color</code>, <code>metalness</code>, <code>roughness</code>,
+    <code>emissive</code>, <code>normalMap</code>, <code>aoMap</code> и
+    остальные поля <code>Material</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.copy(source)</h3>
+  <p>Вызывает <code>Material.copy</code>, затем копирует три поля карт.</p>
+
+  <h3 class="member">.fromImporter(mat)</h3>
+  <p>Строит <code>MeshStandardMaterial</code> из записи материала
+    импортёра (общая форма, которую выдают оба импортёра движка:
+    <code>{ name, baseColor, texture, metallic, roughness, emissive,
+    emissiveTexture, normalTexture, occlusionTexture, alphaMode, doubleSided,
+    ... }</code>). glTF упаковывает metalness и roughness в одну текстуру,
+    каналы B и G, поэтому <code>metalnessMap</code> и <code>roughnessMap</code>
+    обе указывают на неё. <code>alphaMode == "BLEND"</code> устанавливает
+    <code>transparent = true</code>; <code>"MASK"</code> устанавливает
+    <code>alphaTest</code> из <code>alphaCutoff</code> (по умолчанию
+    <code>0.5</code>). <code>doubleSided</code> устанавливает
+    <code>side = "double"</code>. Не имеет аналога в three.js — это связующий
+    код импортёра TreeLua.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><code>.fromImporter(mat)</code> — фабрика, существующая только в
+        TreeLua, без аналога в three.js.</li>
+      <li>В <code>.fromImporter</code> факторы metallic/roughness из
+        исходного материала применяются только при наличии карты
+        metallic-roughness (<code>metalness = mrMap and mat.metallic or 0</code>,
+        <code>roughness = mrMap and mat.roughness or 1</code>). Без карты
+        поверхность принудительно становится обычным матовым диэлектриком
+        независимо от того, какие значения факторов оставил экспортёр —
+        намеренный обход для экспортёров (в исходнике упомянут Mixamo),
+        которые записывают нетривиальные факторы metallic/roughness в
+        каждый материал даже без карты за ними, что иначе рендерило бы кожу
+        наполовину металлической.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/materials/MeshStandardMaterial.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

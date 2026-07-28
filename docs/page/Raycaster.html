@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Raycaster — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Raycaster" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">Raycaster</h1>
+  <p class="lead">Picking against scene geometry.</p>
+  <pre><code>local caster = Raycaster:new()
+caster:setFromCamera({ x = ndcX, y = ndcY }, camera)
+local hits = caster:intersectObjects(scene.children, true)
+if hits[1] then print(hits[1].object.name, hits[1].distance) end</code></pre>
+  <p>Each hit is <code>{ distance, point, object, face, faceIndex, uv }</code>,
+    ordered nearest first, as in three.js.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Raycaster</span>(origin, direction, near, far)</h3>
+  <p>All arguments optional. Builds a <code>Ray</code> from
+    <code>origin</code>/<code>direction</code>; <code>near</code> defaults
+    to <code>0</code>, <code>far</code> to <code>math.huge</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Raycaster"</code></td><td></td></tr>
+    <tr><td><code>ray</code></td><td>Ray</td><td>—</td><td></td></tr>
+    <tr><td><code>near</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>far</code></td><td>number</td><td><code>math.huge</code></td><td></td></tr>
+    <tr><td><code>params</code></td><td>table</td><td><code>{ Mesh = {} }</code></td><td>three.js keeps per-object-type settings here; only the mesh entry is meaningful.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isRaycaster()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.set(origin, direction)</h3>
+
+  <h3 class="member">.setFromCamera(coords, camera)</h3>
+  <p><code>coords</code> carries normalised device coordinates, both
+    components in <code>[-1, 1]</code> with +Y up, matching three.js. Handles
+    both perspective (origin at the eye) and orthographic (parallel rays,
+    origin slides across the near plane) cameras.</p>
+
+  <h3 class="member">.setFromScreen(x, y, camera, width, height)</h3>
+  <p>Facade over <code>setFromCamera</code> for the coordinates LÖVE actually
+    hands a <code>love.mousepressed</code> handler: pixels, Y growing
+    downward. <code>width</code>/<code>height</code> default to
+    <code>love.graphics.getWidth/Height()</code>.</p>
+
+  <h3 class="member">.intersectMesh(object, hits)</h3>
+  <p>Tests one mesh's triangles. The ray is pulled into the mesh's local
+    space rather than pushing every vertex into world space. Rejects early
+    against the geometry's bounding sphere. Respects
+    <code>material.visible</code> and <code>material.side</code> (backface
+    culling unless <code>side ~= "front"</code>). Appends hits to
+    <code>hits</code> and returns it.</p>
+
+  <h3 class="member">.intersectObject(object, recursive, hits)</h3>
+  <p>Tests one object (and, unless <code>recursive == false</code>, its
+    descendants), skipping invisible objects. Result is sorted nearest
+    first.</p>
+
+  <h3 class="member">.intersectObjects(objects, recursive, hits)</h3>
+  <p>Same as <code>intersectObject</code> over an array of objects.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Skinned meshes are tested against their bind pose.</strong>
+        The vertex tables held by <code>BufferGeometry</code> are the
+        pre-skinning data — deformation happens on the GPU — so a moving
+        character picks roughly, not exactly.</li>
+      <li><code>.setFromScreen(x, y, camera, width, height)</code> has no
+        three.js equivalent: <code>WebGLRenderer</code> knows its own canvas
+        size, so three.js examples normalise screen coordinates by hand. A
+        LÖVE mousepressed handler only has pixels, so that conversion lives
+        here instead.</li>
+      <li>Only <code>Mesh</code> objects are testable; there is no
+        <code>Points</code>/<code>Line</code>/<code>Sprite</code> intersection
+        support.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/core/Raycaster.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">Raycaster</h1>
+  <p class="lead">Выбор объектов по геометрии сцены (picking).</p>
+  <pre><code>local caster = Raycaster:new()
+caster:setFromCamera({ x = ndcX, y = ndcY }, camera)
+local hits = caster:intersectObjects(scene.children, true)
+if hits[1] then print(hits[1].object.name, hits[1].distance) end</code></pre>
+  <p>Каждое попадание — это <code>{ distance, point, object, face, faceIndex, uv }</code>,
+    отсортированные от ближайшего, как в three.js.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Raycaster</span>(origin, direction, near, far)</h3>
+  <p>Все аргументы необязательны. Строит <code>Ray</code> из
+    <code>origin</code>/<code>direction</code>; <code>near</code> по
+    умолчанию <code>0</code>, <code>far</code> — <code>math.huge</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Raycaster"</code></td><td></td></tr>
+    <tr><td><code>ray</code></td><td>Ray</td><td>—</td><td></td></tr>
+    <tr><td><code>near</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>far</code></td><td>number</td><td><code>math.huge</code></td><td></td></tr>
+    <tr><td><code>params</code></td><td>table</td><td><code>{ Mesh = {} }</code></td><td>three.js хранит здесь настройки по типу объекта; значима только запись mesh.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isRaycaster()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.set(origin, direction)</h3>
+
+  <h3 class="member">.setFromCamera(coords, camera)</h3>
+  <p><code>coords</code> несёт нормализованные координаты устройства, оба
+    компонента в <code>[-1, 1]</code> с +Y вверх, как в three.js.
+    Обрабатывает и перспективные (origin в глазе камеры), и ортографические
+    (параллельные лучи, origin скользит по ближней плоскости) камеры.</p>
+
+  <h3 class="member">.setFromScreen(x, y, camera, width, height)</h3>
+  <p>Фасад над <code>setFromCamera</code> для координат, которые LÖVE
+    реально передаёт обработчику <code>love.mousepressed</code>: пиксели,
+    Y растёт вниз. <code>width</code>/<code>height</code> по умолчанию —
+    <code>love.graphics.getWidth/Height()</code>.</p>
+
+  <h3 class="member">.intersectMesh(object, hits)</h3>
+  <p>Тестирует треугольники одного меша. Луч переводится в локальное
+    пространство меша, а не каждая вершина — в мировое. Ранний отсев по
+    ограничивающей сфере геометрии. Учитывает
+    <code>material.visible</code> и <code>material.side</code> (отсечение
+    задних граней, если <code>side ~= "front"</code>). Добавляет попадания
+    в <code>hits</code> и возвращает его.</p>
+
+  <h3 class="member">.intersectObject(object, recursive, hits)</h3>
+  <p>Тестирует один объект (и, если не <code>recursive == false</code>,
+    его потомков), пропуская невидимые объекты. Результат отсортирован от
+    ближайшего.</p>
+
+  <h3 class="member">.intersectObjects(objects, recursive, hits)</h3>
+  <p>То же, что <code>intersectObject</code>, но по массиву объектов.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Скиннированные меши тестируются в bind pose.</strong>
+        Таблицы вершин, хранимые <code>BufferGeometry</code>, — это данные
+        до скиннинга, деформация происходит на GPU — поэтому выбор
+        движущегося персонажа приблизительный, а не точный.</li>
+      <li>У <code>.setFromScreen(x, y, camera, width, height)</code> нет
+        аналога в three.js: <code>WebGLRenderer</code> знает размер
+        собственного canvas, поэтому примеры three.js нормализуют
+        экранные координаты вручную. У обработчика mousepressed в LÖVE
+        есть только пиксели, поэтому это преобразование живёт здесь.</li>
+      <li>Тестировать можно только объекты <code>Mesh</code>; нет
+        поддержки пересечения с <code>Points</code>/<code>Line</code>/<code>Sprite</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/core/Raycaster.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

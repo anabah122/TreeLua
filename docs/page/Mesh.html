@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mesh — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Mesh" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Mesh</h1>
+  <p class="lead">Drawable geometry plus a material. Extends
+    <code>Object3D</code> and inherits its full API. The importers already
+    produce a <code>love.Mesh</code> per primitive, so <code>.geometry</code>
+    here is a thin holder around that object rather than a vertex-buffer
+    abstraction: the engine's job is to hand it to <code>love.graphics.draw</code>
+    with the right uniforms set, which is what the renderer does by reading
+    the fields below.</p>
+  <pre><code>local mesh = Mesh:new(geometry, material)
+scene:add(mesh)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Mesh</span>(geometry, material)</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>geometry</code></td><td>BufferGeometry</td><td>—</td><td></td></tr>
+    <tr><td><code>material</code></td><td>Material</td><td>—</td><td></td></tr>
+    <tr><td><code>skin</code></td><td>table</td><td><code>nil</code></td><td>Set by the loaders for skinned primitives; see <code>SkinnedMesh</code>.</td></tr>
+    <tr><td><code>bindShapeMatrix</code></td><td>Matrix4</td><td><code>nil</code></td><td>Straight off the importer entry. A mesh carrying a skin is drawn with the bone palette; one without is drawn rigid.</td></tr>
+  </table>
+  <p>Otherwise inherits all of <code>Object3D</code>'s properties.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isMesh()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Extends <code>Object3D.copy</code>. <code>geometry</code> and
+    <code>material</code> are shared, as in three.js: cloning a mesh gives a
+    second transform over the same buffers, not a second copy of the data.</p>
+
+  <p>All other methods come from <code>Object3D</code>.</p>
+
+  <p class="source-link">Source: <code>three/objects/Mesh.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Mesh</h1>
+  <p class="lead">Отрисовываемая геометрия плюс материал. Наследует
+    <code>Object3D</code> и получает весь его API. Импортёры уже
+    производят <code>love.Mesh</code> для каждого примитива, поэтому
+    <code>.geometry</code> здесь — тонкий держатель вокруг этого объекта,
+    а не абстракция вершинного буфера: задача движка — передать его в
+    <code>love.graphics.draw</code> с правильно выставленными uniform'ами,
+    что и делает рендерер, читая поля ниже.</p>
+  <pre><code>local mesh = Mesh:new(geometry, material)
+scene:add(mesh)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Mesh</span>(geometry, material)</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>geometry</code></td><td>BufferGeometry</td><td>—</td><td></td></tr>
+    <tr><td><code>material</code></td><td>Material</td><td>—</td><td></td></tr>
+    <tr><td><code>skin</code></td><td>table</td><td><code>nil</code></td><td>Устанавливается загрузчиками для скиннированных примитивов; см. <code>SkinnedMesh</code>.</td></tr>
+    <tr><td><code>bindShapeMatrix</code></td><td>Matrix4</td><td><code>nil</code></td><td>Прямо из записи импортёра. Меш с скином рисуется с палитрой костей; без него — жёстко (rigid).</td></tr>
+  </table>
+  <p>В остальном наследует все свойства <code>Object3D</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isMesh()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Расширяет <code>Object3D.copy</code>. <code>geometry</code> и
+    <code>material</code> используются совместно (общие), как в three.js:
+    клонирование меша даёт второй трансформ поверх тех же буферов, а не
+    вторую копию данных.</p>
+
+  <p>Все остальные методы приходят из <code>Object3D</code>.</p>
+
+  <p class="source-link">Source: <code>three/objects/Mesh.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

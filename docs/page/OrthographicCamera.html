@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>OrthographicCamera — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="OrthographicCamera" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Cameras</div>
+  <h1 class="title">OrthographicCamera</h1>
+  <p class="lead">Extends Camera, inherits its API. A camera with
+    orthographic (parallel) projection — no perspective foreshortening.</p>
+  <pre><code>local d = 5
+local camera = OrthographicCamera:new(-d * aspect, d * aspect, d, -d, 1, 100)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">OrthographicCamera</span>(left, right, top, bottom, near, far)</h3>
+  <p>Argument order is three.js's: <code>left</code>, <code>right</code>,
+    <code>top</code>, <code>bottom</code>, <code>near</code>, <code>far</code>
+    — note <code>top</code> comes before <code>bottom</code> and is the
+    larger value. <code>left</code>/<code>bottom</code> default to
+    <code>-1</code>, <code>right</code>/<code>top</code> to <code>1</code>,
+    <code>near</code> to <code>0.1</code>, <code>far</code> to <code>2000</code>.
+    Builds the projection matrix immediately.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>left</code></td><td>number</td><td><code>-1</code></td><td></td></tr>
+    <tr><td><code>right</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>top</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>bottom</code></td><td>number</td><td><code>-1</code></td><td></td></tr>
+    <tr><td><code>near</code></td><td>number</td><td><code>0.1</code></td><td></td></tr>
+    <tr><td><code>far</code></td><td>number</td><td><code>2000</code></td><td></td></tr>
+    <tr><td><code>zoom</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isOrthographicCamera()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.updateProjectionMatrix()</h3>
+  <p>Recomputes <code>projectionMatrix</code> from <code>left</code>,
+    <code>right</code>, <code>top</code>, <code>bottom</code>,
+    <code>near</code>, <code>far</code>, and <code>zoom</code> (which scales
+    the view volume about its centre). Call after changing any of them.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <p class="source-link">Source: <code>three/cameras/OrthographicCamera.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Cameras</div>
+  <h1 class="title">OrthographicCamera</h1>
+  <p class="lead">Наследует Camera, наследует её API. Камера с
+    ортографической (параллельной) проекцией — без перспективного
+    сокращения.</p>
+  <pre><code>local d = 5
+local camera = OrthographicCamera:new(-d * aspect, d * aspect, d, -d, 1, 100)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">OrthographicCamera</span>(left, right, top, bottom, near, far)</h3>
+  <p>Порядок аргументов как в three.js: <code>left</code>, <code>right</code>,
+    <code>top</code>, <code>bottom</code>, <code>near</code>, <code>far</code>
+    — обратите внимание, <code>top</code> идёт перед <code>bottom</code> и
+    является бо́льшим значением. <code>left</code>/<code>bottom</code> по
+    умолчанию <code>-1</code>, <code>right</code>/<code>top</code> —
+    <code>1</code>, <code>near</code> — <code>0.1</code>, <code>far</code> —
+    <code>2000</code>. Строит матрицу проекции немедленно.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>left</code></td><td>number</td><td><code>-1</code></td><td></td></tr>
+    <tr><td><code>right</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>top</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>bottom</code></td><td>number</td><td><code>-1</code></td><td></td></tr>
+    <tr><td><code>near</code></td><td>number</td><td><code>0.1</code></td><td></td></tr>
+    <tr><td><code>far</code></td><td>number</td><td><code>2000</code></td><td></td></tr>
+    <tr><td><code>zoom</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isOrthographicCamera()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.updateProjectionMatrix()</h3>
+  <p>Пересчитывает <code>projectionMatrix</code> из <code>left</code>,
+    <code>right</code>, <code>top</code>, <code>bottom</code>,
+    <code>near</code>, <code>far</code> и <code>zoom</code> (масштабирующего
+    объём вида относительно его центра). Вызывайте после изменения любого
+    из них.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <p class="source-link">Source: <code>three/cameras/OrthographicCamera.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

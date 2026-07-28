@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>CylinderGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="CylinderGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">CylinderGeometry</h1>
+  <p class="lead">A cylinder (or, with a zero top radius, a cone) built from
+    a tapered side wall plus two optional caps. <code>ConeGeometry</code> is
+    this generator with <code>radiusTop</code> pinned to <code>0</code>.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">CylinderGeometry</span>(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength)</h3>
+  <p><code>radiusTop</code>/<code>radiusBottom</code>/<code>height</code>
+    default to <code>1</code>. <code>radialSegments</code> defaults to
+    <code>32</code> (minimum <code>3</code>), <code>heightSegments</code>
+    defaults to <code>1</code>. <code>openEnded</code> defaults to
+    <code>false</code> (caps included). <code>thetaStart</code> defaults to
+    <code>0</code>, <code>thetaLength</code> to <code>2π</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength }</code> as resolved by the constructor.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>No methods beyond the constructor and what <code>BufferGeometry</code>
+    provides.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Built through the shared <code>three/geometries/build.lua</code>
+        helper, which forces convex-about-origin outward winding. A closed
+        cylinder is convex, so this is transparent; the tip row of a
+        degenerate cone (<code>radiusTop</code> or <code>radiusBottom</code>
+        of <code>0</code>) is skipped by the generator, and the cap index
+        order is arbitrary since the helper reorients it regardless.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/CylinderGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">CylinderGeometry</h1>
+  <p class="lead">Цилиндр (или, при нулевом верхнем радиусе, конус),
+    построенный из сужающейся боковой стенки плюс двух опциональных
+    крышек. <code>ConeGeometry</code> — это тот же генератор с
+    <code>radiusTop</code>, зафиксированным на <code>0</code>.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">CylinderGeometry</span>(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength)</h3>
+  <p><code>radiusTop</code>/<code>radiusBottom</code>/<code>height</code>
+    по умолчанию <code>1</code>. <code>radialSegments</code> по умолчанию
+    <code>32</code> (минимум <code>3</code>), <code>heightSegments</code>
+    по умолчанию <code>1</code>. <code>openEnded</code> по умолчанию
+    <code>false</code> (крышки включены). <code>thetaStart</code> по
+    умолчанию <code>0</code>, <code>thetaLength</code> — <code>2π</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength }</code>, как разрешено конструктором.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>Нет методов, кроме конструктора и того, что предоставляет
+    <code>BufferGeometry</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Строится через общий хелпер <code>three/geometries/build.lua</code>,
+        который принудительно задаёт выпуклый внешний winding относительно
+        начала координат. Замкнутый цилиндр выпуклый, поэтому это не влияет
+        на результат; крайний ряд вырожденного конуса (<code>radiusTop</code>
+        или <code>radiusBottom</code> равный <code>0</code>) пропускается
+        генератором, а порядок индексов крышки произволен, поскольку хелпер
+        в любом случае переориентирует его.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/CylinderGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

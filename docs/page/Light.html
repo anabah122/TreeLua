@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Light — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Light" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">Light</h1>
+  <p class="lead">Extends Object3D, inherits its API. Lights sit in the
+    scene graph and inherit a transform, which matters for
+    <code>DirectionalLight</code> and <code>SpotLight</code>, whose
+    direction is derived from where they sit relative to a target rather
+    than stored as a vector.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Light</span>(color, intensity)</h3>
+  <p><code>color</code> defaults to <code>0xffffff</code>,
+    <code>intensity</code> to <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>color</code></td><td>Color</td><td><code>0xffffff</code></td><td></td></tr>
+    <tr><td><code>intensity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isLight()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.effectiveColor(target)</h3>
+  <p>Colour scaled by intensity — what a shader uniform wants. No direct
+    three.js equivalent (three.js's <code>WebGLLights</code> does the
+    equivalent scaling internally, not as a public method).</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <h3 class="member">.dispose()</h3>
+  <p>No-op, kept for API compatibility — there is nothing GPU-side to
+    release.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>The bundled shader samples exactly one <code>DirectionalLight</code>
+        plus one ambient term. A scene may hold more lights of any kind, but
+        only that pair reaches the shader — see <em>DirectionalLight</em>
+        and <em>PointLight</em> for the details.</li>
+      <li><code>.effectiveColor(target)</code> is a TreeLua-only facade with
+        no three.js equivalent.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/lights/Light.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">Light</h1>
+  <p class="lead">Наследует Object3D, наследует её API. Источники света
+    находятся в графе сцены и наследуют трансформ, что важно для
+    <code>DirectionalLight</code> и <code>SpotLight</code>, чьё направление
+    выводится из положения относительно цели, а не хранится как вектор.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Light</span>(color, intensity)</h3>
+  <p><code>color</code> по умолчанию <code>0xffffff</code>,
+    <code>intensity</code> — <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>color</code></td><td>Color</td><td><code>0xffffff</code></td><td></td></tr>
+    <tr><td><code>intensity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isLight()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.effectiveColor(target)</h3>
+  <p>Цвет, умноженный на интенсивность — то, что нужно uniform шейдера.
+    Нет прямого аналога в three.js (<code>WebGLLights</code> в three.js
+    делает эквивалентное масштабирование внутренне, а не как публичный
+    метод).</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Пустая операция, сохранена ради совместимости API — освобождать на
+    стороне GPU нечего.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Встроенный шейдер сэмплирует ровно один <code>DirectionalLight</code>
+        плюс один ambient-член. Сцена может содержать больше источников
+        света любого типа, но до шейдера доходит только эта пара —
+        подробности смотрите в <em>DirectionalLight</em> и
+        <em>PointLight</em>.</li>
+      <li><code>.effectiveColor(target)</code> — фасад, существующий только
+        в TreeLua, без аналога в three.js.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/lights/Light.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

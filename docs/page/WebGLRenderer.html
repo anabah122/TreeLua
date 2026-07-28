@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>WebGLRenderer — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="WebGLRenderer" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Renderers</div>
+  <h1 class="title">WebGLRenderer</h1>
+  <p class="lead">Draws a <code>Scene</code> from a <code>Camera</code> into the
+    LÖVE window. The name is kept from three.js so the docs read across, but
+    there is no WebGL here — <code>love.graphics</code> does the work, and this
+    class is the only one that touches it. Shaders come in two variants,
+    static and skinned, assembled by <code>shader/init.lua</code>; draws are
+    grouped so each variant is bound once per frame.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">WebGLRenderer</span>(params)</h3>
+  <p><code>params</code> is an optional table:</p>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>shader</code></td><td>love.Shader</td><td><code>nil</code></td><td>Forces one shader for every draw instead of picking the static/skinned variant per mesh.</td></tr>
+    <tr><td><code>autoClear</code></td><td>boolean</td><td><code>true</code></td><td>Whether <code>render()</code> clears the screen itself.</td></tr>
+    <tr><td><code>clearColor</code></td><td>number</td><td><code>0x171a21</code></td><td>Hex color passed to <code>Color:new()</code>.</td></tr>
+    <tr><td><code>clearAlpha</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>sortObjects</code></td><td>boolean</td><td><code>true</code></td><td>Sort each draw bucket by render order / transparency / depth.</td></tr>
+    <tr><td><code>autoUpdateScene</code></td><td>boolean</td><td><code>true</code></td><td>Whether <code>render()</code> calls <code>scene:updateMatrixWorld()</code> itself.</td></tr>
+    <tr><td><code>diffuseWrap</code></td><td>number</td><td><code>0.25</code></td><td>How far the diffuse term wraps past the terminator; 0 is physically strict, 1 is flat. Compensates for having only one light and no global illumination.</td></tr>
+    <tr><td><code>frustumCulling</code></td><td>boolean</td><td><code>true</code></td><td>three.js flag of the same name; off draws everything.</td></tr>
+  </table>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"WebGLRenderer"</code></td><td></td></tr>
+    <tr><td><code>info.render</code></td><td>table</td><td>—</td><td><code>calls</code>, <code>triangles</code>, <code>meshes</code>, <code>culled</code>, <code>shaderSwaps</code>; reset and refilled every <code>render()</code> call.</td></tr>
+  </table>
+  <p>Plus the constructor params above, all stored as same-named fields
+    (<code>shader</code>, <code>autoClear</code>, <code>clearColor</code>,
+    <code>clearAlpha</code>, <code>sortObjects</code>,
+    <code>autoUpdateScene</code>, <code>diffuseWrap</code>,
+    <code>frustumCulling</code>) and mutable after construction.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isWebGLRenderer()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.setClearColor(color, alpha)</h3>
+  <p><code>alpha</code> is optional; when omitted the current
+    <code>clearAlpha</code> is kept.</p>
+
+  <h3 class="member">.getSize()</h3>
+  <p>Returns <code>love.graphics.getWidth(), love.graphics.getHeight()</code>
+    — the renderer does not own a canvas size of its own.</p>
+
+  <h3 class="member">.setSize(width, height, camera)</h3>
+  <p>LÖVE owns the window, so this does not resize anything — it only keeps
+    a perspective camera's aspect honest. Call it from
+    <code>love.resize</code>. <code>camera</code> is optional; if given and
+    it has a <code>setAspect</code> method, <code>width / height</code> is
+    applied to it.</p>
+
+  <h3 class="member">.clear(scene)</h3>
+  <p>Clears the screen to <code>scene.background</code> if set, otherwise to
+    <code>clearColor</code>/<code>clearAlpha</code>. Called automatically by
+    <code>render()</code> when <code>autoClear</code> is true.</p>
+
+  <h3 class="member">.render(scene, camera)</h3>
+  <p>Updates world matrices (unless <code>autoUpdateScene</code> is false, or
+    for the camera when it has a parent), clears if <code>autoClear</code>,
+    then walks the scene once to collect drawable meshes and lights,
+    frustum-culls, sorts, and draws. Draw order is static meshes first, then
+    skinned, so each shader program is bound once. Restores default shader,
+    cull mode and depth mode before returning.</p>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Clears <code>shader</code> and the internal shader-variant table.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Lighting is one directional light plus one ambient
+        term.</strong> If the scene has several
+        <code>DirectionalLight</code>s, the brightest is used and the rest
+        are ignored (a warning is printed once). Multiple
+        <code>AmbientLight</code>s are summed rather than picking one.</li>
+      <li><strong>No shadow mapping.</strong> <code>castShadow</code> /
+        <code>receiveShadow</code> on objects and lights are not read.</li>
+      <li><strong>Skinned meshes are capped at
+        <code>WebGLRenderer.MAX_BONES</code> (128 bones)</strong>, matching
+        the shader's uniform array size. A longer skeleton is truncated and
+        reported once per mesh via <code>print</code>.</li>
+      <li><strong>Skinned meshes are exempt from frustum culling</strong>:
+        their bounding sphere describes the bind pose, which an animation
+        routinely leaves, so culling against it would pop a character out of
+        view mid-stride.</li>
+      <li>No WebGL/canvas — <code>setSize</code> does not resize anything;
+        LÖVE owns the window.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/renderers/WebGLRenderer.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Renderers</div>
+  <h1 class="title">WebGLRenderer</h1>
+  <p class="lead">Рисует <code>Scene</code> из <code>Camera</code> в окно
+    LÖVE. Имя сохранено от three.js, чтобы документация читалась
+    параллельно, но никакого WebGL здесь нет — всю работу делает
+    <code>love.graphics</code>, и этот класс — единственный, кто его
+    касается. Шейдеры бывают двух вариантов, статический и скиннинговый,
+    собираются <code>shader/init.lua</code>; отрисовки группируются так,
+    чтобы каждый вариант привязывался один раз за кадр.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">WebGLRenderer</span>(params)</h3>
+  <p><code>params</code> — необязательная таблица:</p>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>shader</code></td><td>love.Shader</td><td><code>nil</code></td><td>Принудительно использует один шейдер для каждой отрисовки вместо выбора статического/скиннингового варианта на каждый меш.</td></tr>
+    <tr><td><code>autoClear</code></td><td>boolean</td><td><code>true</code></td><td>Очищает ли <code>render()</code> экран самостоятельно.</td></tr>
+    <tr><td><code>clearColor</code></td><td>number</td><td><code>0x171a21</code></td><td>Hex-цвет, передаваемый в <code>Color:new()</code>.</td></tr>
+    <tr><td><code>clearAlpha</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>sortObjects</code></td><td>boolean</td><td><code>true</code></td><td>Сортировать ли каждую группу отрисовки по render order / прозрачности / глубине.</td></tr>
+    <tr><td><code>autoUpdateScene</code></td><td>boolean</td><td><code>true</code></td><td>Вызывает ли <code>render()</code> сам <code>scene:updateMatrixWorld()</code>.</td></tr>
+    <tr><td><code>diffuseWrap</code></td><td>number</td><td><code>0.25</code></td><td>Насколько диффузный член заходит за терминатор; 0 — физически строго, 1 — плоско. Компенсирует наличие только одного источника света и отсутствие глобального освещения.</td></tr>
+    <tr><td><code>frustumCulling</code></td><td>boolean</td><td><code>true</code></td><td>Флаг three.js с тем же именем; при отключении рисуется всё.</td></tr>
+  </table>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"WebGLRenderer"</code></td><td></td></tr>
+    <tr><td><code>info.render</code></td><td>table</td><td>—</td><td><code>calls</code>, <code>triangles</code>, <code>meshes</code>, <code>culled</code>, <code>shaderSwaps</code>; сбрасывается и заполняется заново при каждом вызове <code>render()</code>.</td></tr>
+  </table>
+  <p>Плюс параметры конструктора выше, все хранятся как поля с теми же
+    именами (<code>shader</code>, <code>autoClear</code>,
+    <code>clearColor</code>, <code>clearAlpha</code>,
+    <code>sortObjects</code>, <code>autoUpdateScene</code>,
+    <code>diffuseWrap</code>, <code>frustumCulling</code>) и изменяемы
+    после создания.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isWebGLRenderer()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.setClearColor(color, alpha)</h3>
+  <p><code>alpha</code> необязателен; если не указан, сохраняется текущий
+    <code>clearAlpha</code>.</p>
+
+  <h3 class="member">.getSize()</h3>
+  <p>Возвращает <code>love.graphics.getWidth(), love.graphics.getHeight()</code>
+    — рендерер не владеет собственным размером канваса.</p>
+
+  <h3 class="member">.setSize(width, height, camera)</h3>
+  <p>Окном владеет LÖVE, поэтому это ничего не меняет в размерах — метод
+    только поддерживает честный aspect у перспективной камеры. Вызывайте
+    его из <code>love.resize</code>. <code>camera</code> необязательна;
+    если передана и у неё есть метод <code>setAspect</code>, к ней
+    применяется <code>width / height</code>.</p>
+
+  <h3 class="member">.clear(scene)</h3>
+  <p>Очищает экран в <code>scene.background</code>, если он задан, иначе в
+    <code>clearColor</code>/<code>clearAlpha</code>. Вызывается
+    автоматически из <code>render()</code>, когда <code>autoClear</code>
+    истинен.</p>
+
+  <h3 class="member">.render(scene, camera)</h3>
+  <p>Обновляет мировые матрицы (если <code>autoUpdateScene</code> не
+    ложный, а также для камеры, если у неё есть родитель), очищает экран,
+    если <code>autoClear</code>, затем один раз обходит сцену, собирая
+    отрисовываемые меши и источники света, отсекает по frustum,
+    сортирует и рисует. Порядок отрисовки: сначала статические меши,
+    затем скиннинговые, чтобы каждая шейдерная программа привязывалась
+    один раз. Перед возвратом восстанавливает шейдер по умолчанию, режим
+    отсечения граней и режим глубины.</p>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Очищает <code>shader</code> и внутреннюю таблицу вариантов шейдеров.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Освещение — один направленный источник плюс один
+        ambient-член.</strong> Если в сцене несколько
+        <code>DirectionalLight</code>, используется самый яркий, остальные
+        игнорируются (предупреждение печатается один раз). Несколько
+        <code>AmbientLight</code> суммируются, а не выбирается один.</li>
+      <li><strong>Нет карт теней.</strong> <code>castShadow</code> /
+        <code>receiveShadow</code> у объектов и источников света не
+        читаются.</li>
+      <li><strong>Скиннинговые меши ограничены
+        <code>WebGLRenderer.MAX_BONES</code> (128 костей)</strong>, что
+        соответствует размеру uniform-массива шейдера. Более длинный
+        скелет обрезается, и это сообщается один раз на меш через
+        <code>print</code>.</li>
+      <li><strong>Скиннинговые меши не подвергаются frustum culling</strong>:
+        их ограничивающая сфера описывает bind pose, из которой анимация
+        обычно выходит, поэтому отсечение по ней могло бы выкидывать
+        персонажа из вида посреди движения.</li>
+      <li>Нет WebGL/canvas — <code>setSize</code> ничего не меняет в
+        размерах; окном владеет LÖVE.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/renderers/WebGLRenderer.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>
+</content>

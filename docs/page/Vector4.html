@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vector4 — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Vector4" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Vector4</h1>
+<p class="lead">A 4-component vector, used for homogeneous coordinates and other quadruples of numbers.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Vector4( x, y, z, w )</h3>
+<p>x, y, z, w — the component values. Default 0 for each.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td>The x component.</td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td>The y component.</td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td>The z component.</td></tr>
+<tr><td>w</td><td>number</td><td>0</td><td>The w component.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Vector4 with the same x, y, z, w values.</p>
+
+<h3 class="member">.equals( v )</h3>
+<p>Returns true if this vector and v have identical components.</p>
+
+<h3 class="member">.add( v )</h3>
+<p>Returns a new vector: this + v. Also accepts a scalar, added to every component. Does not modify self.</p>
+
+<h3 class="member">.sub( v )</h3>
+<p>Returns a new vector: this - v (or scalar). Does not modify self.</p>
+
+<h3 class="member">.mul( v )</h3>
+<p>Returns a new vector: component-wise this * v (or scalar). Does not modify self.</p>
+
+<h3 class="member">.div( v )</h3>
+<p>Returns a new vector: component-wise this / v (or scalar). Does not modify self.</p>
+
+<h3 class="member">.magnitude()</h3>
+<p>Returns the Euclidean length of this vector.</p>
+
+<h3 class="member">.distanceTo( v )</h3>
+<p>Returns the Euclidean distance between this vector and v.</p>
+
+<h3 class="member">.dot( v )</h3>
+<p>Returns the dot product of this vector and v.</p>
+
+<h3 class="member">.normalize()</h3>
+<p>Returns a new unit-length vector in the same direction. If length is zero, returns a zero vector.</p>
+
+<h3 class="member">.clamp( min, max )</h3>
+<p>Returns a new vector with each component clamped between min and max (both may be scalars or vectors).</p>
+
+<h3 class="member">.clampMagnitude( maxLength )</h3>
+<p>Returns a new vector scaled down to maxLength if its length exceeds it.</p>
+
+<h3 class="member">.abs()</h3>
+<p>Returns a new vector with each component's absolute value.</p>
+
+<h3 class="member">.frac()</h3>
+<p>Returns a new vector with the fractional part of each component.</p>
+
+<h3 class="member">.project( dir )</h3>
+<p>Returns a new vector: the projection of this vector onto dir.</p>
+
+<h3 class="member">.min( v )</h3>
+<p>Returns a new vector with the component-wise minimum of this and v (or scalar).</p>
+
+<h3 class="member">.max( v )</h3>
+<p>Returns a new vector with the component-wise maximum of this and v (or scalar).</p>
+
+<h3 class="member">.floor()</h3>
+<p>Returns a new vector with each component floored.</p>
+
+<h3 class="member">.ceil()</h3>
+<p>Returns a new vector with each component ceiled.</p>
+
+<h3 class="member">.round()</h3>
+<p>Returns a new vector with each component rounded to the nearest integer.</p>
+
+<h3 class="member">.lerp( target, t )</h3>
+<p>Returns a new vector linearly interpolated between this and target by t.</p>
+
+<h3 class="member">.angle( v )</h3>
+<p>Returns the angle in radians between this vector and v.</p>
+
+<h3 class="member">.approach( target, amount )</h3>
+<p>Returns a new vector moved from this toward target by up to amount; reaches target exactly if within amount.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>All arithmetic methods (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>clamp</code>, <code>min</code>, <code>max</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, <code>lerp</code>) are <strong>immutable</strong> here — they return a new Vector4 and leave self unchanged, unlike three.js where these mutate self and return it. Vector4 does not have the mutating <code>*Self</code>/<code>setX</code>-style three.js-compatible layer that Vector3 has; only the original immutable API is implemented.</li>
+<li>No <code>set</code>, <code>copy</code>, <code>setFromMatrixPosition</code>, or <code>applyMatrix4</code> — Vector4 is used purely as a value type, not wired into the matrix/quaternion transform pipeline the way Vector3 is.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/vec4.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Vector4</h1>
+<p class="lead">Четырёхкомпонентный вектор, используется для однородных координат и других четвёрок чисел.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Vector4( x, y, z, w )</h3>
+<p>x, y, z, w — значения компонентов. По умолчанию 0 для каждого.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td>Компонент x.</td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td>Компонент y.</td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td>Компонент z.</td></tr>
+<tr><td>w</td><td>number</td><td>0</td><td>Компонент w.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Vector4 с теми же значениями x, y, z, w.</p>
+
+<h3 class="member">.equals( v )</h3>
+<p>Возвращает true, если этот вектор и v имеют идентичные компоненты.</p>
+
+<h3 class="member">.add( v )</h3>
+<p>Возвращает новый вектор: this + v. Также принимает скаляр, который добавляется к каждому компоненту. Не изменяет self.</p>
+
+<h3 class="member">.sub( v )</h3>
+<p>Возвращает новый вектор: this - v (или скаляр). Не изменяет self.</p>
+
+<h3 class="member">.mul( v )</h3>
+<p>Возвращает новый вектор: покомпонентное this * v (или скаляр). Не изменяет self.</p>
+
+<h3 class="member">.div( v )</h3>
+<p>Возвращает новый вектор: покомпонентное this / v (или скаляр). Не изменяет self.</p>
+
+<h3 class="member">.magnitude()</h3>
+<p>Возвращает евклидову длину этого вектора.</p>
+
+<h3 class="member">.distanceTo( v )</h3>
+<p>Возвращает евклидово расстояние между этим вектором и v.</p>
+
+<h3 class="member">.dot( v )</h3>
+<p>Возвращает скалярное произведение этого вектора и v.</p>
+
+<h3 class="member">.normalize()</h3>
+<p>Возвращает новый вектор единичной длины в том же направлении. Если длина равна нулю, возвращает нулевой вектор.</p>
+
+<h3 class="member">.clamp( min, max )</h3>
+<p>Возвращает новый вектор с каждым компонентом, ограниченным между min и max (оба могут быть скалярами или векторами).</p>
+
+<h3 class="member">.clampMagnitude( maxLength )</h3>
+<p>Возвращает новый вектор, уменьшенный до maxLength, если его длина превышает это значение.</p>
+
+<h3 class="member">.abs()</h3>
+<p>Возвращает новый вектор с абсолютным значением каждого компонента.</p>
+
+<h3 class="member">.frac()</h3>
+<p>Возвращает новый вектор с дробной частью каждого компонента.</p>
+
+<h3 class="member">.project( dir )</h3>
+<p>Возвращает новый вектор: проекцию этого вектора на dir.</p>
+
+<h3 class="member">.min( v )</h3>
+<p>Возвращает новый вектор с покомпонентным минимумом this и v (или скаляра).</p>
+
+<h3 class="member">.max( v )</h3>
+<p>Возвращает новый вектор с покомпонентным максимумом this и v (или скаляра).</p>
+
+<h3 class="member">.floor()</h3>
+<p>Возвращает новый вектор с каждым компонентом, округлённым вниз.</p>
+
+<h3 class="member">.ceil()</h3>
+<p>Возвращает новый вектор с каждым компонентом, округлённым вверх.</p>
+
+<h3 class="member">.round()</h3>
+<p>Возвращает новый вектор с каждым компонентом, округлённым до ближайшего целого.</p>
+
+<h3 class="member">.lerp( target, t )</h3>
+<p>Возвращает новый вектор, линейно интерполированный между this и target по t.</p>
+
+<h3 class="member">.angle( v )</h3>
+<p>Возвращает угол в радианах между этим вектором и v.</p>
+
+<h3 class="member">.approach( target, amount )</h3>
+<p>Возвращает новый вектор, сдвинутый от this к target не более чем на amount; достигает target точно, если расстояние в пределах amount.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Все арифметические методы (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>clamp</code>, <code>min</code>, <code>max</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, <code>lerp</code>) здесь <strong>иммутабельны</strong> — они возвращают новый Vector4 и не изменяют self, в отличие от three.js, где эти методы мутируют self и возвращают его. У Vector4 нет мутирующего слоя <code>*Self</code>/<code>setX</code>-стиля, совместимого с three.js, который есть у Vector3 — реализован только исходный иммутабельный API.</li>
+<li>Нет <code>set</code>, <code>copy</code>, <code>setFromMatrixPosition</code> или <code>applyMatrix4</code> — Vector4 используется исключительно как тип значения, а не встроен в конвейер трансформации матриц/кватернионов, как Vector3.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/vec4.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

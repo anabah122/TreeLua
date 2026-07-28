@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Group — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Group" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">Group</h1>
+  <p class="lead">An <code>Object3D</code> that exists only to hold children.
+    Behaviourally identical to <code>Object3D</code> — the separate type is
+    what lets callers (and the renderer) tell "this is a container" apart
+    from "this is a thing that happens to have children".</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Group</span>()</h3>
+  <p>Creates a new Group. Extends <code>Object3D</code> and inherits its full
+    API (transform, hierarchy, traversal, matrix update, clone/copy).</p>
+
+  <h2>Properties</h2>
+  <p>No properties of its own — inherits all of <code>Object3D</code>'s
+    (position, quaternion, scale, children, visible, ...).</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isGroup()</h3>
+  <p>Returns <code>true</code>. Type-check facade over three.js's
+    <code>.isGroup</code> flag.</p>
+
+  <p>All other methods come from <code>Object3D</code> — see that page for
+    <code>.add</code>, <code>.remove</code>, <code>.traverse</code>,
+    <code>.updateMatrixWorld</code>, <code>.clone</code>, and the rest.</p>
+
+  <p class="source-link">Source: <code>three/core/Group.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">Group</h1>
+  <p class="lead">Это <code>Object3D</code>, существующий только для того,
+    чтобы содержать детей. По поведению идентичен <code>Object3D</code> —
+    отдельный тип нужен лишь для того, чтобы вызывающий код (и рендерер)
+    мог отличить "это контейнер" от "это объект, у которого просто есть
+    дети".</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Group</span>()</h3>
+  <p>Создаёт новый Group. Наследует <code>Object3D</code> и получает весь
+    его API (трансформ, иерархия, обход, обновление матрицы, clone/copy).</p>
+
+  <h2>Properties</h2>
+  <p>Собственных свойств нет — наследует все свойства <code>Object3D</code>
+    (position, quaternion, scale, children, visible, ...).</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isGroup()</h3>
+  <p>Возвращает <code>true</code>. Фасад проверки типа поверх флага
+    three.js <code>.isGroup</code>.</p>
+
+  <p>Все остальные методы приходят из <code>Object3D</code> — см. эту
+    страницу для <code>.add</code>, <code>.remove</code>, <code>.traverse</code>,
+    <code>.updateMatrixWorld</code>, <code>.clone</code> и остального.</p>
+
+  <p class="source-link">Source: <code>three/core/Group.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

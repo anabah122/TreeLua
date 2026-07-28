@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>PointLight — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="PointLight" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">PointLight</h1>
+  <p class="lead">Extends Light, inherits its API. Omnidirectional light
+    with distance-based falloff, radiating from its world position.</p>
+  <pre><code>local lamp = PointLight:new(0xffeecc, 2, 10)
+lamp.position:set(0, 3, 0)
+scene:add(lamp)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">PointLight</span>(color, intensity, distance, decay)</h3>
+  <p>Same <code>color</code>/<code>intensity</code> defaults as
+    <code>Light</code>. <code>distance</code> defaults to <code>0</code>
+    (never cuts off). <code>decay</code> defaults to <code>2</code>, the
+    physical inverse-square falloff and three.js's default.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>distance</code></td><td>number</td><td><code>0</code></td><td><code>0</code> means the light never cuts off.</td></tr>
+    <tr><td><code>decay</code></td><td>number</td><td><code>2</code></td><td>Physical inverse-square falloff.</td></tr>
+  </table>
+  <p>Inherits <code>color</code> and <code>intensity</code> from <code>Light</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isPointLight()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.getPower()</h3>
+  <h3 class="member">.setPower(power)</h3>
+  <p>three.js's luminous-power accessor pair: <code>intensity</code>
+    expressed in candela, converted via <code>power = intensity * 4π</code>.</p>
+
+  <h3 class="member">.worldPosition(target)</h3>
+  <p>Updates the world matrix and returns the light's world-space position.
+    No direct three.js equivalent — three.js's renderer reads
+    <code>matrixWorld</code> position internally rather than exposing this
+    as a public method.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Not sampled by the bundled shader.</strong> The shader
+        takes one directional light plus ambient only; a <code>PointLight</code>
+        sits in the scene graph, tracks its transform, and offers
+        <code>.worldPosition()</code>, but contributes no illumination yet.
+        It exists so scene code written against three.js loads instead of
+        erroring on a missing class.</li>
+      <li><code>.worldPosition(target)</code> is a TreeLua-only facade with
+        no three.js equivalent.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/lights/PointLight.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">PointLight</h1>
+  <p class="lead">Наследует Light, наследует её API. Всенаправленный
+    источник света с затуханием по расстоянию, излучающий из своей мировой
+    позиции.</p>
+  <pre><code>local lamp = PointLight:new(0xffeecc, 2, 10)
+lamp.position:set(0, 3, 0)
+scene:add(lamp)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">PointLight</span>(color, intensity, distance, decay)</h3>
+  <p>Те же значения по умолчанию для <code>color</code>/<code>intensity</code>,
+    что и у <code>Light</code>. <code>distance</code> по умолчанию
+    <code>0</code> (никогда не обрезается). <code>decay</code> по умолчанию
+    <code>2</code> — физическое затухание по обратному квадрату,
+    соответствует умолчанию three.js.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>distance</code></td><td>number</td><td><code>0</code></td><td><code>0</code> означает, что свет никогда не обрезается.</td></tr>
+    <tr><td><code>decay</code></td><td>number</td><td><code>2</code></td><td>Физическое затухание по обратному квадрату.</td></tr>
+  </table>
+  <p>Наследует <code>color</code> и <code>intensity</code> от <code>Light</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isPointLight()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.getPower()</h3>
+  <h3 class="member">.setPower(power)</h3>
+  <p>Пара акцессоров светового потока из three.js: <code>intensity</code>,
+    выраженная в канделах, конвертируется через
+    <code>power = intensity * 4π</code>.</p>
+
+  <h3 class="member">.worldPosition(target)</h3>
+  <p>Обновляет мировую матрицу и возвращает позицию источника света в
+    мировом пространстве. Нет прямого аналога в three.js — рендерер
+    three.js читает позицию из <code>matrixWorld</code> внутренне, а не
+    предоставляет это как публичный метод.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Не сэмплируется встроенным шейдером.</strong> Шейдер
+        принимает только один направленный источник плюс ambient;
+        <code>PointLight</code> находится в графе сцены, отслеживает свой
+        трансформ и предоставляет <code>.worldPosition()</code>, но пока не
+        вносит вклада в освещение. Он существует, чтобы код сцены,
+        написанный под three.js, загружался, а не падал с ошибкой из-за
+        отсутствующего класса.</li>
+      <li><code>.worldPosition(target)</code> — фасад, существующий только
+        в TreeLua, без аналога в three.js.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/lights/PointLight.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

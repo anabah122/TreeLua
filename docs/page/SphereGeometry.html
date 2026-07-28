@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>SphereGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="SphereGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">SphereGeometry</h1>
+  <p class="lead">A UV sphere: rings of latitude subdivided along longitude.
+    The <code>phi</code>/<code>theta</code> start/length arguments allow a
+    partial sphere — a dome or a wedge — from the same generator, matching
+    three.js.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">SphereGeometry</span>(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)</h3>
+  <p><code>radius</code> defaults to <code>1</code>. <code>widthSegments</code>
+    defaults to <code>32</code> (minimum <code>3</code>),
+    <code>heightSegments</code> defaults to <code>16</code> (minimum
+    <code>2</code>). <code>phiStart</code>/<code>thetaStart</code> default to
+    <code>0</code>; <code>phiLength</code> defaults to <code>2π</code>;
+    <code>thetaLength</code> defaults to <code>π</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength }</code> as resolved by the constructor.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>No methods beyond the constructor and what <code>BufferGeometry</code>
+    provides.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Built through the shared <code>three/geometries/build.lua</code>
+        helper, which forces convex-about-origin outward winding on every
+        triangle. A full sphere is convex, so this is transparent; degenerate
+        pole triangles are skipped by the generator itself rather than by
+        <code>build()</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/SphereGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">SphereGeometry</h1>
+  <p class="lead">UV-сфера: кольца широты, подразделённые по долготе.
+    Аргументы <code>phi</code>/<code>theta</code> start/length позволяют
+    получить частичную сферу — купол или клин — из того же генератора, как
+    в three.js.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">SphereGeometry</span>(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength)</h3>
+  <p><code>radius</code> по умолчанию <code>1</code>.
+    <code>widthSegments</code> по умолчанию <code>32</code> (минимум
+    <code>3</code>), <code>heightSegments</code> по умолчанию
+    <code>16</code> (минимум <code>2</code>). <code>phiStart</code>/<code>thetaStart</code>
+    по умолчанию <code>0</code>; <code>phiLength</code> по умолчанию
+    <code>2π</code>; <code>thetaLength</code> по умолчанию <code>π</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength }</code>, как разрешено конструктором.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>Нет методов, кроме конструктора и того, что предоставляет
+    <code>BufferGeometry</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Строится через общий хелпер <code>three/geometries/build.lua</code>,
+        который принудительно задаёт выпуклый (относительно начала
+        координат) внешний winding для каждого треугольника. Полная сфера
+        выпукла, поэтому это не влияет на результат; вырожденные
+        треугольники на полюсах пропускаются самим генератором, а не
+        <code>build()</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/SphereGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

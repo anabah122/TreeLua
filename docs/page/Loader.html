@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loader — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Loader" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Loaders</div>
+  <h1 class="title">Loader</h1>
+  <p class="lead">Base class for the format loaders (<code>GLTFLoader</code>,
+    <code>ColladaLoader</code>, <code>TextureLoader</code>). Holds the
+    <code>setPath</code>/<code>resolveURL</code> path-prefixing convention
+    shared with three.js, plus <code>_assemble</code>, the shared routine
+    that turns an importer's flat primitive list into a
+    <code>{ scene, animations }</code> facade. Not used directly.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Loader</span>()</h3>
+  <p>Sets <code>type = "Loader"</code> and <code>path = ""</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Loader"</code></td><td>Set by <code>extend()</code> for subclasses.</td></tr>
+    <tr><td><code>path</code></td><td>string</td><td><code>""</code></td><td>Prefix joined to every URL passed to <code>load()</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.setPath(path)</h3>
+  <p>Sets the prefix used by <code>resolveURL</code>.</p>
+
+  <h3 class="member">.resolveURL(url)</h3>
+  <p>Returns <code>self.path .. url</code>, or <code>url</code> unchanged if
+    no path is set.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>extend(typeName)</strong> is TreeLua's subclassing hook and
+        has no three.js equivalent.</li>
+      <li>Does not implement three.js's <code>LoadingManager</code>,
+        <code>crossOrigin</code>, <code>withCredentials</code>,
+        <code>requestHeader</code> or MIME-type options — there is no
+        network layer to configure.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/loaders/Loader.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Loaders</div>
+  <h1 class="title">Loader</h1>
+  <p class="lead">Базовый класс для загрузчиков форматов (<code>GLTFLoader</code>,
+    <code>ColladaLoader</code>, <code>TextureLoader</code>). Хранит
+    конвенцию <code>setPath</code>/<code>resolveURL</code> для
+    префиксов путей, общую с three.js, а также <code>_assemble</code> —
+    общую процедуру, которая превращает плоский список примитивов
+    импортёра в фасад <code>{ scene, animations }</code>. Напрямую не
+    используется.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Loader</span>()</h3>
+  <p>Устанавливает <code>type = "Loader"</code> и <code>path = ""</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Loader"</code></td><td>Устанавливается <code>extend()</code> для подклассов.</td></tr>
+    <tr><td><code>path</code></td><td>string</td><td><code>""</code></td><td>Префикс, присоединяемый к каждому URL, переданному в <code>load()</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.setPath(path)</h3>
+  <p>Устанавливает префикс, используемый в <code>resolveURL</code>.</p>
+
+  <h3 class="member">.resolveURL(url)</h3>
+  <p>Возвращает <code>self.path .. url</code>, либо <code>url</code> без
+    изменений, если путь не задан.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>extend(typeName)</strong> — хук наследования TreeLua и не
+        имеет аналога в three.js.</li>
+      <li>Не реализует <code>LoadingManager</code>,
+        <code>crossOrigin</code>, <code>withCredentials</code>,
+        <code>requestHeader</code> и опции MIME-типа из three.js — сетевого
+        слоя, который нужно было бы настраивать, здесь нет.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/loaders/Loader.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>FlyControls — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="FlyControls" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Controls</p>
+<h1 class="title">FlyControls</h1>
+<p class="lead">TreeLua-native free-flight camera controller: no three.js class shares this exact name and API, but the behavior mirrors three.js's addon <code>FlyControls</code>/<code>FirstPersonControls</code> — WASD-style translation plus mouse-look rotation, unconstrained by any up-vector or target orbit point.</p>
+
+<h2>Constructor</h2>
+<p><code>FlyControls.new(camera, params)</code></p>
+<p>Wraps a <code>PerspectiveCamera</code> with WASD + mouse-look input handling. The camera stays a normal Object3D — it can still be parented, animated or replaced — since FlyControls only drives its position/rotation each frame rather than owning a view matrix. <code>params</code> is an optional table overriding any of the properties below (e.g. <code>movementSpeed</code>, <code>lookSpeed</code>, <code>keys</code>, <code>lockMouse</code>). By default the constructor calls <code>love.mouse.setRelativeMode(true)</code> to lock the cursor.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>object</td><td>Camera</td><td>—</td><td>The camera being controlled.</td></tr>
+<tr><td>enabled</td><td>boolean</td><td>true</td><td>When false, input is ignored by <code>update</code>/<code>mousemoved</code>/<code>wheelmoved</code>.</td></tr>
+<tr><td>yaw</td><td>number</td><td>π</td><td>Horizontal look angle in radians, kept independently of the camera's quaternion to avoid drift.</td></tr>
+<tr><td>pitch</td><td>number</td><td>0</td><td>Vertical look angle in radians, clamped just short of ±π/2.</td></tr>
+<tr><td>movementSpeed</td><td>number</td><td>5</td><td>Units per second of translation while a movement key is held.</td></tr>
+<tr><td>speedMin / speedMax</td><td>number</td><td>0.1 / 500</td><td>Clamp range for <code>movementSpeed</code> as adjusted by the scroll wheel.</td></tr>
+<tr><td>lookSpeed</td><td>number</td><td>0.002</td><td>Radians per pixel of mouse movement applied to yaw/pitch.</td></tr>
+<tr><td>slowModifier</td><td>number</td><td>0.2</td><td>Multiplier applied to <code>movementSpeed</code> while a slow-move key is held.</td></tr>
+<tr><td>keys</td><td>table</td><td>WASD + Q/E + shift</td><td>Key bindings: <code>forward</code>, <code>back</code>, <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code>, <code>slow</code> (the last may be a single key or an array of keys).</td></tr>
+<tr><td>lockMouse</td><td>boolean</td><td>true</td><td>Whether the constructor/dispose toggle <code>love.mouse.setRelativeMode</code>.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:update(dt)</h3>
+<p>Reads held movement keys and translates the camera along its forward/right/up axes (forward is flattened so vertical look doesn't affect walking speed), scaled by <code>movementSpeed * dt</code> and <code>slowModifier</code> if the slow key is held.</p>
+
+<h3 class="member">:mousemoved(dx, dy)</h3>
+<p>Adjusts <code>yaw</code>/<code>pitch</code> by the mouse delta scaled by <code>lookSpeed</code>, clamps pitch away from the poles, and re-applies the resulting look direction to the camera via <code>lookAt</code>.</p>
+
+<h3 class="member">:wheelmoved(dy)</h3>
+<p>Multiplies <code>movementSpeed</code> by 1.2 or 1/1.2 depending on scroll direction, clamped to <code>[speedMin, speedMax]</code>.</p>
+
+<h3 class="member">:forward()</h3>
+<p>Returns the current forward direction as a Vector3, derived from <code>yaw</code>/<code>pitch</code>.</p>
+
+<h3 class="member">:right()</h3>
+<p>Returns the current right direction (forward crossed with world up).</p>
+
+<h3 class="member">:forwardFlat()</h3>
+<p>Returns the forward direction with pitch zeroed out, used for movement so looking up/down doesn't change walking speed.</p>
+
+<h3 class="member">:dispose()</h3>
+<p>Disables the controls and releases the mouse lock if <code>lockMouse</code> was set.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>No matching class in three.js core; closest analogues are the addon controls <code>FlyControls</code> and <code>FirstPersonControls</code>, neither of which TreeLua mirrors property-for-property — this is a from-scratch, LÖVE-native implementation.</li>
+<li>Reads <code>love.keyboard</code>/<code>love.mouse</code> directly and expects the host application to forward <code>love.update</code>, <code>love.mousemoved</code> and <code>love.wheelmoved</code> — there is no DOM element to attach listeners to.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/controls/FlyControls.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Controls</p>
+<h1 class="title">FlyControls</h1>
+<p class="lead">Собственный для TreeLua контроллер камеры свободного полёта: в three.js нет класса с точно таким же именем и API, но поведение повторяет аддон-контроллеры three.js <code>FlyControls</code>/<code>FirstPersonControls</code> — перемещение в стиле WASD плюс вращение мышью, без ограничений вектором up или точкой орбиты.</p>
+
+<h2>Constructor</h2>
+<p><code>FlyControls.new(camera, params)</code></p>
+<p>Оборачивает <code>PerspectiveCamera</code> обработкой ввода WASD + mouse-look. Камера остаётся обычным Object3D — её всё ещё можно перепривязать, анимировать или заменить — так как FlyControls лишь управляет её position/rotation каждый кадр, а не владеет собственной view-матрицей. <code>params</code> — необязательная таблица, переопределяющая любое из свойств ниже (например, <code>movementSpeed</code>, <code>lookSpeed</code>, <code>keys</code>, <code>lockMouse</code>). По умолчанию конструктор вызывает <code>love.mouse.setRelativeMode(true)</code>, чтобы заблокировать курсор.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>object</td><td>Camera</td><td>—</td><td>Управляемая камера.</td></tr>
+<tr><td>enabled</td><td>boolean</td><td>true</td><td>Если false, ввод игнорируется в <code>update</code>/<code>mousemoved</code>/<code>wheelmoved</code>.</td></tr>
+<tr><td>yaw</td><td>number</td><td>π</td><td>Горизонтальный угол взгляда в радианах, хранится независимо от кватерниона камеры во избежание накопления ошибки (drift).</td></tr>
+<tr><td>pitch</td><td>number</td><td>0</td><td>Вертикальный угол взгляда в радианах, ограничен чуть меньше ±π/2.</td></tr>
+<tr><td>movementSpeed</td><td>number</td><td>5</td><td>Единиц в секунду перемещения при удержании клавиши движения.</td></tr>
+<tr><td>speedMin / speedMax</td><td>number</td><td>0.1 / 500</td><td>Диапазон ограничения для <code>movementSpeed</code>, изменяемого колесом мыши.</td></tr>
+<tr><td>lookSpeed</td><td>number</td><td>0.002</td><td>Радиан на пиксель движения мыши, применяемых к yaw/pitch.</td></tr>
+<tr><td>slowModifier</td><td>number</td><td>0.2</td><td>Множитель, применяемый к <code>movementSpeed</code> при удержании клавиши замедления.</td></tr>
+<tr><td>keys</td><td>table</td><td>WASD + Q/E + shift</td><td>Привязки клавиш: <code>forward</code>, <code>back</code>, <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code>, <code>slow</code> (последняя может быть одной клавишей или массивом клавиш).</td></tr>
+<tr><td>lockMouse</td><td>boolean</td><td>true</td><td>Переключают ли конструктор/dispose <code>love.mouse.setRelativeMode</code>.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:update(dt)</h3>
+<p>Считывает удерживаемые клавиши движения и перемещает камеру вдоль её осей forward/right/up (forward сглаживается по вертикали, чтобы взгляд вверх/вниз не влиял на скорость ходьбы), масштабируя на <code>movementSpeed * dt</code> и <code>slowModifier</code>, если удержана клавиша замедления.</p>
+
+<h3 class="member">:mousemoved(dx, dy)</h3>
+<p>Изменяет <code>yaw</code>/<code>pitch</code> на дельту мыши, масштабированную <code>lookSpeed</code>, ограничивает pitch от полюсов и заново применяет полученное направление взгляда к камере через <code>lookAt</code>.</p>
+
+<h3 class="member">:wheelmoved(dy)</h3>
+<p>Умножает <code>movementSpeed</code> на 1.2 или 1/1.2 в зависимости от направления прокрутки, ограничивая значением в диапазоне <code>[speedMin, speedMax]</code>.</p>
+
+<h3 class="member">:forward()</h3>
+<p>Возвращает текущее направление вперёд как Vector3, вычисленное из <code>yaw</code>/<code>pitch</code>.</p>
+
+<h3 class="member">:right()</h3>
+<p>Возвращает текущее направление вправо (forward, скрещенный с мировым up).</p>
+
+<h3 class="member">:forwardFlat()</h3>
+<p>Возвращает направление вперёд с обнулённым pitch, используется для перемещения, чтобы взгляд вверх/вниз не менял скорость ходьбы.</p>
+
+<h3 class="member">:dispose()</h3>
+<p>Отключает контроллер и снимает блокировку мыши, если был установлен <code>lockMouse</code>.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Нет соответствующего класса в ядре three.js; ближайшие аналоги — аддон-контроллеры <code>FlyControls</code> и <code>FirstPersonControls</code>, ни один из которых TreeLua не повторяет свойство в свойство — это реализация, написанная с нуля специально для LÖVE.</li>
+<li>Читает <code>love.keyboard</code>/<code>love.mouse</code> напрямую и ожидает, что хост-приложение будет пересылать <code>love.update</code>, <code>love.mousemoved</code> и <code>love.wheelmoved</code> — DOM-элемента для подключения слушателей нет.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/controls/FlyControls.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

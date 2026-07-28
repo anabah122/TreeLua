@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>BoxGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="BoxGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">BoxGeometry</h1>
+  <p class="lead">A rectangular box (cuboid), optionally segmented per face.
+    Each of the six faces is built by one shared routine and pushed out
+    along its axis, the same way three.js constructs it.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">BoxGeometry</span>(width, height, depth, widthSegments, heightSegments, depthSegments)</h3>
+  <p>All arguments are optional. <code>width</code>/<code>height</code>/<code>depth</code>
+    default to <code>1</code>; the three segment counts default to
+    <code>1</code> and are floored and clamped to at least <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ width, height, depth, widthSegments, heightSegments, depthSegments }</code> as resolved by the constructor.</td></tr>
+  </table>
+  <p>BoxGeometry is a <code>BufferGeometry</code>; see its vertex/index data
+    and <code>.mesh</code> (the underlying <code>love.Mesh</code>) there.</p>
+
+  <h2>Methods</h2>
+  <p>No methods beyond the constructor and what <code>BufferGeometry</code>
+    provides.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Geometry assembly goes through the shared
+        <code>three/geometries/build.lua</code> helper, common to every
+        primitive in this directory. It force-orients every triangle so its
+        winding agrees with the direction from the shape's centre outward —
+        a rule that only holds for a convex body centred on the origin. Two
+        of the box's six faces come out of the per-face loop with reversed
+        winding on purpose (chosen to get the vertex normals right); <code>build()</code>
+        is what flips them back rather than the face table encoding correct
+        winding directly.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/BoxGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">BoxGeometry</h1>
+  <p class="lead">Прямоугольный параллелепипед (кубоид), опционально
+    сегментированный по каждой грани. Каждая из шести граней строится одной
+    общей процедурой и выдвигается вдоль своей оси — так же, как это делает
+    three.js.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">BoxGeometry</span>(width, height, depth, widthSegments, heightSegments, depthSegments)</h3>
+  <p>Все аргументы необязательны. <code>width</code>/<code>height</code>/<code>depth</code>
+    по умолчанию равны <code>1</code>; три счётчика сегментов по умолчанию
+    равны <code>1</code> и округляются вниз с ограничением снизу минимум
+    <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ width, height, depth, widthSegments, heightSegments, depthSegments }</code>, как разрешено конструктором.</td></tr>
+  </table>
+  <p>BoxGeometry — это <code>BufferGeometry</code>; данные вершин/индексов и
+    <code>.mesh</code> (лежащий в основе <code>love.Mesh</code>) смотрите
+    там.</p>
+
+  <h2>Methods</h2>
+  <p>Нет методов, кроме конструктора и того, что предоставляет
+    <code>BufferGeometry</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Сборка геометрии проходит через общий хелпер
+        <code>three/geometries/build.lua</code>, общий для всех примитивов
+        в этой директории. Он принудительно ориентирует каждый треугольник
+        так, чтобы его winding согласовывался с направлением от центра
+        фигуры наружу — правило, справедливое только для выпуклого тела с
+        центром в начале координат. Две из шести граней box выходят из
+        цикла по граням с намеренно обратным winding (выбрано так, чтобы
+        нормали вершин получились правильными); именно <code>build()</code>
+        разворачивает их обратно, а не таблица граней, кодирующая
+        правильный winding напрямую.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/BoxGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

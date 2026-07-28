@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>LOD — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="LOD" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">LOD</h1>
+  <p class="lead">Swap detail with distance. Extends <code>Object3D</code>
+    and inherits its full API. Every level is a child, so the whole set
+    inherits the LOD's transform; only one is left visible at a time, which
+    is what the renderer's <code>traverseVisible</code> walk then picks up —
+    there is no special case in the renderer for this.</p>
+  <pre><code>local lod = LOD:new()
+lod:addLevel(highMesh, 0)
+lod:addLevel(lowMesh, 25)
+scene:add(lod)
+-- each frame:
+lod:update(camera)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">LOD</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>levels</code></td><td>table</td><td><code>{}</code></td><td>Array of <code>{ distance, hysteresis, object }</code>, kept sorted by distance.</td></tr>
+    <tr><td><code>autoUpdate</code></td><td>boolean</td><td><code>true</code></td><td>Kept for signature compatibility; not read by the renderer — see below.</td></tr>
+  </table>
+  <p>Otherwise inherits all of <code>Object3D</code>'s properties.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isLOD()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.addLevel(object, distance, hysteresis)</h3>
+  <p>Adds <code>object</code> as a child at the given <code>distance</code>
+    (absolute value, defaults <code>0</code>) and inserts it into
+    <code>.levels</code> in sorted order. <code>hysteresis</code> defaults to
+    <code>0</code> and widens the switch threshold in the direction already
+    taken, so a camera hovering on a boundary does not flicker between two
+    levels.</p>
+
+  <h3 class="member">.removeLevel(distance)</h3>
+  <p>Removes the level at exactly <code>distance</code> and its child.
+    Returns whether one was found.</p>
+
+  <h3 class="member">.getCurrentLevel()</h3>
+  <p>Returns the index into <code>.levels</code> last chosen by
+    <code>.update()</code>, or <code>1</code> if it hasn't run yet.</p>
+
+  <h3 class="member">.getObjectForDistance(distance)</h3>
+  <p>Returns which level's object would be shown at the given distance,
+    applying hysteresis, without changing visibility.</p>
+
+  <h3 class="member">.update(camera)</h3>
+  <p>Picks the level for the camera's current world position and sets
+    <code>visible</code> on every level's object accordingly (only the
+    chosen one is visible). Must be called by the application, typically
+    next to <code>controls:update</code> — see <em>Differences</em>.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Extends <code>Object3D.copy</code> (called non-recursively); rebuilds
+    <code>.levels</code> by cloning each level's object.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>No automatic per-frame update.</strong> three.js updates
+        levels from inside its render loop (<code>WebGLRenderer.render</code>
+        calls <code>lod.update(camera)</code> for every LOD it encounters).
+        This renderer does not know about LOD objects at all, so
+        <code>update(camera)</code> must be called explicitly by the
+        application each frame. <code>autoUpdate</code> is kept on the object
+        for signature compatibility but is not read anywhere.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/LOD.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">LOD</h1>
+  <p class="lead">Смена уровня детализации в зависимости от расстояния.
+    Наследует <code>Object3D</code> и получает весь его API. Каждый
+    уровень — это ребёнок, поэтому весь набор наследует трансформ LOD;
+    видимым остаётся только один за раз, что и подхватывает обход
+    <code>traverseVisible</code> рендерера — специального случая для
+    этого в рендерере нет.</p>
+  <pre><code>local lod = LOD:new()
+lod:addLevel(highMesh, 0)
+lod:addLevel(lowMesh, 25)
+scene:add(lod)
+-- each frame:
+lod:update(camera)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">LOD</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>levels</code></td><td>table</td><td><code>{}</code></td><td>Массив <code>{ distance, hysteresis, object }</code>, поддерживается отсортированным по расстоянию.</td></tr>
+    <tr><td><code>autoUpdate</code></td><td>boolean</td><td><code>true</code></td><td>Хранится для совместимости сигнатуры; рендерером не читается — см. ниже.</td></tr>
+  </table>
+  <p>В остальном наследует все свойства <code>Object3D</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isLOD()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.addLevel(object, distance, hysteresis)</h3>
+  <p>Добавляет <code>object</code> как ребёнка на заданном
+    <code>distance</code> (абсолютное значение, по умолчанию
+    <code>0</code>) и вставляет его в <code>.levels</code> в
+    отсортированном порядке. <code>hysteresis</code> по умолчанию
+    <code>0</code> и расширяет порог переключения в уже выбранном
+    направлении, так что камера, зависшая на границе, не мерцает между
+    двумя уровнями.</p>
+
+  <h3 class="member">.removeLevel(distance)</h3>
+  <p>Удаляет уровень ровно на <code>distance</code> и его ребёнка.
+    Возвращает, был ли найден такой уровень.</p>
+
+  <h3 class="member">.getCurrentLevel()</h3>
+  <p>Возвращает индекс в <code>.levels</code>, последним выбранный
+    <code>.update()</code>, либо <code>1</code>, если он ещё не
+    запускался.</p>
+
+  <h3 class="member">.getObjectForDistance(distance)</h3>
+  <p>Возвращает, объект какого уровня был бы показан на заданном
+    расстоянии, с учётом гистерезиса, не меняя видимость.</p>
+
+  <h3 class="member">.update(camera)</h3>
+  <p>Выбирает уровень для текущей мировой позиции камеры и
+    соответствующим образом выставляет <code>visible</code> на объекте
+    каждого уровня (видимым остаётся только выбранный). Должен вызываться
+    приложением, обычно рядом с <code>controls:update</code> — см.
+    <em>Differences</em>.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Расширяет <code>Object3D.copy</code> (вызывается нерекурсивно);
+    перестраивает <code>.levels</code>, клонируя объект каждого уровня.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Нет автоматического обновления каждый кадр.</strong>
+        three.js обновляет уровни изнутри своего цикла рендеринга
+        (<code>WebGLRenderer.render</code> вызывает
+        <code>lod.update(camera)</code> для каждого встреченного LOD).
+        Этот рендерер вообще не знает об объектах LOD, поэтому
+        <code>update(camera)</code> должен явно вызываться приложением
+        каждый кадр. <code>autoUpdate</code> сохранён на объекте для
+        совместимости сигнатуры, но нигде не читается.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/LOD.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Camera — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Camera" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Cameras</div>
+  <h1 class="title">Camera</h1>
+  <p class="lead">Extends Object3D, inherits its API. Adds the two matrices
+    the renderer needs: <code>projectionMatrix</code>, filled in by a
+    subclass, and <code>matrixWorldInverse</code> — the view matrix, kept as
+    the inverse of wherever the camera sits in the scene graph.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Camera</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>matrixWorldInverse</code></td><td>Matrix4</td><td>identity</td><td>The view matrix; kept in sync by <code>updateMatrixWorld</code>/<code>updateWorldMatrix</code>.</td></tr>
+    <tr><td><code>projectionMatrix</code></td><td>Matrix4</td><td>identity</td><td>Set by the subclass (<code>PerspectiveCamera</code>, <code>OrthographicCamera</code>).</td></tr>
+    <tr><td><code>projectionMatrixInverse</code></td><td>Matrix4</td><td>identity</td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isCamera()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.updateMatrixWorld(force)</h3>
+  <p>Calls <code>Object3D.updateMatrixWorld</code>, then recomputes
+    <code>matrixWorldInverse</code> from the new <code>matrixWorld</code>.</p>
+
+  <h3 class="member">.updateWorldMatrix(updateParents, updateChildren)</h3>
+  <p>Same idea as <code>.updateMatrixWorld</code>, following the
+    parents/children propagation rules of <code>Object3D.updateWorldMatrix</code>.</p>
+
+  <h3 class="member">.getWorldDirection(target)</h3>
+  <p>Where the camera looks: down its own <code>-Z</code>, in world space.</p>
+
+  <h3 class="member">.viewProjectionMatrix(target)</h3>
+  <p><code>projectionMatrix * matrixWorldInverse</code>, the single matrix
+    the bundled shader takes as <code>u_viewProj</code>. Not part of
+    three.js's API — three.js sends projection and view separately — but the
+    shader wants them premultiplied.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><code>.viewProjectionMatrix(target)</code> is a TreeLua-only
+        facade with no three.js equivalent, added because the shader wants
+        projection and view premultiplied into one matrix.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/cameras/Camera.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Cameras</div>
+  <h1 class="title">Camera</h1>
+  <p class="lead">Наследует Object3D, наследует её API. Добавляет две
+    матрицы, необходимые рендереру: <code>projectionMatrix</code>,
+    заполняемую подклассом, и <code>matrixWorldInverse</code> — матрицу
+    вида, хранимую как обратную к тому, где камера находится в графе
+    сцены.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Camera</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>matrixWorldInverse</code></td><td>Matrix4</td><td>identity</td><td>Матрица вида; синхронизируется через <code>updateMatrixWorld</code>/<code>updateWorldMatrix</code>.</td></tr>
+    <tr><td><code>projectionMatrix</code></td><td>Matrix4</td><td>identity</td><td>Устанавливается подклассом (<code>PerspectiveCamera</code>, <code>OrthographicCamera</code>).</td></tr>
+    <tr><td><code>projectionMatrixInverse</code></td><td>Matrix4</td><td>identity</td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isCamera()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.updateMatrixWorld(force)</h3>
+  <p>Вызывает <code>Object3D.updateMatrixWorld</code>, затем пересчитывает
+    <code>matrixWorldInverse</code> из нового <code>matrixWorld</code>.</p>
+
+  <h3 class="member">.updateWorldMatrix(updateParents, updateChildren)</h3>
+  <p>Та же идея, что и <code>.updateMatrixWorld</code>, следуя правилам
+    распространения parents/children из <code>Object3D.updateWorldMatrix</code>.</p>
+
+  <h3 class="member">.getWorldDirection(target)</h3>
+  <p>Куда смотрит камера: вдоль своей собственной <code>-Z</code>, в
+    мировом пространстве.</p>
+
+  <h3 class="member">.viewProjectionMatrix(target)</h3>
+  <p><code>projectionMatrix * matrixWorldInverse</code> — единая матрица,
+    которую встроенный шейдер принимает как <code>u_viewProj</code>. Не
+    входит в API three.js — three.js отправляет projection и view
+    отдельно — но шейдеру нужны они перемноженными заранее.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><code>.viewProjectionMatrix(target)</code> — фасад, существующий
+        только в TreeLua, без аналога в three.js, добавлен потому что
+        шейдеру нужны projection и view, перемноженные в одну матрицу
+        заранее.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/cameras/Camera.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

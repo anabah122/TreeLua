@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>BufferGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="BufferGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">BufferGeometry</h1>
+  <p class="lead">Vertex data for one primitive. three.js stores attributes in
+    typed arrays and uploads them to the GPU itself; LÖVE already owns that
+    step, since the importers build a <code>love.Mesh</code> per primitive
+    with the vertex format declared in <code>importer.common</code>. So this
+    class holds that <code>love.Mesh</code> plus the raw vertex/index tables
+    the importer produced, and offers the handful of three.js methods that
+    make sense on top of them.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">BufferGeometry</span>(entry)</h3>
+  <p>Built either from an importer entry or by one of the generators in
+    <code>three/geometries/</code>, which fill the same fields. <code>entry</code>
+    is optional and defaults to <code>{}</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"BufferGeometry"</code></td><td>Set by <code>extend()</code> for subclasses.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td></td></tr>
+    <tr><td><code>mesh</code></td><td>love.Mesh</td><td><code>nil</code></td><td>What actually draws.</td></tr>
+    <tr><td><code>vertices</code></td><td>table</td><td><code>nil</code></td><td>Interleaved vertex tables (position, uv, normal, ...).</td></tr>
+    <tr><td><code>indices</code></td><td>table</td><td><code>nil</code></td><td>Triangle indices.</td></tr>
+    <tr><td><code>attributes</code></td><td>table</td><td><code>nil</code></td><td>Named attribute lookup, read via <code>getAttribute</code>.</td></tr>
+    <tr><td><code>skinned</code></td><td>boolean</td><td><code>false</code></td><td>Whether the format carries joints/weights.</td></tr>
+    <tr><td><code>boundingBox</code></td><td>Box3</td><td><code>nil</code></td><td>Cached by <code>computeBoundingBox</code>.</td></tr>
+    <tr><td><code>boundingSphere</code></td><td>Sphere</td><td><code>nil</code></td><td>Cached by <code>computeBoundingSphere</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isBufferGeometry()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.computeBoundingBox()</h3>
+  <p>Computes and caches the axis-aligned bounds from <code>.vertices</code>.</p>
+
+  <h3 class="member">.computeBoundingSphere()</h3>
+  <p>Computes and caches a bounding sphere centered on the bounding box's
+    center, radius fit to the farthest vertex. Computes the bounding box
+    first if it isn't cached yet.</p>
+
+  <h3 class="member">.getAttribute(name)</h3>
+  <p>Looks up a named entry in <code>.attributes</code>, or <code>nil</code>.</p>
+
+  <h3 class="member">.setTexture(tex)</h3>
+  <p>Sets the texture on the underlying <code>love.Mesh</code>, if any.</p>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Drops the <code>.mesh</code> reference. three.js frees GPU buffers here;
+    LÖVE meshes are garbage collected instead, so this exists mainly so
+    teardown code reads the same across both.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>No typed-array attribute system (<code>setAttribute</code>,
+        <code>BufferAttribute</code>, morph targets, groups). Vertex data
+        lives in a plain Lua table plus a <code>love.Mesh</code> built by the
+        importer; <code>getAttribute</code> only reads a flat name-keyed
+        table, it does not construct three.js's <code>BufferAttribute</code>
+        objects.</li>
+      <li><code>.dispose()</code> just drops the reference — there is no GPU
+        buffer to explicitly free.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/core/BufferGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">BufferGeometry</h1>
+  <p class="lead">Вершинные данные одного примитива. three.js хранит
+    атрибуты в типизированных массивах и сам загружает их на GPU; в LÖVE
+    этот шаг уже выполняется — импортёры собирают <code>love.Mesh</code>
+    для каждого примитива с форматом вершин, объявленным в
+    <code>importer.common</code>. Поэтому этот класс хранит этот
+    <code>love.Mesh</code> плюс сырые таблицы вершин/индексов, которые
+    произвёл импортёр, и предоставляет ту горстку методов three.js,
+    которые имеют смысл поверх них.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">BufferGeometry</span>(entry)</h3>
+  <p>Строится либо из записи импортёра, либо одним из генераторов в
+    <code>three/geometries/</code>, которые заполняют те же поля.
+    <code>entry</code> необязателен, по умолчанию <code>{}</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"BufferGeometry"</code></td><td>Устанавливается <code>extend()</code> для подклассов.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td></td></tr>
+    <tr><td><code>mesh</code></td><td>love.Mesh</td><td><code>nil</code></td><td>То, что реально рисуется.</td></tr>
+    <tr><td><code>vertices</code></td><td>table</td><td><code>nil</code></td><td>Чередующиеся таблицы вершин (position, uv, normal, ...).</td></tr>
+    <tr><td><code>indices</code></td><td>table</td><td><code>nil</code></td><td>Индексы треугольников.</td></tr>
+    <tr><td><code>attributes</code></td><td>table</td><td><code>nil</code></td><td>Именованный поиск атрибутов, читается через <code>getAttribute</code>.</td></tr>
+    <tr><td><code>skinned</code></td><td>boolean</td><td><code>false</code></td><td>Несёт ли формат joints/weights.</td></tr>
+    <tr><td><code>boundingBox</code></td><td>Box3</td><td><code>nil</code></td><td>Кэшируется <code>computeBoundingBox</code>.</td></tr>
+    <tr><td><code>boundingSphere</code></td><td>Sphere</td><td><code>nil</code></td><td>Кэшируется <code>computeBoundingSphere</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isBufferGeometry()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.computeBoundingBox()</h3>
+  <p>Вычисляет и кэширует границы по осям из <code>.vertices</code>.</p>
+
+  <h3 class="member">.computeBoundingSphere()</h3>
+  <p>Вычисляет и кэширует ограничивающую сферу с центром в центре
+    ограничивающего бокса, радиус подгоняется под самую дальнюю вершину.
+    Сначала вычисляет ограничивающий бокс, если он ещё не закэширован.</p>
+
+  <h3 class="member">.getAttribute(name)</h3>
+  <p>Ищет именованную запись в <code>.attributes</code>, либо
+    <code>nil</code>.</p>
+
+  <h3 class="member">.setTexture(tex)</h3>
+  <p>Устанавливает текстуру на нижележащий <code>love.Mesh</code>, если
+    он есть.</p>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Сбрасывает ссылку <code>.mesh</code>. three.js здесь освобождает
+    GPU-буферы; меши LÖVE вместо этого собираются сборщиком мусора, так
+    что это существует в основном для того, чтобы код очистки читался
+    одинаково в обоих случаях.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Нет системы атрибутов на типизированных массивах
+        (<code>setAttribute</code>, <code>BufferAttribute</code>, morph
+        targets, groups). Вершинные данные хранятся в обычной Lua-таблице
+        плюс <code>love.Mesh</code>, построенном импортёром;
+        <code>getAttribute</code> только читает плоскую таблицу по имени,
+        она не строит объекты <code>BufferAttribute</code> three.js.</li>
+      <li><code>.dispose()</code> просто сбрасывает ссылку — тут нет
+        GPU-буфера, который нужно явно освобождать.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/core/BufferGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

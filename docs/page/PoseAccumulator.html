@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>PoseAccumulator — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="PoseAccumulator" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">PoseAccumulator</h1>
+<p class="lead">TreeLua-specific internal helper with no direct equivalent in three.js. It exists to let <a href="AnimationMixer.html">AnimationMixer</a> combine several simultaneously-playing <a href="AnimationAction.html">AnimationAction</a>s into a single per-bone pose each frame: translation and scale are accumulated as weighted linear averages, and rotation is accumulated via successive quaternion slerp with hemisphere selection so opposite-signed quaternions don't fight each other. It is what makes the mixer's default <code>blending = true</code> behavior possible.</p>
+
+<h2>Constructor</h2>
+<p><code>PoseAccumulator.new()</code></p>
+<p>Creates an empty accumulator with no accumulated bone entries.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>entries</td><td>table</td><td>{}</td><td>Per-bone accumulated state keyed by target name, each holding running weighted translation/scale sums and the running slerped rotation plus total weight seen so far.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:reset()</h3>
+<p>Clears all accumulated entries so the accumulator can be reused for the next frame.</p>
+
+<h3 class="member">:add(targetName, type, value, weight)</h3>
+<p>Folds one action's sampled value for a bone/property into the running result: translation and scale are weighted-summed, rotation is combined into the running quaternion via slerp (choosing the shorter-arc hemisphere against the accumulated-so-far rotation) weighted by this call's proportion of total weight seen for that target.</p>
+
+<h3 class="member">:apply(root)</h3>
+<p>Writes the final accumulated translation/rotation/scale for every entry onto the matching named node under <code>root</code>.</p>
+
+<p class="source-link">Source: <code>three/animation/PoseAccumulator.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">PoseAccumulator</h1>
+<p class="lead">Внутренний вспомогательный класс, специфичный для TreeLua, без прямого аналога в three.js. Он существует, чтобы позволить <a href="AnimationMixer.html">AnimationMixer</a> объединять несколько одновременно проигрывающихся <a href="AnimationAction.html">AnimationAction</a> в единую позу по костям на каждом кадре: translation и scale накапливаются как взвешенные линейные средние, а rotation накапливается через последовательный кватернионный slerp с выбором полушария, чтобы кватернионы с противоположным знаком не конфликтовали друг с другом. Именно это делает возможным поведение миксера по умолчанию при <code>blending = true</code>.</p>
+
+<h2>Constructor</h2>
+<p><code>PoseAccumulator.new()</code></p>
+<p>Создаёт пустой аккумулятор без накопленных записей по костям.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>entries</td><td>table</td><td>{}</td><td>Накопленное состояние по каждой кости, индексированное по имени цели, содержащее текущие взвешенные суммы translation/scale, текущий слерпленный rotation и суммарный вес, учтённый на данный момент.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:reset()</h3>
+<p>Очищает все накопленные записи, чтобы аккумулятор можно было переиспользовать на следующем кадре.</p>
+
+<h3 class="member">:add(targetName, type, value, weight)</h3>
+<p>Добавляет сэмплированное значение одного экшена для кости/свойства в текущий результат: translation и scale суммируются с учётом веса, rotation объединяется в текущий кватернион через slerp (выбирая более короткую дугу относительно уже накопленного вращения) с весом, пропорциональным доле этого вызова в суммарном весе, учтённом для этой цели.</p>
+
+<h3 class="member">:apply(root)</h3>
+<p>Записывает итоговые накопленные translation/rotation/scale для каждой записи в соответствующий узел с таким же именем внутри <code>root</code>.</p>
+
+<p class="source-link">Source: <code>three/animation/PoseAccumulator.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

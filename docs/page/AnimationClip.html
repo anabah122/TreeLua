@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnimationClip — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="AnimationClip" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">AnimationClip</h1>
+<p class="lead">A reusable set of keyframe tracks representing an animation. A clip groups <code>tracks</code> (per-property keyframe data) under a <code>name</code> and a total <code>duration</code>, and is played back through an <a href="AnimationAction.html">AnimationAction</a> on an <a href="AnimationMixer.html">AnimationMixer</a>.</p>
+
+<h2>Constructor</h2>
+<p><code>AnimationClip.new(name, duration, tracks)</code></p>
+<p>Creates a clip from a name, a duration in seconds and an array of tracks. Each track is a plain table describing a single animated property.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>name</td><td>string</td><td>—</td><td>Clip identifier, used to look it up by name.</td></tr>
+<tr><td>duration</td><td>number</td><td>—</td><td>Clip length in seconds.</td></tr>
+<tr><td>tracks</td><td>table[]</td><td>—</td><td>Array of keyframe tracks. Each track has <code>targetName</code> (node/bone name), <code>type</code> (<code>"translation"</code>, <code>"rotation"</code> or <code>"scale"</code>), <code>times</code> (array of keyframe timestamps) and <code>values</code> (flat array of vector/quaternion components, one entry per keyframe).</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:getTrackForBone(name, type)</h3>
+<p>Returns the track matching a given target/bone name and property type (<code>"translation"</code>, <code>"rotation"</code> or <code>"scale"</code>), or <code>nil</code> if the clip has no such track.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Tracks are plain Lua tables with <code>targetName</code>/<code>type</code>/<code>times</code>/<code>values</code> fields rather than <code>KeyframeTrack</code> subclass instances (<code>VectorKeyframeTrack</code>, <code>QuaternionKeyframeTrack</code>, etc.).</li>
+<li>No <code>CLIP_STAINS</code> serialization helpers (<code>toJSON</code>, <code>parse</code>, <code>CreateFromMorphTargetSequence</code>, ...) — clips are constructed directly from loader data.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/animation/AnimationClip.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">AnimationClip</h1>
+<p class="lead">Переиспользуемый набор ключевых дорожек (keyframe tracks), представляющий анимацию. Клип группирует <code>tracks</code> (данные ключевых кадров по каждому свойству) под общим <code>name</code> и общей <code>duration</code>, и воспроизводится через <a href="AnimationAction.html">AnimationAction</a> на <a href="AnimationMixer.html">AnimationMixer</a>.</p>
+
+<h2>Constructor</h2>
+<p><code>AnimationClip.new(name, duration, tracks)</code></p>
+<p>Создаёт клип из имени, длительности в секундах и массива дорожек. Каждая дорожка — обычная таблица, описывающая одно анимируемое свойство.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>name</td><td>string</td><td>—</td><td>Идентификатор клипа, используется для поиска по имени.</td></tr>
+<tr><td>duration</td><td>number</td><td>—</td><td>Длительность клипа в секундах.</td></tr>
+<tr><td>tracks</td><td>table[]</td><td>—</td><td>Массив ключевых дорожек. Каждая дорожка содержит <code>targetName</code> (имя узла/кости), <code>type</code> (<code>"translation"</code>, <code>"rotation"</code> или <code>"scale"</code>), <code>times</code> (массив временных меток ключевых кадров) и <code>values</code> (плоский массив компонентов вектора/кватерниона, по одной записи на ключевой кадр).</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:getTrackForBone(name, type)</h3>
+<p>Возвращает дорожку, соответствующую заданному имени цели/кости и типу свойства (<code>"translation"</code>, <code>"rotation"</code> или <code>"scale"</code>), либо <code>nil</code>, если у клипа нет такой дорожки.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Дорожки — обычные Lua-таблицы с полями <code>targetName</code>/<code>type</code>/<code>times</code>/<code>values</code>, а не экземпляры подклассов <code>KeyframeTrack</code> (<code>VectorKeyframeTrack</code>, <code>QuaternionKeyframeTrack</code> и т.д.).</li>
+<li>Нет вспомогательных средств сериализации <code>CLIP_STAINS</code> (<code>toJSON</code>, <code>parse</code>, <code>CreateFromMorphTargetSequence</code>, ...) — клипы создаются напрямую из данных загрузчика.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/animation/AnimationClip.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

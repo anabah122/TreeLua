@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Skeleton — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Skeleton" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Skeleton</h1>
+  <p class="lead">Joints plus their inverse bind matrices. In three.js a
+    Skeleton holds an array of <code>Bone</code> objects. Here it wraps the
+    importer's flat node list and skin record instead, because that is what
+    the animation sampler writes into and what
+    <code>importer.common.palette</code> reads. Wrapping rather than
+    converting keeps one source of truth: animation writes to nodes, the
+    palette reads from nodes, no copy in between to fall stale.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Skeleton</span>(nodes, skin)</h3>
+  <p><code>nodes</code> is the importer's flat node list
+    (<code>{ [i] = { name, parent, children, localMatrix, worldMatrix, ... } }</code>).
+    <code>skin</code> is <code>{ joints = {node indices}, inverseBind = {mat4}, skeletonRoot }</code>.
+    Does not extend <code>Object3D</code> — a Skeleton is data, not a scene
+    graph node.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Skeleton"</code></td><td></td></tr>
+    <tr><td><code>nodes</code></td><td>table</td><td>—</td><td>Flat importer node list.</td></tr>
+    <tr><td><code>skin</code></td><td>table</td><td>—</td><td>Joint indices and inverse bind matrices.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSkeleton()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.getBoneCount()</h3>
+  <p>Returns <code>#skin.joints</code>, or <code>0</code> if there is no skin.</p>
+
+  <h3 class="member">.getBoneByName(name)</h3>
+  <p>Scans <code>.nodes</code> for a matching name. three.js exposes bones
+    by name too, but as an array lookup — here the node list is flat, so
+    this is a linear scan.</p>
+
+  <h3 class="member">.update(root)</h3>
+  <p>Recomputes every node's world matrix from its local one. The animation
+    mixer calls this after sampling; <code>root</code> seeds the root
+    matrices so a model transform can be baked in (defaults to
+    <code>nodes.rootMatrix</code>).</p>
+
+  <h3 class="member">.computeBoneMatrices()</h3>
+  <p>Returns the bone palette for the current pose via
+    <code>importer.common.palette</code>, or <code>nil</code> if there is no
+    skin.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>No <code>Bone</code> objects.</strong> three.js's Skeleton
+        is an array of <code>Bone</code> (an <code>Object3D</code> subclass)
+        plus a parallel <code>boneInverses</code> array. TreeLua instead
+        wraps the importer's flat node table directly, so bones are plain
+        node records, not scene-graph objects you can <code>:add()</code>
+        children to independently.</li>
+      <li>No <code>.bones</code> / <code>.boneInverses</code> properties —
+        use <code>.nodes</code> and <code>.skin.inverseBind</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/Skeleton.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Skeleton</h1>
+  <p class="lead">Суставы (joints) плюс их обратные bind-матрицы. В
+    three.js Skeleton хранит массив объектов <code>Bone</code>. Здесь же
+    он вместо этого оборачивает плоский список узлов импортёра и запись
+    skin, потому что именно в них пишет сэмплер анимации и именно их
+    читает <code>importer.common.palette</code>. Обёртывание вместо
+    преобразования сохраняет единый источник истины: анимация пишет в
+    узлы, палитра читает из узлов, между ними нет копии, которая могла
+    бы устареть.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Skeleton</span>(nodes, skin)</h3>
+  <p><code>nodes</code> — это плоский список узлов импортёра
+    (<code>{ [i] = { name, parent, children, localMatrix, worldMatrix, ... } }</code>).
+    <code>skin</code> — это <code>{ joints = {node indices}, inverseBind = {mat4}, skeletonRoot }</code>.
+    Не наследует <code>Object3D</code> — Skeleton это данные, а не узел
+    графа сцены.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Skeleton"</code></td><td></td></tr>
+    <tr><td><code>nodes</code></td><td>table</td><td>—</td><td>Плоский список узлов импортёра.</td></tr>
+    <tr><td><code>skin</code></td><td>table</td><td>—</td><td>Индексы суставов и обратные bind-матрицы.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSkeleton()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.getBoneCount()</h3>
+  <p>Возвращает <code>#skin.joints</code>, либо <code>0</code>, если
+    скина нет.</p>
+
+  <h3 class="member">.getBoneByName(name)</h3>
+  <p>Сканирует <code>.nodes</code> в поисках совпадающего имени. three.js
+    тоже даёт доступ к костям по имени, но через поиск по массиву — здесь
+    список узлов плоский, поэтому это линейный перебор.</p>
+
+  <h3 class="member">.update(root)</h3>
+  <p>Пересчитывает мировую матрицу каждого узла из его локальной. Миксер
+    анимации вызывает это после сэмплирования; <code>root</code> задаёт
+    начальные корневые матрицы, чтобы можно было запечь трансформ модели
+    (по умолчанию <code>nodes.rootMatrix</code>).</p>
+
+  <h3 class="member">.computeBoneMatrices()</h3>
+  <p>Возвращает палитру костей для текущей позы через
+    <code>importer.common.palette</code>, либо <code>nil</code>, если
+    скина нет.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Нет объектов <code>Bone</code>.</strong> Skeleton в
+        three.js — это массив <code>Bone</code> (подкласс
+        <code>Object3D</code>) плюс параллельный массив
+        <code>boneInverses</code>. TreeLua вместо этого напрямую
+        оборачивает плоскую таблицу узлов импортёра, так что кости — это
+        обычные записи узлов, а не объекты графа сцены, которым можно
+        независимо <code>:add()</code> детей.</li>
+      <li>Нет свойств <code>.bones</code> / <code>.boneInverses</code> —
+        используйте <code>.nodes</code> и <code>.skin.inverseBind</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/Skeleton.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

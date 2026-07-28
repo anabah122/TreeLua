@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sphere — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Sphere" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Sphere</h1>
+<p class="lead">A bounding sphere, defined by a center and radius. An empty sphere has <code>radius &lt; 0</code>, so a fresh sphere grows correctly under <code>expandByPoint</code> without a separate empty flag.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Sphere( center, radius )</h3>
+<p>center — a Vector3, cloned in, defaults to the origin. radius defaults to -1 (empty).</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>center</td><td>Vector3</td><td>(0,0,0)</td><td></td></tr>
+<tr><td>radius</td><td>number</td><td>-1</td><td>Negative means empty.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isSphere()</h3>
+<p>Returns true. Type-check facade.</p>
+
+<h3 class="member">.set( center, radius )</h3>
+<p>Sets center (copied) and radius. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Sphere with the same center and radius.</p>
+
+<h3 class="member">.copy( sphere )</h3>
+<p>Copies sphere's center and radius into this sphere. Returns self.</p>
+
+<h3 class="member">.isEmpty()</h3>
+<p>Returns true if radius is negative.</p>
+
+<h3 class="member">.makeEmpty()</h3>
+<p>Resets this sphere to the empty state (center at origin, radius -1). Returns self.</p>
+
+<h3 class="member">.containsPoint( point )</h3>
+<p>Returns true if point lies within this sphere.</p>
+
+<h3 class="member">.distanceToPoint( point )</h3>
+<p>Returns the signed distance from point to the sphere's surface (negative if inside).</p>
+
+<h3 class="member">.intersectsSphere( sphere )</h3>
+<p>Returns true if this sphere and sphere overlap.</p>
+
+<h3 class="member">.intersectsBox( box )</h3>
+<p>Returns true if this sphere overlaps box.</p>
+
+<h3 class="member">.expandByPoint( point )</h3>
+<p>Grows this sphere just enough to include point, recentring so the far side of the sphere does not balloon outward. Returns self.</p>
+
+<h3 class="member">.getBoundingBox( target )</h3>
+<p>Writes this sphere's axis-aligned bounding box into target (a Box3, created if omitted) and returns it.</p>
+
+<h3 class="member">.setFromPoints( points, optionalCenter )</h3>
+<p>Sets this sphere to the minimal sphere (around optionalCenter, or the bounding box center if omitted) that encloses every point. Returns self.</p>
+
+<h3 class="member">.applyMatrix4( m )</h3>
+<p>Transforms this sphere by matrix m, in place. Since a non-uniform scale cannot keep the shape a true sphere, the radius is scaled by the largest of the three axis scales, so the result always encloses the true transformed shape. Returns self.</p>
+
+<h3 class="member">.translate( offset )</h3>
+<p>Moves this sphere's center by offset, in place. Returns self.</p>
+
+<h3 class="member">.equals( sphere )</h3>
+<p>Returns true if this sphere and sphere have equal center and radius.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.applyMatrix4</code> approximates non-uniform scale by taking the largest axis scale rather than three.js's exact approach of transforming via the box, so the result is a conservative (never-too-small) enclosing sphere rather than a tight fit.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/sphere.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Sphere</h1>
+<p class="lead">Ограничивающая сфера, заданная центром и радиусом. У пустой сферы <code>radius &lt; 0</code>, поэтому свежесозданная сфера корректно растёт при <code>expandByPoint</code> без отдельного флага пустоты.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Sphere( center, radius )</h3>
+<p>center — Vector3, клонируется при передаче, по умолчанию — начало координат. radius по умолчанию -1 (пусто).</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>center</td><td>Vector3</td><td>(0,0,0)</td><td></td></tr>
+<tr><td>radius</td><td>number</td><td>-1</td><td>Отрицательное значение означает пустоту.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isSphere()</h3>
+<p>Возвращает true. Фасад проверки типа.</p>
+
+<h3 class="member">.set( center, radius )</h3>
+<p>Устанавливает center (копируется) и radius. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новую Sphere с тем же центром и радиусом.</p>
+
+<h3 class="member">.copy( sphere )</h3>
+<p>Копирует center и radius из sphere в эту сферу. Возвращает self.</p>
+
+<h3 class="member">.isEmpty()</h3>
+<p>Возвращает true, если radius отрицателен.</p>
+
+<h3 class="member">.makeEmpty()</h3>
+<p>Сбрасывает эту сферу в пустое состояние (центр в начале координат, radius -1). Возвращает self.</p>
+
+<h3 class="member">.containsPoint( point )</h3>
+<p>Возвращает true, если point лежит внутри этой сферы.</p>
+
+<h3 class="member">.distanceToPoint( point )</h3>
+<p>Возвращает знаковое расстояние от point до поверхности сферы (отрицательное, если точка внутри).</p>
+
+<h3 class="member">.intersectsSphere( sphere )</h3>
+<p>Возвращает true, если эта сфера и sphere пересекаются.</p>
+
+<h3 class="member">.intersectsBox( box )</h3>
+<p>Возвращает true, если эта сфера пересекается с box.</p>
+
+<h3 class="member">.expandByPoint( point )</h3>
+<p>Увеличивает эту сферу ровно настолько, чтобы включить point, пересчитывая центр так, чтобы дальняя сторона сферы не раздувалась наружу. Возвращает self.</p>
+
+<h3 class="member">.getBoundingBox( target )</h3>
+<p>Записывает выровненный по осям ограничивающий параллелепипед этой сферы в target (Box3, создаётся, если не передан) и возвращает его.</p>
+
+<h3 class="member">.setFromPoints( points, optionalCenter )</h3>
+<p>Устанавливает эту сферу как минимальную сферу (вокруг optionalCenter, либо центра ограничивающего параллелепипеда, если не передан), охватывающую все точки. Возвращает self.</p>
+
+<h3 class="member">.applyMatrix4( m )</h3>
+<p>Трансформирует эту сферу матрицей m на месте. Поскольку неравномерный масштаб не может сохранить форму настоящей сферы, радиус масштабируется по наибольшему из трёх осевых масштабов, так что результат всегда охватывает истинную трансформированную форму. Возвращает self.</p>
+
+<h3 class="member">.translate( offset )</h3>
+<p>Сдвигает центр этой сферы на offset, на месте. Возвращает self.</p>
+
+<h3 class="member">.equals( sphere )</h3>
+<p>Возвращает true, если у этой сферы и sphere равны center и radius.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.applyMatrix4</code> приближает неравномерный масштаб, беря наибольший осевой масштаб, вместо точного подхода three.js, трансформирующего через параллелепипед, поэтому результат — консервативная (никогда не слишком маленькая) охватывающая сфера, а не точная подгонка.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/sphere.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

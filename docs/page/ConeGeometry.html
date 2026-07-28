@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>ConeGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="ConeGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">ConeGeometry</h1>
+  <p class="lead">A cone, defined the same way three.js defines it: a
+    <code>CylinderGeometry</code> with its top radius pinned to <code>0</code>.
+    Everything else — segments, <code>openEnded</code>, theta range —
+    passes straight through.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">ConeGeometry</span>(radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength)</h3>
+  <p><code>radius</code>/<code>height</code> default to <code>1</code>.
+    Remaining arguments forward to <code>CylinderGeometry</code> unchanged.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td>The underlying <code>CylinderGeometry</code>'s parameters, with <code>radius</code> added.</td></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"ConeGeometry"</code></td><td>Overridden after construction (the underlying object is a <code>CylinderGeometry</code>).</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>No methods beyond the constructor and what <code>BufferGeometry</code>
+    provides.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Implemented as a thin wrapper: it calls
+        <code>CylinderGeometry:new(0, radius, height, ...)</code> and then
+        overwrites <code>.type</code>/<code>.name</code>/<code>.parameters.radius</code>.
+        The resulting object still carries a <code>radiusTop</code>/<code>radiusBottom</code>
+        pair in <code>.parameters</code> (inherited from the cylinder) in
+        addition to the three.js-shaped <code>radius</code> field.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/ConeGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">ConeGeometry</h1>
+  <p class="lead">Конус, определённый так же, как его определяет three.js:
+    <code>CylinderGeometry</code> с верхним радиусом, зафиксированным на
+    <code>0</code>. Всё остальное — сегменты, <code>openEnded</code>,
+    диапазон theta — передаётся без изменений.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">ConeGeometry</span>(radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength)</h3>
+  <p><code>radius</code>/<code>height</code> по умолчанию <code>1</code>.
+    Остальные аргументы передаются в <code>CylinderGeometry</code> без
+    изменений.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td>Параметры лежащего в основе <code>CylinderGeometry</code>, с добавленным <code>radius</code>.</td></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"ConeGeometry"</code></td><td>Переопределяется после конструирования (объект в основе — <code>CylinderGeometry</code>).</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>Нет методов, кроме конструктора и того, что предоставляет
+    <code>BufferGeometry</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Реализован как тонкая обёртка: вызывает
+        <code>CylinderGeometry:new(0, radius, height, ...)</code>, а затем
+        перезаписывает <code>.type</code>/<code>.name</code>/<code>.parameters.radius</code>.
+        Результирующий объект по-прежнему несёт пару
+        <code>radiusTop</code>/<code>radiusBottom</code> в
+        <code>.parameters</code> (унаследованную от цилиндра) в дополнение к
+        полю <code>radius</code> в стиле three.js.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/ConeGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

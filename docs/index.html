@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>TreeLua — local docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="" data-depth="">
+<main class="home">
+
+<div lang="en">
+  <h1 class="title">TreeLua</h1>
+  <p class="lead">
+    Local documentation for TreeEngine — a Lua port of the three.js API for
+    LÖVE. The structure mirrors
+    <a href="https://threejs.org/docs" target="_blank">threejs.org/docs</a>:
+    categories on the left, and on every class page a Constructor,
+    Properties and Methods section, plus a "Differences from three.js"
+    block wherever behaviour or signature diverged.
+  </p>
+
+  <h2>How to read this reference</h2>
+  <ul>
+    <li>Methods are called with <code>:</code>, and the object is passed as
+      the first argument — three.js statics (e.g.
+      <code>AnimationClip.findByName</code>) are methods here too.</li>
+    <li>Where a three.js name was already taken by an older immutable
+      method on the engine, the mutating version carries a suffix:
+      <code>addV</code>, <code>subV</code>, <code>normalizeSelf</code>,
+      <code>lerpSelf</code>, <code>minSelf</code>/<code>maxSelf</code>,
+      <code>clampSelf</code>,
+      <code>floorSelf</code>/<code>ceilSelf</code>/<code>roundSelf</code>,
+      <code>transposeSelf</code>. Everything else keeps its three.js
+      spelling.</li>
+    <li>The <strong style="color:var(--diff-border)">Differences from
+      three.js</strong> block on a class page is what to watch for when
+      carrying knowledge over from the original docs: a different
+      signature, reduced functionality, or a different default.</li>
+  </ul>
+
+  <h2>Quick start</h2>
+  <pre><code>local TL = require "TreeEngine"
+
+local scene    = TL.Scene:new()
+local camera   = TL.PerspectiveCamera:new(60, w / h, 0.1, 1000)
+local renderer = TL.WebGLRenderer:new()
+
+local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
+scene:add(gltf.scene)
+
+local mixer = TL.AnimationMixer:new(gltf.scene)
+mixer:clipAction(gltf.animations[1]):play()
+
+function love.update(dt) mixer:update(dt) end
+function love.draw()     renderer:render(scene, camera) end</code></pre>
+
+  <h2>Limitations compared to three.js</h2>
+  <ul>
+    <li>The shader takes one directional light plus an ambient term —
+      multiple directional lights are not yet supported.</li>
+    <li>No environment map / IBL, so reflections have nothing to
+      reflect.</li>
+    <li>Skeletons are capped at 128 bones (<code>MAX_BONES</code> in the
+      shader).</li>
+  </ul>
+</div>
+
+<div lang="ru">
+  <h1 class="title">TreeLua</h1>
+  <p class="lead">
+    Локальная справка по TreeEngine — Lua-порту API three.js для LÖVE.
+    Структура повторяет
+    <a href="https://threejs.org/docs" target="_blank">threejs.org/docs</a>:
+    слева категории классов, на странице каждого класса — разделы
+    Constructor, Properties и Methods, а также блок «Differences from
+    three.js» там, где поведение или сигнатура разошлись.
+  </p>
+
+  <h2>Как читать эту справку</h2>
+  <ul>
+    <li>Методы вызываются через <code>:</code>, и объект передаётся первым
+      аргументом — статики three.js (например
+      <code>AnimationClip.findByName</code>) здесь тоже методы.</li>
+    <li>Там, где three.js-имя уже было занято старым immutable-методом
+      движка, мутирующая версия получает суффикс: <code>addV</code>,
+      <code>subV</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>,
+      <code>minSelf</code>/<code>maxSelf</code>, <code>clampSelf</code>,
+      <code>floorSelf</code>/<code>ceilSelf</code>/<code>roundSelf</code>,
+      <code>transposeSelf</code>. Остальное сохраняет написание three.js.</li>
+    <li>Блок <strong style="color:var(--diff-border)">Differences from
+      three.js</strong> на странице класса — это то, на что стоит обратить
+      внимание при переносе знаний из оригинальной документации: другая
+      сигнатура, урезанный функционал, иное поведение по умолчанию.</li>
+  </ul>
+
+  <h2>Быстрый старт</h2>
+  <pre><code>local TL = require "TreeEngine"
+
+local scene    = TL.Scene:new()
+local camera   = TL.PerspectiveCamera:new(60, w / h, 0.1, 1000)
+local renderer = TL.WebGLRenderer:new()
+
+local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
+scene:add(gltf.scene)
+
+local mixer = TL.AnimationMixer:new(gltf.scene)
+mixer:clipAction(gltf.animations[1]):play()
+
+function love.update(dt) mixer:update(dt) end
+function love.draw()     renderer:render(scene, camera) end</code></pre>
+
+  <h2>Ограничения по сравнению с three.js</h2>
+  <ul>
+    <li>Шейдер берёт один directional light плюс ambient-составляющую —
+      несколько направленных источников пока не поддержаны.</li>
+    <li>Нет environment map / IBL, поэтому отражениям нечего отражать.</li>
+    <li>Скелеты ограничены 128 костями (<code>MAX_BONES</code> в
+      шейдере).</li>
+  </ul>
+</div>
+
+</main>
+<script src="assets/nav.js"></script>
+<script src="assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Color — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Color" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Color</h1>
+<p class="lead">An RGB color, three components only — no alpha. Transparency lives on the material as <code>opacity</code>, matching three.js. Values are unclamped floats in the 0..1 range, the same range LÖVE 11's <code>love.graphics.setColor</code> uses, so colors pass through untouched and values above 1 stay usable for emissive tinting.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Color( r, g, b )</h3>
+<p>Flexible constructor, matching <code>.set()</code>:</p>
+<ul>
+<li><code>Color()</code> — white</li>
+<li><code>Color(0xff8800)</code> — hex integer</li>
+<li><code>Color("red")</code> / <code>Color("#ff8800")</code> / <code>Color("#f80")</code> — string</li>
+<li><code>Color(1, 0.5, 0)</code> — r, g, b components</li>
+</ul>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>r</td><td>number</td><td>1</td><td></td></tr>
+<tr><td>g</td><td>number</td><td>1</td><td></td></tr>
+<tr><td>b</td><td>number</td><td>1</td><td></td></tr>
+</table>
+<p><code>Color.NAMES</code> is a static table of recognized CSS-style color names (a trimmed subset — black, white, red, green, blue, yellow, cyan, magenta, gray/grey, orange, purple), used by <code>.setStyle()</code>.</p>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( r, g, b )</h3>
+<p>Sets the color from a string (name or hex), a color-like table, a single hex number, or three components — dispatches to <code>setStyle</code>, <code>setRGB</code>, or <code>setHex</code> based on argument types. Returns self.</p>
+
+<h3 class="member">.setRGB( r, g, b )</h3>
+<p>Sets the components directly. Returns self.</p>
+
+<h3 class="member">.setScalar( s )</h3>
+<p>Sets r, g, b all to s. Returns self.</p>
+
+<h3 class="member">.setHex( hex )</h3>
+<p>Sets the color from a 24-bit hex integer. Returns self.</p>
+
+<h3 class="member">.setStyle( style )</h3>
+<p>Sets the color from a CSS-like string: a name from <code>Color.NAMES</code>, <code>"#rrggbb"</code>, or the shorthand <code>"#rgb"</code>. Unrecognized input leaves the color unchanged rather than resetting to black. Returns self.</p>
+
+<h3 class="member">.setHSL( h, s, l )</h3>
+<p>Sets the color from hue/saturation/lightness, each in 0..1. Returns self.</p>
+
+<h3 class="member">.getHex()</h3>
+<p>Returns the color as a 24-bit hex integer, with components clamped to 0..1 before conversion.</p>
+
+<h3 class="member">.getHexString()</h3>
+<p>Returns the color as a 6-digit lowercase hex string, no leading <code>#</code>.</p>
+
+<h3 class="member">.getHSL()</h3>
+<p>Returns h, s, l as three separate values, each in 0..1.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Color with the same r, g, b.</p>
+
+<h3 class="member">.copy( c )</h3>
+<p>Copies c's components into this color. Returns self.</p>
+
+<h3 class="member">.add( c )</h3>
+<p>Adds c's components to this color, in place. Returns self.</p>
+
+<h3 class="member">.sub( c )</h3>
+<p>Subtracts c's components from this color, in place, clamped to a minimum of 0. Returns self.</p>
+
+<h3 class="member">.multiply( c )</h3>
+<p>Multiplies this color by c component-wise, in place. Returns self.</p>
+
+<h3 class="member">.multiplyScalar( s )</h3>
+<p>Multiplies each component by s, in place. Returns self.</p>
+
+<h3 class="member">.lerp( c, alpha )</h3>
+<p>Linearly interpolates this color toward c by alpha, in place. Returns self.</p>
+
+<h3 class="member">.equals( c )</h3>
+<p>Returns true if this color and c have identical r, g, b.</p>
+
+<h3 class="member">.toArray( alpha )</h3>
+<p>Returns <code>{r, g, b, alpha or 1}</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Sets r, g, b from array starting at offset. Returns self.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>No alpha channel on the class itself — three.js's <code>Color</code> is also RGB-only, so this matches; alpha only appears as an optional argument to <code>.toArray()</code> for convenience when feeding LÖVE's color arrays.</li>
+<li><code>Color.NAMES</code> is a small hand-picked subset of the ~150 CSS color keywords three.js recognizes, not the full X11/CSS list.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/color.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Color</h1>
+<p class="lead">RGB-цвет, только три компонента — без альфа-канала. Прозрачность живёт на материале как <code>opacity</code>, как и в three.js. Значения — неограниченные числа с плавающей точкой в диапазоне 0..1, том же, что использует <code>love.graphics.setColor</code> в LÖVE 11, поэтому цвета проходят без изменений, а значения выше 1 остаются полезны для эмиссивной подсветки.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Color( r, g, b )</h3>
+<p>Гибкий конструктор, соответствующий <code>.set()</code>:</p>
+<ul>
+<li><code>Color()</code> — белый</li>
+<li><code>Color(0xff8800)</code> — hex-целое</li>
+<li><code>Color("red")</code> / <code>Color("#ff8800")</code> / <code>Color("#f80")</code> — строка</li>
+<li><code>Color(1, 0.5, 0)</code> — компоненты r, g, b</li>
+</ul>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>r</td><td>number</td><td>1</td><td></td></tr>
+<tr><td>g</td><td>number</td><td>1</td><td></td></tr>
+<tr><td>b</td><td>number</td><td>1</td><td></td></tr>
+</table>
+<p><code>Color.NAMES</code> — статическая таблица распознаваемых CSS-подобных названий цветов (урезанное подмножество — black, white, red, green, blue, yellow, cyan, magenta, gray/grey, orange, purple), используемая <code>.setStyle()</code>.</p>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( r, g, b )</h3>
+<p>Устанавливает цвет из строки (имя или hex), таблицы, похожей на цвет, одиночного hex-числа или трёх компонентов — в зависимости от типов аргументов делегирует в <code>setStyle</code>, <code>setRGB</code> или <code>setHex</code>. Возвращает self.</p>
+
+<h3 class="member">.setRGB( r, g, b )</h3>
+<p>Устанавливает компоненты напрямую. Возвращает self.</p>
+
+<h3 class="member">.setScalar( s )</h3>
+<p>Устанавливает r, g, b равными s. Возвращает self.</p>
+
+<h3 class="member">.setHex( hex )</h3>
+<p>Устанавливает цвет из 24-битного hex-целого. Возвращает self.</p>
+
+<h3 class="member">.setStyle( style )</h3>
+<p>Устанавливает цвет из CSS-подобной строки: имени из <code>Color.NAMES</code>, <code>"#rrggbb"</code> или сокращённого <code>"#rgb"</code>. Нераспознанный ввод оставляет цвет без изменений, а не сбрасывает его в чёрный. Возвращает self.</p>
+
+<h3 class="member">.setHSL( h, s, l )</h3>
+<p>Устанавливает цвет из оттенка/насыщенности/светлоты, каждое значение в 0..1. Возвращает self.</p>
+
+<h3 class="member">.getHex()</h3>
+<p>Возвращает цвет как 24-битное hex-целое, компоненты ограничиваются до 0..1 перед преобразованием.</p>
+
+<h3 class="member">.getHexString()</h3>
+<p>Возвращает цвет как 6-значную строку hex в нижнем регистре, без ведущего <code>#</code>.</p>
+
+<h3 class="member">.getHSL()</h3>
+<p>Возвращает h, s, l как три отдельных значения, каждое в 0..1.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Color с теми же r, g, b.</p>
+
+<h3 class="member">.copy( c )</h3>
+<p>Копирует компоненты c в этот цвет. Возвращает self.</p>
+
+<h3 class="member">.add( c )</h3>
+<p>Прибавляет компоненты c к этому цвету на месте. Возвращает self.</p>
+
+<h3 class="member">.sub( c )</h3>
+<p>Вычитает компоненты c из этого цвета на месте, с ограничением снизу нулём. Возвращает self.</p>
+
+<h3 class="member">.multiply( c )</h3>
+<p>Покомпонентно умножает этот цвет на c на месте. Возвращает self.</p>
+
+<h3 class="member">.multiplyScalar( s )</h3>
+<p>Умножает каждый компонент на s на месте. Возвращает self.</p>
+
+<h3 class="member">.lerp( c, alpha )</h3>
+<p>Линейно интерполирует этот цвет к c на величину alpha, на месте. Возвращает self.</p>
+
+<h3 class="member">.equals( c )</h3>
+<p>Возвращает true, если этот цвет и c имеют одинаковые r, g, b.</p>
+
+<h3 class="member">.toArray( alpha )</h3>
+<p>Возвращает <code>{r, g, b, alpha or 1}</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Устанавливает r, g, b из массива, начиная с offset. Возвращает self.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>У класса нет альфа-канала — <code>Color</code> в three.js тоже только RGB, так что это совпадает; alpha появляется лишь как необязательный аргумент <code>.toArray()</code> для удобства при передаче в цветовые массивы LÖVE.</li>
+<li><code>Color.NAMES</code> — небольшое отобранное вручную подмножество из ~150 CSS-ключевых слов цвета, которые распознаёт three.js, а не полный список X11/CSS.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/color.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

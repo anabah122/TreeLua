@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnimationMixer — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="AnimationMixer" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">AnimationMixer</h1>
+<p class="lead">Plays and blends <a href="AnimationClip.html">AnimationClip</a>s against a target object's skeleton or scene graph. By default the mixer accumulates every enabled, non-zero-weight <a href="AnimationAction.html">AnimationAction</a> through an internal <a href="PoseAccumulator.html">PoseAccumulator</a> each frame — translation and scale blend linearly and rotation blends via quaternion slerp (with hemisphere selection) — so multiple simultaneously-playing clips combine the way three.js's mixer does, instead of only the highest-weight clip winning.</p>
+
+<h2>Constructor</h2>
+<p><code>AnimationMixer.new(root)</code></p>
+<p>Creates a mixer bound to a root object (typically a skinned mesh or its skeleton root). Actions created from this mixer animate that root's bones/nodes by name.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>root</td><td>Object3D</td><td>—</td><td>Object whose hierarchy the mixer animates.</td></tr>
+<tr><td>blending</td><td>boolean</td><td>true</td><td>When true (default), every frame accumulates all enabled actions with weight > 0 through the <a href="PoseAccumulator.html">PoseAccumulator</a>. Set to <code>false</code> to fall back to the legacy single-clip path, which samples only the action with the highest weight and applies it directly — cheaper, but loses the ability to cross-blend multiple simultaneous clips.</td></tr>
+<tr><td>actions</td><td>table</td><td>{}</td><td>Cache of AnimationAction instances keyed by clip, populated by <code>clipAction</code>.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:clipAction(clip)</h3>
+<p>Returns the AnimationAction for <code>clip</code> on this mixer, creating and caching it on first call.</p>
+
+<h3 class="member">:update(delta)</h3>
+<p>Advances every action's time by <code>delta</code>, then applies the resulting pose to <code>root</code>. When <code>blending</code> is true this runs all enabled actions with non-zero weight through the PoseAccumulator and writes the combined pose; when <code>blending</code> is false it samples only the single highest-weight enabled action and applies it directly.</p>
+
+<h3 class="member">:stopAllAction()</h3>
+<p>Stops every action created on this mixer.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Exposes a <code>blending</code> flag with no three.js equivalent: it toggles between the default multi-action accumulation path (matching three.js's per-frame blending behavior) and a legacy single-clip path retained for cheaper playback when only one clip is ever active.</li>
+<li>No <code>AnimationObjectGroup</code> support, time-scale-on-mixer, or clip-event listeners (<code>finished</code>/<code>loop</code>).</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/animation/AnimationMixer.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">AnimationMixer</h1>
+<p class="lead">Воспроизводит и смешивает <a href="AnimationClip.html">AnimationClip</a> относительно скелета или графа сцены целевого объекта. По умолчанию миксер каждый кадр накапливает все включённые <a href="AnimationAction.html">AnimationAction</a> с ненулевым весом через внутренний <a href="PoseAccumulator.html">PoseAccumulator</a> — translation и scale смешиваются линейно, а rotation — через кватернионный slerp (с выбором полушария) — так что несколько одновременно проигрывающихся клипов комбинируются так же, как это делает миксер three.js, а не так, что побеждает только клип с наибольшим весом.</p>
+
+<h2>Constructor</h2>
+<p><code>AnimationMixer.new(root)</code></p>
+<p>Создаёт миксер, привязанный к корневому объекту (обычно skinned mesh или корню его скелета). Экшены, созданные этим миксером, анимируют кости/узлы этого корня по имени.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>root</td><td>Object3D</td><td>—</td><td>Объект, чью иерархию анимирует миксер.</td></tr>
+<tr><td>blending</td><td>boolean</td><td>true</td><td>Если true (по умолчанию), каждый кадр все включённые экшены с весом > 0 накапливаются через <a href="PoseAccumulator.html">PoseAccumulator</a>. Установите <code>false</code>, чтобы вернуться к устаревшему пути с одним клипом, который сэмплирует только экшен с наибольшим весом и применяет его напрямую — дешевле, но теряется возможность кросс-смешивания нескольких одновременных клипов.</td></tr>
+<tr><td>actions</td><td>table</td><td>{}</td><td>Кэш экземпляров AnimationAction, индексированный по клипу, заполняется через <code>clipAction</code>.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:clipAction(clip)</h3>
+<p>Возвращает AnimationAction для <code>clip</code> на этом миксере, создавая и кэшируя его при первом вызове.</p>
+
+<h3 class="member">:update(delta)</h3>
+<p>Продвигает время каждого экшена на <code>delta</code>, затем применяет полученную позу к <code>root</code>. Когда <code>blending</code> равен true, это прогоняет все включённые экшены с ненулевым весом через PoseAccumulator и записывает объединённую позу; когда <code>blending</code> равен false, сэмплируется только один включённый экшен с наибольшим весом и применяется напрямую.</p>
+
+<h3 class="member">:stopAllAction()</h3>
+<p>Останавливает все экшены, созданные на этом миксере.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Предоставляет флаг <code>blending</code>, не имеющий аналога в three.js: он переключает между стандартным путём накопления нескольких экшенов (соответствующим поведению покадрового смешивания в three.js) и устаревшим путём с одним клипом, сохранённым ради более дешёвого воспроизведения, когда активен только один клип.</li>
+<li>Нет поддержки <code>AnimationObjectGroup</code>, масштаба времени на уровне миксера или слушателей событий клипа (<code>finished</code>/<code>loop</code>).</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/animation/AnimationMixer.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

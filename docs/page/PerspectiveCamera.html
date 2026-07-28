@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>PerspectiveCamera — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="PerspectiveCamera" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Cameras</div>
+  <h1 class="title">PerspectiveCamera</h1>
+  <p class="lead">Extends Camera, inherits its API. A camera with
+    perspective projection, matching a real-world lens.</p>
+  <pre><code>local camera = PerspectiveCamera:new(60, w / h, 0.1, 1000)
+camera.position:set(0, 1.2, 3.5)
+camera:lookAt(0, 1, 0)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">PerspectiveCamera</span>(fov, aspect, near, far)</h3>
+  <p><code>fov</code> defaults to <code>50</code> and is in
+    <strong>degrees</strong> — the one place this engine's radians-everywhere
+    rule is broken on purpose, to match every three.js example. It is
+    converted to radians when the projection matrix is built.
+    <code>aspect</code> defaults to <code>1</code>, <code>near</code> to
+    <code>0.1</code>, <code>far</code> to <code>2000</code>. Builds the
+    projection matrix immediately.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>fov</code></td><td>number (degrees)</td><td><code>50</code></td><td>Vertical field of view.</td></tr>
+    <tr><td><code>aspect</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>near</code></td><td>number</td><td><code>0.1</code></td><td></td></tr>
+    <tr><td><code>far</code></td><td>number</td><td><code>2000</code></td><td></td></tr>
+    <tr><td><code>zoom</code></td><td>number</td><td><code>1</code></td><td>Widens or narrows the vertical field.</td></tr>
+    <tr><td><code>filmGauge</code></td><td>number</td><td><code>35</code></td><td>Used by <code>getFilmWidth</code>/<code>getFilmHeight</code>.</td></tr>
+    <tr><td><code>filmOffset</code></td><td>number</td><td><code>0</code></td><td>Stored for API compatibility.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isPerspectiveCamera()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.updateProjectionMatrix()</h3>
+  <p>Recomputes <code>projectionMatrix</code> from <code>fov</code>,
+    <code>aspect</code>, <code>near</code>, <code>far</code>, and
+    <code>zoom</code>. Call after changing any of them.</p>
+
+  <h3 class="member">.setFocalLength(focalLength)</h3>
+  <p>Sets <code>.fov</code> to match a real lens's focal length, given
+    <code>filmGauge</code>. Kept because three.js examples use it.</p>
+
+  <h3 class="member">.getFocalLength()</h3>
+  <h3 class="member">.getFilmWidth()</h3>
+  <h3 class="member">.getFilmHeight()</h3>
+  <h3 class="member">.getEffectiveFOV()</h3>
+  <p>The vertical FOV after <code>zoom</code> is applied.</p>
+
+  <h3 class="member">.setAspect(aspect)</h3>
+  <p>Sets <code>.aspect</code> and calls <code>updateProjectionMatrix()</code>
+    only if the value actually changed. Convenience the renderer calls on
+    window resize; has no three.js equivalent.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><code>.setAspect(aspect)</code> is a TreeLua-only convenience with
+        no three.js equivalent.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/cameras/PerspectiveCamera.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Cameras</div>
+  <h1 class="title">PerspectiveCamera</h1>
+  <p class="lead">Наследует Camera, наследует её API. Камера с
+    перспективной проекцией, соответствующей реальному объективу.</p>
+  <pre><code>local camera = PerspectiveCamera:new(60, w / h, 0.1, 1000)
+camera.position:set(0, 1.2, 3.5)
+camera:lookAt(0, 1, 0)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">PerspectiveCamera</span>(fov, aspect, near, far)</h3>
+  <p><code>fov</code> по умолчанию <code>50</code> и указывается в
+    <strong>градусах</strong> — единственное место, где правило движка
+    «всюду радианы» намеренно нарушено, чтобы соответствовать каждому
+    примеру three.js. Значение конвертируется в радианы при построении
+    матрицы проекции. <code>aspect</code> по умолчанию <code>1</code>,
+    <code>near</code> — <code>0.1</code>, <code>far</code> — <code>2000</code>.
+    Строит матрицу проекции немедленно.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>fov</code></td><td>number (градусы)</td><td><code>50</code></td><td>Вертикальное поле зрения.</td></tr>
+    <tr><td><code>aspect</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>near</code></td><td>number</td><td><code>0.1</code></td><td></td></tr>
+    <tr><td><code>far</code></td><td>number</td><td><code>2000</code></td><td></td></tr>
+    <tr><td><code>zoom</code></td><td>number</td><td><code>1</code></td><td>Расширяет или сужает вертикальное поле.</td></tr>
+    <tr><td><code>filmGauge</code></td><td>number</td><td><code>35</code></td><td>Используется в <code>getFilmWidth</code>/<code>getFilmHeight</code>.</td></tr>
+    <tr><td><code>filmOffset</code></td><td>number</td><td><code>0</code></td><td>Хранится ради совместимости API.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isPerspectiveCamera()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.updateProjectionMatrix()</h3>
+  <p>Пересчитывает <code>projectionMatrix</code> из <code>fov</code>,
+    <code>aspect</code>, <code>near</code>, <code>far</code> и
+    <code>zoom</code>. Вызывайте после изменения любого из них.</p>
+
+  <h3 class="member">.setFocalLength(focalLength)</h3>
+  <p>Устанавливает <code>.fov</code> в соответствии с фокусным расстоянием
+    реального объектива, с учётом <code>filmGauge</code>. Сохранён,
+    поскольку используется в примерах three.js.</p>
+
+  <h3 class="member">.getFocalLength()</h3>
+  <h3 class="member">.getFilmWidth()</h3>
+  <h3 class="member">.getFilmHeight()</h3>
+  <h3 class="member">.getEffectiveFOV()</h3>
+  <p>Вертикальный FOV после применения <code>zoom</code>.</p>
+
+  <h3 class="member">.setAspect(aspect)</h3>
+  <p>Устанавливает <code>.aspect</code> и вызывает
+    <code>updateProjectionMatrix()</code> только если значение
+    действительно изменилось. Удобный метод, который рендерер вызывает при
+    изменении размера окна; не имеет аналога в three.js.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><code>.setAspect(aspect)</code> — удобный метод, существующий
+        только в TreeLua, без аналога в three.js.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/cameras/PerspectiveCamera.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

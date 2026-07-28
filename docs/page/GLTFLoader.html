@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>GLTFLoader — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="GLTFLoader" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Loaders</div>
+  <h1 class="title">GLTFLoader</h1>
+  <p class="lead">Loads glTF 2.0 / GLB files. Extends <code>Loader</code>.</p>
+
+  <pre><code>local loader = GLTFLoader:new()
+loader:load("assets/model/model3dtest.glb", function(gltf)
+    scene:add(gltf.scene)
+    mixer:clipAction(gltf.animations[1]):play()
+end)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">GLTFLoader</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"GLTFLoader"</code></td><td></td></tr>
+    <tr><td><code>withTextures</code></td><td>boolean</td><td><code>true</code></td><td>Passed to the importer; set with <code>setTextures</code>.</td></tr>
+    <tr><td><code>anisotropy</code></td><td>number</td><td><code>1</code></td><td>Passed to the importer; set with <code>setAnisotropy</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isGLTFLoader()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.setTextures(enabled)</h3>
+  <p>Toggles whether textures are loaded and sampled onto materials.</p>
+
+  <h3 class="member">.setAnisotropy(value)</h3>
+
+  <h3 class="member">.load(url, onLoad, onProgress, onError)</h3>
+  <p>Reads and parses the file synchronously, then returns
+    <code>{ scene, animations, asset, userData }</code>:</p>
+  <table>
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><code>scene</code></td><td>A <code>Group</code> named <code>"gltf"</code> containing the file's meshes (<code>Mesh</code> or <code>SkinnedMesh</code>).</td></tr>
+    <tr><td><code>animations</code></td><td>Array of <code>AnimationClip</code>.</td></tr>
+    <tr><td><code>asset</code></td><td>The glTF file's <code>asset</code> JSON block, if present.</td></tr>
+    <tr><td><code>userData.importer</code></td><td>The raw importer output, for anything the facade does not cover.</td></tr>
+  </table>
+  <p><code>onLoad</code> and <code>onProgress</code> are called immediately
+    (reads are synchronous), and the result is also returned directly, so
+    both the callback and the return-value spelling work. On failure,
+    <code>onError</code> is called if given, otherwise the error propagates.</p>
+
+  <h3 class="member">.loadSync(url)</h3>
+  <p>Equivalent to <code>load(url)</code> with no callbacks — three.js has no
+    synchronous loader, so this spelling exists for callers who want to make
+    that explicit.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Synchronous.</strong> three.js's <code>GLTFLoader</code>
+        fetches over the network and calls back asynchronously; this one
+        reads from disk and calls back (and returns) immediately.</li>
+      <li>Returns a plain <code>{ scene, animations, asset, userData }</code>
+        table rather than three.js's full <code>GLTF</code> result object —
+        no <code>parser</code>, <code>cameras</code> or <code>scenes</code>
+        array.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/loaders/GLTFLoader.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Loaders</div>
+  <h1 class="title">GLTFLoader</h1>
+  <p class="lead">Загружает файлы glTF 2.0 / GLB. Наследуется от <code>Loader</code>.</p>
+
+  <pre><code>local loader = GLTFLoader:new()
+loader:load("assets/model/model3dtest.glb", function(gltf)
+    scene:add(gltf.scene)
+    mixer:clipAction(gltf.animations[1]):play()
+end)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">GLTFLoader</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"GLTFLoader"</code></td><td></td></tr>
+    <tr><td><code>withTextures</code></td><td>boolean</td><td><code>true</code></td><td>Передаётся импортеру; задаётся через <code>setTextures</code>.</td></tr>
+    <tr><td><code>anisotropy</code></td><td>number</td><td><code>1</code></td><td>Передаётся импортеру; задаётся через <code>setAnisotropy</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isGLTFLoader()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.setTextures(enabled)</h3>
+  <p>Переключает, загружаются ли и сэмплируются ли текстуры на материалы.</p>
+
+  <h3 class="member">.setAnisotropy(value)</h3>
+
+  <h3 class="member">.load(url, onLoad, onProgress, onError)</h3>
+  <p>Синхронно читает и парсит файл, затем возвращает
+    <code>{ scene, animations, asset, userData }</code>:</p>
+  <table>
+    <tr><th>Поле</th><th>Описание</th></tr>
+    <tr><td><code>scene</code></td><td><code>Group</code> с именем <code>"gltf"</code>, содержащая меши файла (<code>Mesh</code> или <code>SkinnedMesh</code>).</td></tr>
+    <tr><td><code>animations</code></td><td>Массив <code>AnimationClip</code>.</td></tr>
+    <tr><td><code>asset</code></td><td>Блок JSON <code>asset</code> из файла glTF, если он присутствует.</td></tr>
+    <tr><td><code>userData.importer</code></td><td>Сырой вывод импортера — для всего, что не покрывает фасад.</td></tr>
+  </table>
+  <p><code>onLoad</code> и <code>onProgress</code> вызываются немедленно
+    (чтение синхронное), а результат также возвращается напрямую, так что
+    работают оба варианта — и через колбэк, и через возвращаемое значение.
+    При ошибке вызывается <code>onError</code>, если он задан, иначе ошибка
+    пробрасывается дальше.</p>
+
+  <h3 class="member">.loadSync(url)</h3>
+  <p>Эквивалентно <code>load(url)</code> без колбэков — в three.js нет
+    синхронного загрузчика, поэтому такое написание существует для тех,
+    кто хочет сделать это явным.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Синхронность.</strong> <code>GLTFLoader</code> в three.js
+        загружает данные по сети и вызывает колбэк асинхронно; этот же
+        читает с диска и вызывает колбэк (а также возвращает результат)
+        немедленно.</li>
+      <li>Возвращает простую таблицу <code>{ scene, animations, asset, userData }</code>
+        вместо полного объекта результата <code>GLTF</code> из three.js —
+        нет <code>parser</code>, <code>cameras</code> или массива
+        <code>scenes</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/loaders/GLTFLoader.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Frustum — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Frustum" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Frustum</h1>
+<p class="lead">The six planes bounding a camera's view volume. Planes face inward, so a point inside the frustum has a positive distance to all six, and a single negative distance is enough to reject it.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Frustum( p0, p1, p2, p3, p4, p5 )</h3>
+<p>Six optional Planes (left, right, bottom, top, near, far); any omitted are created as default Planes.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>planes</td><td>table of 6 Planes</td><td>—</td><td>Order: left, right, bottom, top, near, far.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isFrustum()</h3>
+<p>Returns true. Type-check facade.</p>
+
+<h3 class="member">.set( p0, p1, p2, p3, p4, p5 )</h3>
+<p>Sets all six planes by copying. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Frustum with copies of the same six planes.</p>
+
+<h3 class="member">.copy( frustum )</h3>
+<p>Copies frustum's planes into this frustum. Returns self.</p>
+
+<h3 class="member">.setFromProjectionMatrix( m )</h3>
+<p>Extracts the six frustum planes from a view-projection matrix m using the Gribb-Hartmann method, then normalizes each so plane distances are true (not merely proportional) signed distances. Returns self.</p>
+
+<h3 class="member">.containsPoint( point )</h3>
+<p>Returns true if point lies inside the frustum.</p>
+
+<h3 class="member">.intersectsSphere( sphere )</h3>
+<p>Returns true if sphere overlaps the frustum.</p>
+
+<h3 class="member">.intersectsBox( box )</h3>
+<p>Returns true if box overlaps the frustum. Tests only the box corner furthest along each plane's normal — if even that corner is outside, the whole box is.</p>
+
+<h3 class="member">.intersectsObject( object )</h3>
+<p>Returns true if object's bounding sphere, pushed into world space, overlaps the frustum. Returns false if object has no geometry. Errs toward accepting when the geometry has no bounding sphere available, since a false positive only costs a draw call while a false negative pops geometry out of view.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.setFromProjectionMatrix</code> reads matrix rows assuming TreeLua's row-major <code>Matrix4</code> storage (rows at indices 1-4, 5-8, 9-12, 13-16), so the element access differs from three.js's column-major version even though the Gribb-Hartmann derivation is the same.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/frustum.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Frustum</h1>
+<p class="lead">Шесть плоскостей, ограничивающих объём видимости камеры. Плоскости направлены внутрь, поэтому точка внутри фрустума имеет положительное расстояние до всех шести, а одного отрицательного расстояния достаточно, чтобы отбросить точку.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Frustum( p0, p1, p2, p3, p4, p5 )</h3>
+<p>Шесть необязательных Plane (left, right, bottom, top, near, far); любые пропущенные создаются как Plane по умолчанию.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>planes</td><td>таблица из 6 Plane</td><td>—</td><td>Порядок: left, right, bottom, top, near, far.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isFrustum()</h3>
+<p>Возвращает true. Фасад проверки типа.</p>
+
+<h3 class="member">.set( p0, p1, p2, p3, p4, p5 )</h3>
+<p>Устанавливает все шесть плоскостей копированием. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Frustum с копиями тех же шести плоскостей.</p>
+
+<h3 class="member">.copy( frustum )</h3>
+<p>Копирует плоскости из frustum в этот фрустум. Возвращает self.</p>
+
+<h3 class="member">.setFromProjectionMatrix( m )</h3>
+<p>Извлекает шесть плоскостей фрустума из матрицы вида-проекции m методом Гриба-Хартманна, затем нормализует каждую, чтобы расстояния до плоскостей были истинными знаковыми расстояниями (а не просто пропорциональными). Возвращает self.</p>
+
+<h3 class="member">.containsPoint( point )</h3>
+<p>Возвращает true, если point лежит внутри фрустума.</p>
+
+<h3 class="member">.intersectsSphere( sphere )</h3>
+<p>Возвращает true, если sphere пересекается с фрустумом.</p>
+
+<h3 class="member">.intersectsBox( box )</h3>
+<p>Возвращает true, если box пересекается с фрустумом. Проверяется только угол параллелепипеда, наиболее удалённый вдоль нормали каждой плоскости — если даже этот угол снаружи, снаружи весь параллелепипед.</p>
+
+<h3 class="member">.intersectsObject( object )</h3>
+<p>Возвращает true, если ограничивающая сфера object, перенесённая в мировое пространство, пересекается с фрустумом. Возвращает false, если у object нет геометрии. Склоняется в сторону принятия, когда у геометрии нет доступной ограничивающей сферы, поскольку ложное срабатывание стоит лишь один вызов отрисовки, а ложный отказ выталкивает геометрию из поля зрения.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.setFromProjectionMatrix</code> читает строки матрицы, исходя из хранения <code>Matrix4</code> в TreeLua по строкам (строки по индексам 1-4, 5-8, 9-12, 13-16), поэтому доступ к элементам отличается от версии three.js со столбцовым хранением, хотя вывод по методу Гриба-Хартманна тот же.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/frustum.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scene — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Scene" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Scenes</div>
+  <h1 class="title">Scene</h1>
+  <p class="lead">The root of a scene graph. Extends <code>Object3D</code> and
+    inherits its full API, adding the frame-wide settings the renderer reads
+    once per draw: the clear colour and an optional material override.</p>
+  <pre><code>local scene = Scene:new()
+scene.background = Color:new(0x101018)
+scene:add(mesh)
+renderer:render(scene, camera)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Scene</span>()</h3>
+  <p>Creates a new Scene with <code>background = nil</code> and
+    <code>overrideMaterial = nil</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>background</code></td><td>Color</td><td><code>nil</code></td><td><code>nil</code> means "do not clear", matching three.js where a null background leaves whatever was in the buffer.</td></tr>
+    <tr><td><code>overrideMaterial</code></td><td>Material</td><td><code>nil</code></td><td>When set, every mesh draws with this material instead of its own.</td></tr>
+  </table>
+  <p>Otherwise inherits all of <code>Object3D</code>'s properties.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isScene()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.setBackground(value)</h3>
+  <p>Convenience the renderer also accepts directly: pass <code>nil</code> to
+    clear, an existing <code>Color</code> to use as-is, or a hex/name value
+    to wrap in a new <code>Color</code>.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Extends <code>Object3D.copy</code>: clones <code>.background</code> and
+    carries over <code>.overrideMaterial</code> by reference.</p>
+
+  <p>All other methods come from <code>Object3D</code>.</p>
+
+  <p class="source-link">Source: <code>three/scenes/Scene.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Scenes</div>
+  <h1 class="title">Scene</h1>
+  <p class="lead">Корень графа сцены. Наследует <code>Object3D</code> и
+    получает весь его API, добавляя общекадровые настройки, которые
+    рендерер читает один раз на отрисовку: цвет очистки и опциональную
+    подмену материала.</p>
+  <pre><code>local scene = Scene:new()
+scene.background = Color:new(0x101018)
+scene:add(mesh)
+renderer:render(scene, camera)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Scene</span>()</h3>
+  <p>Создаёт новую Scene с <code>background = nil</code> и
+    <code>overrideMaterial = nil</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>background</code></td><td>Color</td><td><code>nil</code></td><td><code>nil</code> означает "не очищать", как и в three.js, где null-фон оставляет в буфере то, что там было.</td></tr>
+    <tr><td><code>overrideMaterial</code></td><td>Material</td><td><code>nil</code></td><td>Если задан, каждый меш рисуется этим материалом вместо своего.</td></tr>
+  </table>
+  <p>В остальном наследует все свойства <code>Object3D</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isScene()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.setBackground(value)</h3>
+  <p>Удобный метод, который рендерер тоже принимает напрямую: передайте
+    <code>nil</code> для очистки, существующий <code>Color</code>, чтобы
+    использовать как есть, или hex/именованное значение, чтобы обернуть
+    в новый <code>Color</code>.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Расширяет <code>Object3D.copy</code>: клонирует
+    <code>.background</code> и переносит <code>.overrideMaterial</code>
+    по ссылке.</p>
+
+  <p>Все остальные методы приходят из <code>Object3D</code>.</p>
+
+  <p class="source-link">Source: <code>three/scenes/Scene.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>InstancedMesh — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="InstancedMesh" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">InstancedMesh</h1>
+  <p class="lead">One geometry drawn at many transforms. Extends
+    <code>Mesh</code> (and through it <code>Object3D</code>) and inherits
+    their APIs. The surface is three.js's, including the 1-based index
+    (three.js counts instances from 0; everything else in this engine counts
+    from 1, and mixing the two conventions inside one library would be worse
+    than the small divergence).</p>
+  <pre><code>local field = InstancedMesh:new(geometry, material, 200)
+local m = Matrix4:new()
+for i = 1, 200 do
+    m:makeTranslation(i % 20, 0, math.floor(i / 20))
+    field:setMatrixAt(i, m)
+end
+scene:add(field)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">InstancedMesh</span>(geometry, material, count)</h3>
+  <p><code>count</code> defaults to <code>0</code>. Allocates
+    <code>count</code> identity matrices up front.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>count</code></td><td>number</td><td><code>0</code></td><td>Number of instances.</td></tr>
+    <tr><td><code>instanceMatrix</code></td><td>table</td><td><code>{}</code></td><td>Array of <code>Matrix4</code>, one per instance (1-based).</td></tr>
+    <tr><td><code>instanceColor</code></td><td>table</td><td><code>nil</code></td><td>Sparse array of <code>Color</code>, created lazily by <code>setColorAt</code>.</td></tr>
+  </table>
+  <p>Also inherits <code>.geometry</code>, <code>.material</code> from
+    <code>Mesh</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isInstancedMesh()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.getMatrixAt(index, target)</h3>
+  <h3 class="member">.setMatrixAt(index, matrix)</h3>
+  <p>No-op if <code>index</code> is out of <code>[1, count]</code>.</p>
+
+  <h3 class="member">.getColorAt(index, target)</h3>
+  <h3 class="member">.setColorAt(index, color)</h3>
+  <p>No-op if <code>index</code> is out of <code>[1, count]</code>. Allocates
+    <code>.instanceColor</code> on first use.</p>
+
+  <h3 class="member">.setCount(count)</h3>
+  <p>Grows or shrinks the instance set. New slots get an identity matrix
+    rather than <code>nil</code>, so the renderer never has to test for a
+    hole.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Extends <code>Mesh.copy</code>; deep-copies <code>instanceMatrix</code>
+    and, if present, <code>instanceColor</code>.</p>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Drops <code>instanceMatrix</code> and <code>instanceColor</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>1-based instance indices</strong>, unlike three.js which
+        counts from 0.</li>
+      <li><strong>Not one draw call for the whole set.</strong> The bundled
+        shader takes a single <code>u_model</code> uniform, so the renderer
+        walks the instances and issues one draw per instance — the saving is
+        in the shared geometry, material and bounds, not in the draw-call
+        count. True GPU instancing (three.js's actual behaviour) would
+        require an instance-attribute shader path this engine doesn't have
+        yet.</li>
+      <li>No <code>instanceMatrix.needsUpdate</code> /
+        <code>instanceColor.needsUpdate</code> dirty flags — there is no GPU
+        buffer to re-upload, so writes take effect immediately.</li>
+      <li>No <code>boundingBox</code>/<code>boundingSphere</code> specific to
+        the instanced set, and no <code>toJSON</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/InstancedMesh.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">InstancedMesh</h1>
+  <p class="lead">Одна геометрия, отрисованная со множеством трансформов.
+    Наследует <code>Mesh</code> (а через него <code>Object3D</code>) и
+    получает их API. Поверхность соответствует three.js, включая индекс
+    с отсчётом от 1 (three.js считает инстансы с 0; всё остальное в этом
+    движке считает с 1, и смешивание двух конвенций внутри одной
+    библиотеки было бы хуже, чем это небольшое расхождение).</p>
+  <pre><code>local field = InstancedMesh:new(geometry, material, 200)
+local m = Matrix4:new()
+for i = 1, 200 do
+    m:makeTranslation(i % 20, 0, math.floor(i / 20))
+    field:setMatrixAt(i, m)
+end
+scene:add(field)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">InstancedMesh</span>(geometry, material, count)</h3>
+  <p><code>count</code> по умолчанию <code>0</code>. Заранее выделяет
+    <code>count</code> единичных матриц.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>count</code></td><td>number</td><td><code>0</code></td><td>Количество инстансов.</td></tr>
+    <tr><td><code>instanceMatrix</code></td><td>table</td><td><code>{}</code></td><td>Массив <code>Matrix4</code>, по одной на инстанс (отсчёт от 1).</td></tr>
+    <tr><td><code>instanceColor</code></td><td>table</td><td><code>nil</code></td><td>Разреженный массив <code>Color</code>, создаётся лениво в <code>setColorAt</code>.</td></tr>
+  </table>
+  <p>Также наследует <code>.geometry</code>, <code>.material</code> от
+    <code>Mesh</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isInstancedMesh()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.getMatrixAt(index, target)</h3>
+  <h3 class="member">.setMatrixAt(index, matrix)</h3>
+  <p>Ничего не делает, если <code>index</code> вне диапазона
+    <code>[1, count]</code>.</p>
+
+  <h3 class="member">.getColorAt(index, target)</h3>
+  <h3 class="member">.setColorAt(index, color)</h3>
+  <p>Ничего не делает, если <code>index</code> вне диапазона
+    <code>[1, count]</code>. Выделяет <code>.instanceColor</code> при
+    первом использовании.</p>
+
+  <h3 class="member">.setCount(count)</h3>
+  <p>Увеличивает или уменьшает набор инстансов. Новые слоты получают
+    единичную матрицу, а не <code>nil</code>, поэтому рендереру никогда
+    не нужно проверять наличие дыры.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Расширяет <code>Mesh.copy</code>; глубоко копирует
+    <code>instanceMatrix</code> и, если есть, <code>instanceColor</code>.</p>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Сбрасывает <code>instanceMatrix</code> и <code>instanceColor</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Индексы инстансов с отсчётом от 1</strong>, в отличие
+        от three.js, где отсчёт от 0.</li>
+      <li><strong>Не один draw call на весь набор.</strong> Встроенный
+        шейдер принимает единственный uniform <code>u_model</code>,
+        поэтому рендерер проходит по инстансам и делает один draw на
+        каждый — выигрыш в общих геометрии, материале и границах, а не в
+        количестве draw call'ов. Настоящий GPU-инстансинг (реальное
+        поведение three.js) потребовал бы шейдерного пути с
+        инстанс-атрибутами, которого в этом движке пока нет.</li>
+      <li>Нет флагов "грязности" <code>instanceMatrix.needsUpdate</code> /
+        <code>instanceColor.needsUpdate</code> — тут нет GPU-буфера,
+        который надо перезагружать, поэтому записи вступают в силу
+        немедленно.</li>
+      <li>Нет специфичных для набора инстансов
+        <code>boundingBox</code>/<code>boundingSphere</code>, и нет
+        <code>toJSON</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/InstancedMesh.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

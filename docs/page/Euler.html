@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Euler — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Euler" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Euler</h1>
+<p class="lead">Three axis angles (in radians) plus the order they are applied in. Exists because <code>object.rotation.x = ...</code>-style edits are more common than building quaternions by hand; internally, nothing consumes an Euler directly — <code>Object3D</code> converts it to a quaternion, which is what the importers, skinning, and <code>Matrix4:compose</code> all speak.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Euler( x, y, z, order )</h3>
+<p>x, y, z default to 0. order defaults to <code>"XYZ"</code> (<code>Euler.DEFAULT_ORDER</code>).</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>order</td><td>string</td><td>"XYZ"</td><td>One of "XYZ", "YXZ", "ZXY", "ZYX", "YZX", "XZY".</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( x, y, z, order )</h3>
+<p>Sets the angles and, optionally, the order. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Euler with the same angles and order.</p>
+
+<h3 class="member">.copy( e )</h3>
+<p>Copies e's angles and order into this Euler. Returns self.</p>
+
+<h3 class="member">.equals( e )</h3>
+<p>Returns true if this Euler and e have identical angles and order.</p>
+
+<h3 class="member">.setFromRotationMatrix( m, order )</h3>
+<p>Extracts angles from a pure rotation matrix m in the given order (defaults to this Euler's current order). Clamps each asin argument to [-1, 1] to avoid NaN from accumulated floating-point drift, and handles gimbal lock by pinning z to 0. Returns self.</p>
+
+<h3 class="member">.setFromQuaternion( q, order )</h3>
+<p>Sets this Euler from quaternion q, by way of <code>Matrix4:makeRotationFromQuaternion</code> and <code>setFromRotationMatrix</code>. Returns self.</p>
+
+<h3 class="member">.setFromVector3( v, order )</h3>
+<p>Sets x, y, z from v's components. Returns self.</p>
+
+<h3 class="member">.reorder( newOrder )</h3>
+<p>Re-derives the angles for newOrder while preserving the same net rotation, by round-tripping through a Quaternion. Returns self.</p>
+
+<h3 class="member">.toArray()</h3>
+<p>Returns <code>{x, y, z, order}</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Sets x, y, z, and (if present) order from array starting at offset. Returns self.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.setFromRotationMatrix</code> reads matrix elements assuming TreeLua's row-major <code>Matrix4</code> storage, so the element indices used differ from three.js's column-major version even though the underlying trigonometry matches.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/euler.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Euler</h1>
+<p class="lead">Три угла поворота вокруг осей (в радианах) плюс порядок, в котором они применяются. Существует потому, что правки вида <code>object.rotation.x = ...</code> встречаются чаще, чем построение кватернионов вручную; внутри движка Euler напрямую не используется — <code>Object3D</code> преобразует его в кватернион, а именно с кватернионами работают импортёры, скиннинг и <code>Matrix4:compose</code>.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Euler( x, y, z, order )</h3>
+<p>x, y, z по умолчанию равны 0. order по умолчанию — <code>"XYZ"</code> (<code>Euler.DEFAULT_ORDER</code>).</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>order</td><td>string</td><td>"XYZ"</td><td>Одно из "XYZ", "YXZ", "ZXY", "ZYX", "YZX", "XZY".</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( x, y, z, order )</h3>
+<p>Устанавливает углы и, опционально, порядок. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Euler с теми же углами и порядком.</p>
+
+<h3 class="member">.copy( e )</h3>
+<p>Копирует углы и порядок из e в этот Euler. Возвращает self.</p>
+
+<h3 class="member">.equals( e )</h3>
+<p>Возвращает true, если этот Euler и e имеют одинаковые углы и порядок.</p>
+
+<h3 class="member">.setFromRotationMatrix( m, order )</h3>
+<p>Извлекает углы из чистой матрицы вращения m в заданном порядке (по умолчанию — текущий порядок этого Euler). Ограничивает каждый аргумент asin диапазоном [-1, 1], чтобы избежать NaN из-за накопленной погрешности с плавающей точкой, и обрабатывает gimbal lock, фиксируя z в 0. Возвращает self.</p>
+
+<h3 class="member">.setFromQuaternion( q, order )</h3>
+<p>Устанавливает этот Euler из кватерниона q через <code>Matrix4:makeRotationFromQuaternion</code> и <code>setFromRotationMatrix</code>. Возвращает self.</p>
+
+<h3 class="member">.setFromVector3( v, order )</h3>
+<p>Устанавливает x, y, z из компонентов v. Возвращает self.</p>
+
+<h3 class="member">.reorder( newOrder )</h3>
+<p>Заново вычисляет углы для newOrder, сохраняя тот же итоговый поворот, проходя через Quaternion туда и обратно. Возвращает self.</p>
+
+<h3 class="member">.toArray()</h3>
+<p>Возвращает <code>{x, y, z, order}</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Устанавливает x, y, z и (если присутствует) order из массива, начиная с offset. Возвращает self.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.setFromRotationMatrix</code> читает элементы матрицы, исходя из построчного (row-major) хранения <code>Matrix4</code> в TreeLua, поэтому используемые индексы элементов отличаются от версии three.js, хранящей матрицу по столбцам (column-major), хотя лежащая в основе тригонометрия совпадает.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/euler.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

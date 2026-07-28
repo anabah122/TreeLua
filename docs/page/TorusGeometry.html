@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>TorusGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="TorusGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">TorusGeometry</h1>
+  <p class="lead">A torus (ring donut) swept from a tube around a circle of
+    the given radius.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">TorusGeometry</span>(radius, tube, radialSegments, tubularSegments, arc)</h3>
+  <p><code>radius</code> defaults to <code>1</code>, <code>tube</code> to
+    <code>0.4</code>. <code>radialSegments</code> defaults to <code>12</code>
+    (minimum <code>3</code>), <code>tubularSegments</code> to <code>48</code>
+    (minimum <code>3</code>). <code>arc</code> defaults to <code>2π</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ radius, tube, radialSegments, tubularSegments, arc }</code> as resolved by the constructor.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>No methods beyond the constructor and what <code>BufferGeometry</code>
+    provides.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Every other primitive in this directory is convex and centred on
+        the origin, so they all rely on <code>three/geometries/build.lua</code>'s
+        centroid-from-origin rule to force outward winding. A torus is
+        <strong>not</strong> convex — that rule would flip the inner wall,
+        whose triangles correctly face toward the ring's axis, away from the
+        origin. TorusGeometry opts out of the convex orientation rule: it
+        passes <code>flat = true</code> to <code>build()</code>, computes its
+        own winding directly in the generator loop, and derives normals from
+        each point's distance to the tube's own centre (not the origin),
+        which is the actual outward direction on a non-convex surface.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/TorusGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">TorusGeometry</h1>
+  <p class="lead">Тор (бублик), выметенный трубкой вокруг окружности
+    заданного радиуса.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">TorusGeometry</span>(radius, tube, radialSegments, tubularSegments, arc)</h3>
+  <p><code>radius</code> по умолчанию <code>1</code>, <code>tube</code> —
+    <code>0.4</code>. <code>radialSegments</code> по умолчанию
+    <code>12</code> (минимум <code>3</code>), <code>tubularSegments</code> —
+    <code>48</code> (минимум <code>3</code>). <code>arc</code> по умолчанию
+    <code>2π</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ radius, tube, radialSegments, tubularSegments, arc }</code>, как разрешено конструктором.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>Нет методов, кроме конструктора и того, что предоставляет
+    <code>BufferGeometry</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Все остальные примитивы в этой директории выпуклы и centered
+        относительно начала координат, поэтому все они полагаются на
+        правило <code>three/geometries/build.lua</code> о центроиде от
+        начала координат, чтобы принудительно задать внешний winding. Тор
+        <strong>не</strong> выпуклый — это правило перевернуло бы
+        внутреннюю стенку, чьи треугольники и так корректно обращены к оси
+        кольца, в сторону от начала координат. TorusGeometry отказывается
+        от правила выпуклой ориентации: передаёт <code>flat = true</code> в
+        <code>build()</code>, вычисляет собственный winding прямо в цикле
+        генератора и выводит нормали из расстояния каждой точки до
+        собственного центра трубки (а не начала координат), что и есть
+        реальное направление наружу на невыпуклой поверхности.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/TorusGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

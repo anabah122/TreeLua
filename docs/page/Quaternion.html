@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quaternion — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Quaternion" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Quaternion</h1>
+<p class="lead">Represents a rotation. Written against the three.js Quaternion API from the start, so every method mutates self and returns it, letting calls chain.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Quaternion( x, y, z, w )</h3>
+<p>Default is the identity rotation <code>(0, 0, 0, 1)</code>.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>w</td><td>number</td><td>1</td><td></td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( x, y, z, w )</h3>
+<p>Sets the four components. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Quaternion with the same components.</p>
+
+<h3 class="member">.copy( q )</h3>
+<p>Copies the components of q into this quaternion. Returns self.</p>
+
+<h3 class="member">.identity()</h3>
+<p>Resets this quaternion to <code>(0, 0, 0, 1)</code>. Returns self.</p>
+
+<h3 class="member">.equals( q )</h3>
+<p>Returns true if this quaternion and q have identical components.</p>
+
+<h3 class="member">.length()</h3>
+<p>Returns the Euclidean length of this quaternion.</p>
+
+<h3 class="member">.lengthSq()</h3>
+<p>Returns the squared length.</p>
+
+<h3 class="member">.normalize()</h3>
+<p>Normalizes this quaternion in place. Resets to identity if length is zero. Returns self.</p>
+
+<h3 class="member">.conjugate()</h3>
+<p>Negates the x, y, z components in place, leaving w unchanged. Returns self.</p>
+
+<h3 class="member">.invert()</h3>
+<p>Inverts this quaternion in place. Implemented as the conjugate, which is exact for the unit quaternions this engine produces.</p>
+
+<h3 class="member">.dot( q )</h3>
+<p>Returns the dot product of this quaternion and q.</p>
+
+<h3 class="member">.setFromAxisAngle( axis, angle )</h3>
+<p>Sets this quaternion to represent a rotation of angle radians about axis. Returns self.</p>
+
+<h3 class="member">.setFromEuler( euler )</h3>
+<p>Sets this quaternion from an Euler. Returns self.</p>
+
+<h3 class="member">.setFromRotationMatrix( m )</h3>
+<p>Extracts the rotation component of matrix m (ignoring scale) into this quaternion. Delegates to <code>Matrix4:decompose</code>. Returns self.</p>
+
+<h3 class="member">.setFromUnitVectors( from, to )</h3>
+<p>Sets this quaternion to the shortest rotation taking unit vector from onto unit vector to. Returns self.</p>
+
+<h3 class="member">.multiplyQuaternions( a, b )</h3>
+<p>Sets this quaternion to a * b. Returns self.</p>
+
+<h3 class="member">.multiply( q )</h3>
+<p>Sets this quaternion to this * q. Returns self.</p>
+
+<h3 class="member">.premultiply( q )</h3>
+<p>Sets this quaternion to q * this. Returns self.</p>
+
+<h3 class="member">.slerp( q, t )</h3>
+<p>Spherically interpolates this quaternion toward q by t, in place. Falls back to a normalized linear interpolation when the two quaternions are nearly parallel. Returns self.</p>
+
+<h3 class="member">.slerpQuaternions( a, b, t )</h3>
+<p>Sets this quaternion to the spherical interpolation of a and b by t. Returns self.</p>
+
+<h3 class="member">.angleTo( q )</h3>
+<p>Returns the angle in radians between this quaternion's rotation and q's.</p>
+
+<h3 class="member">.rotateTowards( q, step )</h3>
+<p>Rotates this quaternion toward q by at most step radians. Returns self.</p>
+
+<h3 class="member">.toArray()</h3>
+<p>Returns <code>{x, y, z, w}</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Sets this quaternion's components from array starting at offset. Returns self.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.setFromEuler</code> fully supports only the <code>XYZ</code> and <code>YXZ</code> orders plus the four other three.js orders (<code>ZXY</code>, <code>ZYX</code>, <code>YZX</code>, <code>XZY</code>) via explicit branches; any unrecognized order falls back to <code>XYZ</code> rather than the three.js behavior of supporting all six unconditionally through a single generic formula.</li>
+<li><code>.invert()</code> is implemented as <code>.conjugate()</code>. This is only exact for unit-length quaternions, which is all this engine constructs — three.js's <code>invert()</code> also conjugates, but documents it as valid generally because three.js normalizes internally where needed.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/quat.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Quaternion</h1>
+<p class="lead">Представляет вращение. С самого начала написан по API Quaternion из three.js, поэтому каждый метод изменяет self и возвращает его, позволяя вызовы в цепочку.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Quaternion( x, y, z, w )</h3>
+<p>По умолчанию — единичное вращение <code>(0, 0, 0, 1)</code>.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td></td></tr>
+<tr><td>w</td><td>number</td><td>1</td><td></td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( x, y, z, w )</h3>
+<p>Устанавливает четыре компонента. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Quaternion с теми же компонентами.</p>
+
+<h3 class="member">.copy( q )</h3>
+<p>Копирует компоненты q в этот кватернион. Возвращает self.</p>
+
+<h3 class="member">.identity()</h3>
+<p>Сбрасывает этот кватернион к <code>(0, 0, 0, 1)</code>. Возвращает self.</p>
+
+<h3 class="member">.equals( q )</h3>
+<p>Возвращает true, если этот кватернион и q имеют идентичные компоненты.</p>
+
+<h3 class="member">.length()</h3>
+<p>Возвращает евклидову длину этого кватерниона.</p>
+
+<h3 class="member">.lengthSq()</h3>
+<p>Возвращает квадрат длины.</p>
+
+<h3 class="member">.normalize()</h3>
+<p>Нормализует этот кватернион на месте. Сбрасывает к единичному, если длина равна нулю. Возвращает self.</p>
+
+<h3 class="member">.conjugate()</h3>
+<p>Меняет знак компонентов x, y, z на месте, оставляя w без изменений. Возвращает self.</p>
+
+<h3 class="member">.invert()</h3>
+<p>Обращает этот кватернион на месте. Реализован через сопряжение, что точно для единичных кватернионов, которые только и производит этот движок.</p>
+
+<h3 class="member">.dot( q )</h3>
+<p>Возвращает скалярное произведение этого кватерниона и q.</p>
+
+<h3 class="member">.setFromAxisAngle( axis, angle )</h3>
+<p>Устанавливает этот кватернион как представление вращения на angle радиан вокруг axis. Возвращает self.</p>
+
+<h3 class="member">.setFromEuler( euler )</h3>
+<p>Устанавливает этот кватернион из Euler. Возвращает self.</p>
+
+<h3 class="member">.setFromRotationMatrix( m )</h3>
+<p>Извлекает компонент вращения матрицы m (игнорируя масштаб) в этот кватернион. Делегирует в <code>Matrix4:decompose</code>. Возвращает self.</p>
+
+<h3 class="member">.setFromUnitVectors( from, to )</h3>
+<p>Устанавливает этот кватернион как кратчайшее вращение, переводящее единичный вектор from в единичный вектор to. Возвращает self.</p>
+
+<h3 class="member">.multiplyQuaternions( a, b )</h3>
+<p>Устанавливает этот кватернион в a * b. Возвращает self.</p>
+
+<h3 class="member">.multiply( q )</h3>
+<p>Устанавливает этот кватернион в this * q. Возвращает self.</p>
+
+<h3 class="member">.premultiply( q )</h3>
+<p>Устанавливает этот кватернион в q * this. Возвращает self.</p>
+
+<h3 class="member">.slerp( q, t )</h3>
+<p>Сферически интерполирует этот кватернион к q по t, на месте. Переходит на нормализованную линейную интерполяцию, когда два кватерниона почти параллельны. Возвращает self.</p>
+
+<h3 class="member">.slerpQuaternions( a, b, t )</h3>
+<p>Устанавливает этот кватернион как сферическую интерполяцию a и b по t. Возвращает self.</p>
+
+<h3 class="member">.angleTo( q )</h3>
+<p>Возвращает угол в радианах между вращением этого кватерниона и вращением q.</p>
+
+<h3 class="member">.rotateTowards( q, step )</h3>
+<p>Поворачивает этот кватернион к q не более чем на step радиан. Возвращает self.</p>
+
+<h3 class="member">.toArray()</h3>
+<p>Возвращает <code>{x, y, z, w}</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Устанавливает компоненты этого кватерниона из array, начиная с offset. Возвращает self.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li><code>.setFromEuler</code> полностью поддерживает порядки <code>XYZ</code> и <code>YXZ</code>, а также четыре остальных порядка three.js (<code>ZXY</code>, <code>ZYX</code>, <code>YZX</code>, <code>XZY</code>) через явные ветки; любой нераспознанный порядок откатывается к <code>XYZ</code>, а не поддерживает все шесть безусловно через единую общую формулу, как в three.js.</li>
+<li><code>.invert()</code> реализован как <code>.conjugate()</code>. Это точно только для кватернионов единичной длины, а движок конструирует только такие — <code>invert()</code> в three.js тоже сопрягает, но документирует это как общий случай, поскольку three.js нормализует внутренне там, где нужно.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/quat.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

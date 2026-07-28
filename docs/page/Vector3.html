@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vector3 — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Vector3" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Vector3</h1>
+<p class="lead">A 3-component vector, used to represent points, directions, and any other triple of numbers in 3D space.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Vector3( x, y, z )</h3>
+<p>x, y, z — the component values. Default 0 for each.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td>The x component.</td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td>The y component.</td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td>The z component.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Vector3 with the same x, y, z values.</p>
+
+<h3 class="member">.copy( v )</h3>
+<p>Copies the values of v into this vector and returns self.</p>
+
+<h3 class="member">.set( x, y, z )</h3>
+<p>Sets the x, y, z components and returns self.</p>
+
+<h3 class="member">.equals( v )</h3>
+<p>Returns true if this vector and v have identical x, y, z components.</p>
+
+<h3 class="member">.length()</h3>
+<p>Returns the Euclidean length of this vector.</p>
+
+<h3 class="member">.lengthSq()</h3>
+<p>Returns the squared length of this vector. Faster than <code>.length()</code> when only comparing magnitudes.</p>
+
+<h3 class="member">.distanceTo( v )</h3>
+<p>Returns the Euclidean distance between this vector and v.</p>
+
+<h3 class="member">.distanceToSquared( v )</h3>
+<p>Returns the squared distance between this vector and v.</p>
+
+<h3 class="member">.dot( v )</h3>
+<p>Returns the dot product of this vector and v.</p>
+
+<h3 class="member">.applyMatrix4( m )</h3>
+<p>Transforms this vector by the 4x4 matrix m (returns a new vector), treating it as a point (applies translation).</p>
+
+<h3 class="member">.applyQuaternion( q )</h3>
+<p>Rotates this vector by quaternion q, returning a new vector.</p>
+
+<h3 class="member">.transformDirection( m )</h3>
+<p>Transforms the direction of this vector by matrix m and normalizes the result, without applying translation. Returns a new vector.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Vector3 exposes two parallel method families instead of three.js's single mutating API. The <strong>immutable</strong> group (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code>, and their scalar variants) always returns a <em>new</em> Vector3 and leaves self untouched. The <strong>mutating, three.js-compatible</strong> group — <code>addV</code>, <code>subV</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — mutates self in place and returns self, matching the behavior of three.js's <code>add</code>/<code>sub</code>/<code>normalize</code>/etc.</li>
+<li>Both groups exist side by side so call sites can opt into whichever style fits: the immutable group avoids aliasing bugs common in hot loops, while the <code>*Self</code> group lets ported three.js code and performance-critical paths mutate without allocating.</li>
+</ul>
+</div>
+
+<h3 class="member">.add( v )</h3>
+<p>Returns a new vector: this + v. Does not modify self.</p>
+
+<h3 class="member">.sub( v )</h3>
+<p>Returns a new vector: this - v. Does not modify self.</p>
+
+<h3 class="member">.mul( v )</h3>
+<p>Returns a new vector: component-wise this * v. Does not modify self.</p>
+
+<h3 class="member">.div( v )</h3>
+<p>Returns a new vector: component-wise this / v. Does not modify self.</p>
+
+<h3 class="member">.addScalar( s )</h3>
+<p>Returns a new vector with s added to each component.</p>
+
+<h3 class="member">.subScalar( s )</h3>
+<p>Returns a new vector with s subtracted from each component.</p>
+
+<h3 class="member">.mulScalar( s )</h3>
+<p>Returns a new vector with each component multiplied by s.</p>
+
+<h3 class="member">.divScalar( s )</h3>
+<p>Returns a new vector with each component divided by s.</p>
+
+<h3 class="member">.negate()</h3>
+<p>Returns a new vector with each component negated.</p>
+
+<h3 class="member">.normalize()</h3>
+<p>Returns a new unit-length vector in the same direction. If length is zero, returns a zero vector.</p>
+
+<h3 class="member">.lerp( v, t )</h3>
+<p>Returns a new vector linearly interpolated between this and v by t.</p>
+
+<h3 class="member">.min( v )</h3>
+<p>Returns a new vector with the component-wise minimum of this and v.</p>
+
+<h3 class="member">.max( v )</h3>
+<p>Returns a new vector with the component-wise maximum of this and v.</p>
+
+<h3 class="member">.clamp( min, max )</h3>
+<p>Returns a new vector with each component clamped between the corresponding components of min and max.</p>
+
+<h3 class="member">.floor()</h3>
+<p>Returns a new vector with each component floored.</p>
+
+<h3 class="member">.ceil()</h3>
+<p>Returns a new vector with each component ceiled.</p>
+
+<h3 class="member">.round()</h3>
+<p>Returns a new vector with each component rounded to the nearest integer.</p>
+
+<h3 class="member">.cross( v )</h3>
+<p>Returns a new vector: the cross product of this and v.</p>
+
+<h3 class="member">.addV( v )</h3>
+<p>Adds v to this vector in place. Returns self.</p>
+
+<h3 class="member">.subV( v )</h3>
+<p>Subtracts v from this vector in place. Returns self.</p>
+
+<h3 class="member">.normalizeSelf()</h3>
+<p>Normalizes this vector in place. Returns self.</p>
+
+<h3 class="member">.lerpSelf( v, t )</h3>
+<p>Linearly interpolates this vector toward v by t, in place. Returns self.</p>
+
+<h3 class="member">.minSelf( v )</h3>
+<p>Sets each component to the minimum of itself and the corresponding component of v, in place. Returns self.</p>
+
+<h3 class="member">.maxSelf( v )</h3>
+<p>Sets each component to the maximum of itself and the corresponding component of v, in place. Returns self.</p>
+
+<h3 class="member">.clampSelf( min, max )</h3>
+<p>Clamps each component between min and max, in place. Returns self.</p>
+
+<h3 class="member">.floorSelf()</h3>
+<p>Floors each component in place. Returns self.</p>
+
+<h3 class="member">.ceilSelf()</h3>
+<p>Ceils each component in place. Returns self.</p>
+
+<h3 class="member">.roundSelf()</h3>
+<p>Rounds each component in place. Returns self.</p>
+
+<p class="source-link">Source: <code>math/vec3.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Vector3</h1>
+<p class="lead">Трёхкомпонентный вектор, используется для представления точек, направлений и любых других троек чисел в 3D-пространстве.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Vector3( x, y, z )</h3>
+<p>x, y, z — значения компонентов. По умолчанию 0 для каждого.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>x</td><td>number</td><td>0</td><td>Компонент x.</td></tr>
+<tr><td>y</td><td>number</td><td>0</td><td>Компонент y.</td></tr>
+<tr><td>z</td><td>number</td><td>0</td><td>Компонент z.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новый Vector3 с теми же значениями x, y, z.</p>
+
+<h3 class="member">.copy( v )</h3>
+<p>Копирует значения v в этот вектор и возвращает self.</p>
+
+<h3 class="member">.set( x, y, z )</h3>
+<p>Устанавливает компоненты x, y, z и возвращает self.</p>
+
+<h3 class="member">.equals( v )</h3>
+<p>Возвращает true, если этот вектор и v имеют идентичные компоненты x, y, z.</p>
+
+<h3 class="member">.length()</h3>
+<p>Возвращает евклидову длину этого вектора.</p>
+
+<h3 class="member">.lengthSq()</h3>
+<p>Возвращает квадрат длины этого вектора. Быстрее, чем <code>.length()</code>, когда сравниваются только величины.</p>
+
+<h3 class="member">.distanceTo( v )</h3>
+<p>Возвращает евклидово расстояние между этим вектором и v.</p>
+
+<h3 class="member">.distanceToSquared( v )</h3>
+<p>Возвращает квадрат расстояния между этим вектором и v.</p>
+
+<h3 class="member">.dot( v )</h3>
+<p>Возвращает скалярное произведение этого вектора и v.</p>
+
+<h3 class="member">.applyMatrix4( m )</h3>
+<p>Преобразует этот вектор матрицей 4x4 m (возвращает новый вектор), рассматривая его как точку (применяется трансляция).</p>
+
+<h3 class="member">.applyQuaternion( q )</h3>
+<p>Поворачивает этот вектор кватернионом q, возвращая новый вектор.</p>
+
+<h3 class="member">.transformDirection( m )</h3>
+<p>Преобразует направление этого вектора матрицей m и нормализует результат, без применения трансляции. Возвращает новый вектор.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Vector3 предоставляет два параллельных семейства методов вместо единого мутирующего API three.js. <strong>Иммутабельная</strong> группа (<code>add</code>, <code>sub</code>, <code>mul</code>, <code>div</code>, <code>normalize</code>, <code>lerp</code>, <code>min</code>, <code>max</code>, <code>clamp</code>, <code>floor</code>, <code>ceil</code>, <code>round</code> и их скалярные варианты) всегда возвращает <em>новый</em> Vector3 и не трогает self. <strong>Мутирующая, совместимая с three.js</strong> группа — <code>addV</code>, <code>subV</code>, <code>normalizeSelf</code>, <code>lerpSelf</code>, <code>minSelf</code>, <code>maxSelf</code>, <code>clampSelf</code>, <code>floorSelf</code>, <code>ceilSelf</code>, <code>roundSelf</code> — изменяет self на месте и возвращает self, соответствуя поведению <code>add</code>/<code>sub</code>/<code>normalize</code>/и т.д. в three.js.</li>
+<li>Обе группы существуют параллельно, чтобы места вызова могли выбрать подходящий стиль: иммутабельная группа избегает багов алиасинга, частых в горячих циклах, а группа <code>*Self</code> позволяет портированному коду three.js и критичным к производительности участкам мутировать без аллокаций.</li>
+</ul>
+</div>
+
+<h3 class="member">.add( v )</h3>
+<p>Возвращает новый вектор: this + v. Не изменяет self.</p>
+
+<h3 class="member">.sub( v )</h3>
+<p>Возвращает новый вектор: this - v. Не изменяет self.</p>
+
+<h3 class="member">.mul( v )</h3>
+<p>Возвращает новый вектор: покомпонентное this * v. Не изменяет self.</p>
+
+<h3 class="member">.div( v )</h3>
+<p>Возвращает новый вектор: покомпонентное this / v. Не изменяет self.</p>
+
+<h3 class="member">.addScalar( s )</h3>
+<p>Возвращает новый вектор с s, добавленным к каждому компоненту.</p>
+
+<h3 class="member">.subScalar( s )</h3>
+<p>Возвращает новый вектор с s, вычтенным из каждого компонента.</p>
+
+<h3 class="member">.mulScalar( s )</h3>
+<p>Возвращает новый вектор с каждым компонентом, умноженным на s.</p>
+
+<h3 class="member">.divScalar( s )</h3>
+<p>Возвращает новый вектор с каждым компонентом, делённым на s.</p>
+
+<h3 class="member">.negate()</h3>
+<p>Возвращает новый вектор с каждым компонентом, взятым с обратным знаком.</p>
+
+<h3 class="member">.normalize()</h3>
+<p>Возвращает новый вектор единичной длины в том же направлении. Если длина равна нулю, возвращает нулевой вектор.</p>
+
+<h3 class="member">.lerp( v, t )</h3>
+<p>Возвращает новый вектор, линейно интерполированный между this и v по t.</p>
+
+<h3 class="member">.min( v )</h3>
+<p>Возвращает новый вектор с покомпонентным минимумом this и v.</p>
+
+<h3 class="member">.max( v )</h3>
+<p>Возвращает новый вектор с покомпонентным максимумом this и v.</p>
+
+<h3 class="member">.clamp( min, max )</h3>
+<p>Возвращает новый вектор с каждым компонентом, ограниченным между соответствующими компонентами min и max.</p>
+
+<h3 class="member">.floor()</h3>
+<p>Возвращает новый вектор с каждым компонентом, округлённым вниз.</p>
+
+<h3 class="member">.ceil()</h3>
+<p>Возвращает новый вектор с каждым компонентом, округлённым вверх.</p>
+
+<h3 class="member">.round()</h3>
+<p>Возвращает новый вектор с каждым компонентом, округлённым до ближайшего целого.</p>
+
+<h3 class="member">.cross( v )</h3>
+<p>Возвращает новый вектор: векторное произведение this и v.</p>
+
+<h3 class="member">.addV( v )</h3>
+<p>Прибавляет v к этому вектору на месте. Возвращает self.</p>
+
+<h3 class="member">.subV( v )</h3>
+<p>Вычитает v из этого вектора на месте. Возвращает self.</p>
+
+<h3 class="member">.normalizeSelf()</h3>
+<p>Нормализует этот вектор на месте. Возвращает self.</p>
+
+<h3 class="member">.lerpSelf( v, t )</h3>
+<p>Линейно интерполирует этот вектор к v по t, на месте. Возвращает self.</p>
+
+<h3 class="member">.minSelf( v )</h3>
+<p>Устанавливает каждый компонент в минимум себя и соответствующего компонента v, на месте. Возвращает self.</p>
+
+<h3 class="member">.maxSelf( v )</h3>
+<p>Устанавливает каждый компонент в максимум себя и соответствующего компонента v, на месте. Возвращает self.</p>
+
+<h3 class="member">.clampSelf( min, max )</h3>
+<p>Ограничивает каждый компонент между min и max, на месте. Возвращает self.</p>
+
+<h3 class="member">.floorSelf()</h3>
+<p>Округляет вниз каждый компонент на месте. Возвращает self.</p>
+
+<h3 class="member">.ceilSelf()</h3>
+<p>Округляет вверх каждый компонент на месте. Возвращает self.</p>
+
+<h3 class="member">.roundSelf()</h3>
+<p>Округляет каждый компонент на месте. Возвращает self.</p>
+
+<p class="source-link">Source: <code>math/vec3.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

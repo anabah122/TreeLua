@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>OrbitControls — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="OrbitControls" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Controls</p>
+<h1 class="title">OrbitControls</h1>
+<p class="lead">Orbits, dollies and pans a camera around a <code>target</code> point, with the same mouse bindings as three.js's <code>OrbitControls</code>: left-drag orbits, right-drag pans, the wheel dollies. Unlike <a href="FlyControls.html">FlyControls</a>, this controller owns the camera's position outright — it derives it from <code>target</code> plus a spherical offset every update, so writing <code>camera.position</code> directly is overwritten on the next frame. Move <code>target</code> instead.</p>
+
+<h2>Constructor</h2>
+<p><code>OrbitControls.new(camera, params)</code></p>
+<p>Seeds its spherical coordinates (<code>radius</code>/<code>theta</code>/<code>phi</code>) from wherever the camera already sits relative to <code>target</code>, so construction doesn't teleport it. <code>params</code> is an optional table overriding any of the properties below. Calls <code>update(0)</code> once before returning.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>object</td><td>Camera</td><td>—</td><td>The camera being controlled.</td></tr>
+<tr><td>enabled</td><td>boolean</td><td>true</td><td>When false, all input methods are no-ops.</td></tr>
+<tr><td>target</td><td>Vector3</td><td>(0,0,0)</td><td>Point the camera orbits around and looks at.</td></tr>
+<tr><td>minDistance / maxDistance</td><td>number</td><td>0.1 / ∞</td><td>Clamp range for <code>radius</code>.</td></tr>
+<tr><td>minPolarAngle / maxPolarAngle</td><td>number</td><td>~0 / ~π</td><td>Clamp range for <code>phi</code>, kept just short of the poles where azimuth loses meaning.</td></tr>
+<tr><td>enableRotate / enableZoom / enablePan</td><td>boolean</td><td>true</td><td>Toggle each interaction independently.</td></tr>
+<tr><td>rotateSpeed</td><td>number</td><td>0.005</td><td>Radians of orbit per pixel of drag.</td></tr>
+<tr><td>zoomSpeed</td><td>number</td><td>1.1</td><td>Multiplicative factor applied to <code>radius</code> per wheel step.</td></tr>
+<tr><td>panSpeed</td><td>number</td><td>0.002</td><td>Pan distance per pixel of drag, scaled by <code>radius</code>.</td></tr>
+<tr><td>enableDamping</td><td>boolean</td><td>false</td><td>When true, <code>theta</code>/<code>phi</code>/<code>radius</code> ease toward their target values instead of snapping.</td></tr>
+<tr><td>dampingFactor</td><td>number</td><td>0.08</td><td>Fraction of the remaining gap closed per second (frame-rate independent) when damping.</td></tr>
+<tr><td>radius / theta / phi</td><td>number</td><td>derived</td><td>Current spherical coordinates of the camera relative to <code>target</code>.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:update(dt)</h3>
+<p>Eases (if <code>enableDamping</code>) or snaps the current spherical coordinates toward their targets, then repositions the camera from <code>target</code> + the spherical offset and calls <code>lookAt(target)</code>. Takes a <code>dt</code>, unlike three.js's version, specifically to drive the damping.</p>
+
+<h3 class="member">:mousepressed(x, y, button)</h3>
+<p>Records the drag mode: left button (1) starts rotate, right button (2) starts pan.</p>
+
+<h3 class="member">:mousereleased(x, y, button)</h3>
+<p>Clears the current drag mode.</p>
+
+<h3 class="member">:mousemoved(x, y, dx, dy)</h3>
+<p>Applies the drag delta according to the current mode (falling back to reading <code>love.mouse.isDown</code> live if <code>mousepressed</code> was never forwarded): rotate adjusts <code>theta</code>/<code>phi</code>, pan shifts <code>target</code> along the camera's right/up basis scaled by distance.</p>
+
+<h3 class="member">:wheelmoved(dy)</h3>
+<p>Scales the target radius by <code>zoomSpeed</code> or its inverse depending on scroll direction, then clamps it.</p>
+
+<h3 class="member">:saveState()</h3>
+<p>Snapshots <code>target</code>, <code>theta</code>, <code>phi</code> and <code>radius</code> for later restoration.</p>
+
+<h3 class="member">:reset()</h3>
+<p>Restores the state captured by <code>saveState</code>, or does nothing if none was saved.</p>
+
+<h3 class="member">:dispose()</h3>
+<p>Disables the controls and clears any in-progress drag.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>No DOM element to attach to — the host application must forward LÖVE's <code>mousepressed</code>/<code>mousereleased</code>/<code>mousemoved</code>/<code>wheelmoved</code> callbacks explicitly.</li>
+<li><code>update(dt)</code> takes a delta-time argument, which three.js's version does not; it exists to drive frame-rate-independent damping.</li>
+<li>No keyboard pan, touch gestures, auto-rotate, or screen-space-panning toggle.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/controls/OrbitControls.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Controls</p>
+<h1 class="title">OrbitControls</h1>
+<p class="lead">Вращает (orbit), приближает (dolly) и панорамирует камеру вокруг точки <code>target</code>, с теми же привязками мыши, что и <code>OrbitControls</code> в three.js: перетаскивание левой кнопкой вращает, правой — панорамирует, колесо приближает. В отличие от <a href="FlyControls.html">FlyControls</a>, этот контроллер полностью владеет позицией камеры — он вычисляет её из <code>target</code> плюс сферическое смещение на каждом обновлении, так что прямая запись в <code>camera.position</code> будет перезаписана на следующем кадре. Вместо этого перемещайте <code>target</code>.</p>
+
+<h2>Constructor</h2>
+<p><code>OrbitControls.new(camera, params)</code></p>
+<p>Инициализирует свои сферические координаты (<code>radius</code>/<code>theta</code>/<code>phi</code>) исходя из текущего положения камеры относительно <code>target</code>, так что создание контроллера не телепортирует камеру. <code>params</code> — необязательная таблица, переопределяющая любое из свойств ниже. Перед возвратом один раз вызывает <code>update(0)</code>.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>object</td><td>Camera</td><td>—</td><td>Управляемая камера.</td></tr>
+<tr><td>enabled</td><td>boolean</td><td>true</td><td>Если false, все методы ввода ничего не делают.</td></tr>
+<tr><td>target</td><td>Vector3</td><td>(0,0,0)</td><td>Точка, вокруг которой камера вращается и на которую смотрит.</td></tr>
+<tr><td>minDistance / maxDistance</td><td>number</td><td>0.1 / ∞</td><td>Диапазон ограничения для <code>radius</code>.</td></tr>
+<tr><td>minPolarAngle / maxPolarAngle</td><td>number</td><td>~0 / ~π</td><td>Диапазон ограничения для <code>phi</code>, удерживается чуть меньше полюсов, где азимут теряет смысл.</td></tr>
+<tr><td>enableRotate / enableZoom / enablePan</td><td>boolean</td><td>true</td><td>Включает/выключает каждое взаимодействие независимо.</td></tr>
+<tr><td>rotateSpeed</td><td>number</td><td>0.005</td><td>Радиан вращения на пиксель перетаскивания.</td></tr>
+<tr><td>zoomSpeed</td><td>number</td><td>1.1</td><td>Мультипликативный коэффициент, применяемый к <code>radius</code> на шаг колеса.</td></tr>
+<tr><td>panSpeed</td><td>number</td><td>0.002</td><td>Дистанция панорамирования на пиксель перетаскивания, масштабируется <code>radius</code>.</td></tr>
+<tr><td>enableDamping</td><td>boolean</td><td>false</td><td>Если true, <code>theta</code>/<code>phi</code>/<code>radius</code> плавно стремятся к целевым значениям вместо мгновенного скачка.</td></tr>
+<tr><td>dampingFactor</td><td>number</td><td>0.08</td><td>Доля оставшегося расстояния, преодолеваемая за секунду (не зависит от частоты кадров) при демпфировании.</td></tr>
+<tr><td>radius / theta / phi</td><td>number</td><td>derived</td><td>Текущие сферические координаты камеры относительно <code>target</code>.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:update(dt)</h3>
+<p>Плавно приближает (если <code>enableDamping</code>) или мгновенно устанавливает текущие сферические координаты к целевым, затем перепозиционирует камеру от <code>target</code> плюс сферическое смещение и вызывает <code>lookAt(target)</code>. В отличие от версии three.js, принимает <code>dt</code>, специально для управления демпфированием.</p>
+
+<h3 class="member">:mousepressed(x, y, button)</h3>
+<p>Запоминает режим перетаскивания: левая кнопка (1) начинает вращение, правая (2) — панорамирование.</p>
+
+<h3 class="member">:mousereleased(x, y, button)</h3>
+<p>Сбрасывает текущий режим перетаскивания.</p>
+
+<h3 class="member">:mousemoved(x, y, dx, dy)</h3>
+<p>Применяет дельту перетаскивания согласно текущему режиму (при отсутствии переданного <code>mousepressed</code> читает <code>love.mouse.isDown</code> напрямую в реальном времени): вращение изменяет <code>theta</code>/<code>phi</code>, панорамирование сдвигает <code>target</code> вдоль базиса right/up камеры, масштабированного расстоянием.</p>
+
+<h3 class="member">:wheelmoved(dy)</h3>
+<p>Масштабирует целевой radius на <code>zoomSpeed</code> или обратную величину в зависимости от направления прокрутки, затем ограничивает его.</p>
+
+<h3 class="member">:saveState()</h3>
+<p>Сохраняет снимок <code>target</code>, <code>theta</code>, <code>phi</code> и <code>radius</code> для последующего восстановления.</p>
+
+<h3 class="member">:reset()</h3>
+<p>Восстанавливает состояние, сохранённое через <code>saveState</code>, либо ничего не делает, если ничего не было сохранено.</p>
+
+<h3 class="member">:dispose()</h3>
+<p>Отключает контроллер и очищает любое незавершённое перетаскивание.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Нет DOM-элемента для подключения — хост-приложение должно явно пересылать колбэки LÖVE <code>mousepressed</code>/<code>mousereleased</code>/<code>mousemoved</code>/<code>wheelmoved</code>.</li>
+<li><code>update(dt)</code> принимает аргумент delta-времени, чего нет в версии three.js; это нужно для демпфирования, не зависящего от частоты кадров.</li>
+<li>Нет панорамирования клавиатурой, сенсорных жестов, авто-вращения или переключателя screen-space-panning.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/controls/OrbitControls.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

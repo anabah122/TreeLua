@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Object3D — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Object3D" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">Object3D</h1>
+  <p class="lead">Base class for objects in the scene graph. Holds a
+    transform (position / quaternion / scale, kept in sync with
+    <code>.rotation</code>), parent/child links, and the machinery that
+    bakes the transform into <code>matrix</code> and <code>matrixWorld</code>.
+    <code>Group</code>, <code>Mesh</code>, <code>Scene</code> and the
+    cameras all extend it.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Object3D</span>()</h3>
+  <p>Creates a new Object3D. Assigns an incrementing <code>id</code> and a
+    <code>uuid</code> string (<code>"obj-&lt;id&gt;"</code>).</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>id</code></td><td>number</td><td>—</td><td>Unique, auto-incrementing.</td></tr>
+    <tr><td><code>uuid</code></td><td>string</td><td>—</td><td><code>"obj-&lt;id&gt;"</code>, not a real UUID.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td>Optional free-form name.</td></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Object3D"</code></td><td>Set by <code>extend()</code> for subclasses.</td></tr>
+    <tr><td><code>parent</code></td><td>Object3D</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>children</code></td><td>table</td><td><code>{}</code></td><td>Array of child objects.</td></tr>
+    <tr><td><code>up</code></td><td>Vector3</td><td><code>(0,1,0)</code></td><td>Used by <code>lookAt</code>.</td></tr>
+    <tr><td><code>position</code></td><td>Vector3</td><td><code>(0,0,0)</code></td><td></td></tr>
+    <tr><td><code>quaternion</code></td><td>Quaternion</td><td>identity</td><td>Authoritative rotation; see below.</td></tr>
+    <tr><td><code>scale</code></td><td>Vector3</td><td><code>(1,1,1)</code></td><td></td></tr>
+    <tr><td><code>rotation</code></td><td>Euler</td><td><code>(0,0,0,"XYZ")</code></td><td>Reconciled with <code>.quaternion</code> at <code>updateMatrix()</code> time — see <em>Differences</em>.</td></tr>
+    <tr><td><code>matrix</code></td><td>Matrix4</td><td>identity</td><td>Local transform.</td></tr>
+    <tr><td><code>matrixWorld</code></td><td>Matrix4</td><td>identity</td><td>World transform.</td></tr>
+    <tr><td><code>matrixAutoUpdate</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>visible</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>castShadow</code> / <code>receiveShadow</code></td><td>boolean</td><td><code>false</code></td><td>Stored, not consumed by the renderer.</td></tr>
+    <tr><td><code>frustumCulled</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>renderOrder</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>userData</code></td><td>table</td><td><code>{}</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isObject3D()</h3>
+  <p>Returns <code>true</code>. Type-check facade over three.js's
+    <code>.isObject3D</code> flag.</p>
+
+  <h3 class="member">.add(...)</h3>
+  <p>Adds one or more children. Re-parents rather than duplicating: if a
+    child already has a parent, it is removed from it first.</p>
+
+  <h3 class="member">.remove(...)</h3>
+  <p>Removes one or more children.</p>
+
+  <h3 class="member">.removeFromParent()</h3>
+
+  <h3 class="member">.clear()</h3>
+  <p>Removes all children.</p>
+
+  <h3 class="member">.attach(child)</h3>
+  <p>Re-parents <code>child</code> while preserving its absolute (world)
+    transform.</p>
+
+  <h3 class="member">.getObjectById(id)</h3>
+  <h3 class="member">.getObjectByName(name)</h3>
+  <h3 class="member">.getObjectByProperty(key, value)</h3>
+  <h3 class="member">.getObjectsByProperty(key, value, out)</h3>
+
+  <h3 class="member">.traverse(callback)</h3>
+  <p>Depth-first, includes <code>self</code>.</p>
+
+  <h3 class="member">.traverseVisible(callback)</h3>
+  <p>Like <code>traverse</code> but stops descending into a subtree once
+    <code>visible == false</code>.</p>
+
+  <h3 class="member">.traverseAncestors(callback)</h3>
+
+  <h3 class="member">.updateMatrix()</h3>
+  <p>Reconciles <code>.rotation</code>/<code>.quaternion</code>, then
+    composes <code>position</code>/<code>quaternion</code>/<code>scale</code>
+    into <code>matrix</code>.</p>
+
+  <h3 class="member">.updateMatrixWorld(force)</h3>
+  <h3 class="member">.updateWorldMatrix(updateParents, updateChildren)</h3>
+
+  <h3 class="member">.applyMatrix4(m)</h3>
+  <h3 class="member">.applyQuaternion(q)</h3>
+  <h3 class="member">.setRotationFromAxisAngle(axis, angle)</h3>
+  <h3 class="member">.setRotationFromEuler(euler)</h3>
+  <h3 class="member">.setRotationFromMatrix(m)</h3>
+  <h3 class="member">.setRotationFromQuaternion(q)</h3>
+  <h3 class="member">.rotateOnAxis(axis, angle)</h3>
+  <h3 class="member">.rotateOnWorldAxis(axis, angle)</h3>
+  <h3 class="member">.rotateX(angle) / .rotateY(angle) / .rotateZ(angle)</h3>
+  <h3 class="member">.translateOnAxis(axis, distance)</h3>
+  <h3 class="member">.translateX(d) / .translateY(d) / .translateZ(d)</h3>
+  <h3 class="member">.localToWorld(v)</h3>
+  <h3 class="member">.worldToLocal(v)</h3>
+
+  <h3 class="member">.lookAt(x, y, z)</h3>
+  <p>Also accepts a single vector-like table:
+    <code>lookAt(target)</code>. Points the object's <code>-Z</code> at
+    the target, three.js's mesh convention. Cameras override this since
+    their eye/target roles swap.</p>
+
+  <h3 class="member">.getWorldPosition(target)</h3>
+  <h3 class="member">.getWorldQuaternion(target)</h3>
+  <h3 class="member">.getWorldScale(target)</h3>
+  <h3 class="member">.getWorldDirection(target)</h3>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <h3 class="member">.clone(recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>No property setters.</strong> three.js keeps
+        <code>.rotation</code> and <code>.quaternion</code> in lockstep
+        through JS property setters fired on every write. Lua has no such
+        hook, so instead the engine reconciles them lazily in
+        <code>updateMatrix()</code>: whichever of the two was written since
+        the last sync wins (the euler wins if both changed). This means a
+        raw write to <code>.rotation.x</code> is not reflected in
+        <code>.quaternion</code> until the next matrix update — call
+        <code>:updateMatrix()</code> directly if you need it sooner.</li>
+      <li><strong>extend(typeName)</strong> is TreeLua's subclassing hook
+        (used by <code>Group</code>, <code>Mesh</code>, <code>Scene</code>,
+        the cameras) and has no three.js equivalent.</li>
+      <li><code>castShadow</code>/<code>receiveShadow</code> are stored for
+        API compatibility but not read by <code>WebGLRenderer</code> — there
+        is no shadow mapping.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/core/Object3D.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Core</div>
+  <h1 class="title">Object3D</h1>
+  <p class="lead">Базовый класс для объектов сцены. Хранит трансформ
+    (position / quaternion / scale, синхронизируется с
+    <code>.rotation</code>), связи parent/child и механизм, который
+    запекает трансформ в <code>matrix</code> и <code>matrixWorld</code>.
+    <code>Group</code>, <code>Mesh</code>, <code>Scene</code> и камеры —
+    все наследуются от него.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Object3D</span>()</h3>
+  <p>Создаёт новый Object3D. Присваивает инкрементный <code>id</code> и
+    строку <code>uuid</code> (<code>"obj-&lt;id&gt;"</code>).</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>id</code></td><td>number</td><td>—</td><td>Уникальный, инкрементный.</td></tr>
+    <tr><td><code>uuid</code></td><td>string</td><td>—</td><td><code>"obj-&lt;id&gt;"</code>, не настоящий UUID.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td>Произвольное имя.</td></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Object3D"</code></td><td>Устанавливается <code>extend()</code> для подклассов.</td></tr>
+    <tr><td><code>parent</code></td><td>Object3D</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>children</code></td><td>table</td><td><code>{}</code></td><td>Массив дочерних объектов.</td></tr>
+    <tr><td><code>up</code></td><td>Vector3</td><td><code>(0,1,0)</code></td><td>Используется в <code>lookAt</code>.</td></tr>
+    <tr><td><code>position</code></td><td>Vector3</td><td><code>(0,0,0)</code></td><td></td></tr>
+    <tr><td><code>quaternion</code></td><td>Quaternion</td><td>identity</td><td>Главный источник вращения; см. ниже.</td></tr>
+    <tr><td><code>scale</code></td><td>Vector3</td><td><code>(1,1,1)</code></td><td></td></tr>
+    <tr><td><code>rotation</code></td><td>Euler</td><td><code>(0,0,0,"XYZ")</code></td><td>Синхронизируется с <code>.quaternion</code> во время <code>updateMatrix()</code> — см. <em>Differences</em>.</td></tr>
+    <tr><td><code>matrix</code></td><td>Matrix4</td><td>identity</td><td>Локальный трансформ.</td></tr>
+    <tr><td><code>matrixWorld</code></td><td>Matrix4</td><td>identity</td><td>Мировой трансформ.</td></tr>
+    <tr><td><code>matrixAutoUpdate</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>visible</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>castShadow</code> / <code>receiveShadow</code></td><td>boolean</td><td><code>false</code></td><td>Хранятся, но не используются рендерером.</td></tr>
+    <tr><td><code>frustumCulled</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>renderOrder</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>userData</code></td><td>table</td><td><code>{}</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isObject3D()</h3>
+  <p>Возвращает <code>true</code>. Фасад проверки типа поверх флага
+    three.js <code>.isObject3D</code>.</p>
+
+  <h3 class="member">.add(...)</h3>
+  <p>Добавляет одного или нескольких детей. Перепривязывает, а не
+    дублирует: если у ребёнка уже есть родитель, сначала он оттуда
+    удаляется.</p>
+
+  <h3 class="member">.remove(...)</h3>
+  <p>Удаляет одного или нескольких детей.</p>
+
+  <h3 class="member">.removeFromParent()</h3>
+
+  <h3 class="member">.clear()</h3>
+  <p>Удаляет всех детей.</p>
+
+  <h3 class="member">.attach(child)</h3>
+  <p>Перепривязывает <code>child</code>, сохраняя его абсолютный
+    (мировой) трансформ.</p>
+
+  <h3 class="member">.getObjectById(id)</h3>
+  <h3 class="member">.getObjectByName(name)</h3>
+  <h3 class="member">.getObjectByProperty(key, value)</h3>
+  <h3 class="member">.getObjectsByProperty(key, value, out)</h3>
+
+  <h3 class="member">.traverse(callback)</h3>
+  <p>Обход в глубину, включая <code>self</code>.</p>
+
+  <h3 class="member">.traverseVisible(callback)</h3>
+  <p>Как <code>traverse</code>, но прекращает спуск в поддерево, как
+    только <code>visible == false</code>.</p>
+
+  <h3 class="member">.traverseAncestors(callback)</h3>
+
+  <h3 class="member">.updateMatrix()</h3>
+  <p>Синхронизирует <code>.rotation</code>/<code>.quaternion</code>,
+    затем собирает <code>position</code>/<code>quaternion</code>/<code>scale</code>
+    в <code>matrix</code>.</p>
+
+  <h3 class="member">.updateMatrixWorld(force)</h3>
+  <h3 class="member">.updateWorldMatrix(updateParents, updateChildren)</h3>
+
+  <h3 class="member">.applyMatrix4(m)</h3>
+  <h3 class="member">.applyQuaternion(q)</h3>
+  <h3 class="member">.setRotationFromAxisAngle(axis, angle)</h3>
+  <h3 class="member">.setRotationFromEuler(euler)</h3>
+  <h3 class="member">.setRotationFromMatrix(m)</h3>
+  <h3 class="member">.setRotationFromQuaternion(q)</h3>
+  <h3 class="member">.rotateOnAxis(axis, angle)</h3>
+  <h3 class="member">.rotateOnWorldAxis(axis, angle)</h3>
+  <h3 class="member">.rotateX(angle) / .rotateY(angle) / .rotateZ(angle)</h3>
+  <h3 class="member">.translateOnAxis(axis, distance)</h3>
+  <h3 class="member">.translateX(d) / .translateY(d) / .translateZ(d)</h3>
+  <h3 class="member">.localToWorld(v)</h3>
+  <h3 class="member">.worldToLocal(v)</h3>
+
+  <h3 class="member">.lookAt(x, y, z)</h3>
+  <p>Также принимает одну таблицу вида вектора:
+    <code>lookAt(target)</code>. Направляет <code>-Z</code> объекта на
+    цель — конвенция three.js для мешей. Камеры переопределяют это, так
+    как у них местами меняются eye и target.</p>
+
+  <h3 class="member">.getWorldPosition(target)</h3>
+  <h3 class="member">.getWorldQuaternion(target)</h3>
+  <h3 class="member">.getWorldScale(target)</h3>
+  <h3 class="member">.getWorldDirection(target)</h3>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <h3 class="member">.clone(recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Нет property-сеттеров.</strong> three.js держит
+        <code>.rotation</code> и <code>.quaternion</code> синхронными
+        через JS property-сеттеры, срабатывающие на каждую запись. В Lua
+        такого хука нет, поэтому движок сверяет их лениво в
+        <code>updateMatrix()</code>: побеждает то поле, что было изменено
+        с последней синхронизации (при изменении обоих — побеждает
+        euler). Это значит, что сырая запись в <code>.rotation.x</code>
+        не отражается в <code>.quaternion</code> до следующего
+        обновления матрицы — вызовите <code>:updateMatrix()</code>
+        напрямую, если нужно раньше.</li>
+      <li><strong>extend(typeName)</strong> — хук наследования TreeLua
+        (используется <code>Group</code>, <code>Mesh</code>,
+        <code>Scene</code>, камерами) и не имеет аналога в three.js.</li>
+      <li><code>castShadow</code>/<code>receiveShadow</code> хранятся для
+        совместимости API, но не читаются <code>WebGLRenderer</code> —
+        карт теней в движке нет.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/core/Object3D.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

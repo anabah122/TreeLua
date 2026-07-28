@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>TextureLoader — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="TextureLoader" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Loaders</div>
+  <h1 class="title">TextureLoader</h1>
+  <p class="lead">Loads an image off disk as a <code>love.Image</code>.
+    Extends <code>Loader</code>. There is no <code>Texture</code> class
+    wrapping the result — <code>love.Image</code> already carries the
+    filter and wrap state three.js keeps on <code>Texture</code>.</p>
+
+  <pre><code>local tex = TextureLoader:new():load("assets/wood.png")
+local m   = MeshStandardMaterial:new{ map = tex }</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">TextureLoader</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"TextureLoader"</code></td><td></td></tr>
+    <tr><td><code>mipmaps</code></td><td>boolean</td><td><code>true</code></td><td>Passed to <code>love.graphics.newImage</code>.</td></tr>
+    <tr><td><code>anisotropy</code></td><td>number</td><td><code>1</code></td><td>Set with <code>setAnisotropy</code>.</td></tr>
+    <tr><td><code>filter</code></td><td>string</td><td><code>"linear"</code></td><td>Passed to <code>image:setFilter</code>.</td></tr>
+    <tr><td><code>wrap</code></td><td>string</td><td><code>"repeat"</code></td><td>Passed to <code>image:setWrap</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isTextureLoader()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.setAnisotropy(value)</h3>
+
+  <h3 class="member">.load(url, onLoad, onProgress, onError)</h3>
+  <p>Loads the image synchronously with <code>love.graphics.newImage</code>,
+    applies <code>filter</code>, <code>wrap</code> and
+    <code>anisotropy</code>, then returns the <code>love.Image</code>
+    directly. <code>onLoad</code> and <code>onProgress</code> fire
+    immediately. On failure, <code>onError</code> is called if given (and
+    <code>nil</code> is returned either way); there is no throw-on-missing
+    like the other loaders.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Synchronous</strong> — reads from disk and calls back (and
+        returns) immediately rather than fetching over the network.</li>
+      <li><strong>Returns a raw <code>love.Image</code></strong>, not a
+        three.js <code>Texture</code> — there is no wrapper object, so
+        texture settings (<code>filter</code>, <code>wrap</code>,
+        <code>anisotropy</code>) are configured on the loader before
+        calling <code>load</code>, not on the result afterward.</li>
+      <li>On error, returns <code>nil</code> instead of throwing when no
+        <code>onError</code> is given — the other loaders propagate the
+        error.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/loaders/TextureLoader.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Loaders</div>
+  <h1 class="title">TextureLoader</h1>
+  <p class="lead">Загружает изображение с диска как <code>love.Image</code>.
+    Наследуется от <code>Loader</code>. Класса <code>Texture</code>,
+    оборачивающего результат, нет — <code>love.Image</code> уже несёт
+    состояние фильтра и wrap, которое three.js хранит в <code>Texture</code>.</p>
+
+  <pre><code>local tex = TextureLoader:new():load("assets/wood.png")
+local m   = MeshStandardMaterial:new{ map = tex }</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">TextureLoader</span>()</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"TextureLoader"</code></td><td></td></tr>
+    <tr><td><code>mipmaps</code></td><td>boolean</td><td><code>true</code></td><td>Передаётся в <code>love.graphics.newImage</code>.</td></tr>
+    <tr><td><code>anisotropy</code></td><td>number</td><td><code>1</code></td><td>Устанавливается через <code>setAnisotropy</code>.</td></tr>
+    <tr><td><code>filter</code></td><td>string</td><td><code>"linear"</code></td><td>Передаётся в <code>image:setFilter</code>.</td></tr>
+    <tr><td><code>wrap</code></td><td>string</td><td><code>"repeat"</code></td><td>Передаётся в <code>image:setWrap</code>.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isTextureLoader()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.setAnisotropy(value)</h3>
+
+  <h3 class="member">.load(url, onLoad, onProgress, onError)</h3>
+  <p>Загружает изображение синхронно через
+    <code>love.graphics.newImage</code>, применяет <code>filter</code>,
+    <code>wrap</code> и <code>anisotropy</code>, затем возвращает сам
+    <code>love.Image</code> напрямую. <code>onLoad</code> и
+    <code>onProgress</code> срабатывают немедленно. При ошибке
+    вызывается <code>onError</code>, если он задан (и в любом случае
+    возвращается <code>nil</code>); в отличие от других загрузчиков,
+    здесь нет броска исключения при отсутствии файла.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Синхронно</strong> — читает с диска и вызывает
+        колбэк (и возвращает результат) немедленно, а не через
+        сетевой запрос.</li>
+      <li><strong>Возвращает сырой <code>love.Image</code></strong>, а не
+        three.js <code>Texture</code> — объекта-обёртки нет, поэтому
+        настройки текстуры (<code>filter</code>, <code>wrap</code>,
+        <code>anisotropy</code>) задаются на загрузчике до вызова
+        <code>load</code>, а не на результате после.</li>
+      <li>При ошибке возвращает <code>nil</code> вместо выброса
+        исключения, если <code>onError</code> не задан — остальные
+        загрузчики пробрасывают ошибку дальше.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/loaders/TextureLoader.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

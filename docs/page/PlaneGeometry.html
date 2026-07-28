@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>PlaneGeometry — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="PlaneGeometry" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">PlaneGeometry</h1>
+  <p class="lead">A flat, segmented rectangle lying in the XY plane, facing
+    <code>+Z</code> — <strong>not</strong> flat on the ground. For a floor,
+    rotate the mesh: <code>mesh:rotateX(-math.pi / 2)</code>.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">PlaneGeometry</span>(width, height, widthSegments, heightSegments)</h3>
+  <p><code>width</code>/<code>height</code> default to <code>1</code>;
+    the segment counts default to <code>1</code> and are floored and clamped
+    to at least <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ width, height, widthSegments, heightSegments }</code> as resolved by the constructor.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>No methods beyond the constructor and what <code>BufferGeometry</code>
+    provides.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Built through the shared <code>three/geometries/build.lua</code>
+        helper, but passed with its <code>flat</code> flag set: a plane has
+        no inside, so the helper's convex-about-origin outward-winding rule
+        does not apply here and is skipped. The generator's own winding
+        (already facing <code>+Z</code>) is used as-is.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/PlaneGeometry.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Geometries</div>
+  <h1 class="title">PlaneGeometry</h1>
+  <p class="lead">Плоский, сегментированный прямоугольник, лежащий в
+    плоскости XY, обращённый в сторону <code>+Z</code> — <strong>не</strong>
+    плашмя на земле. Для пола поверните меш:
+    <code>mesh:rotateX(-math.pi / 2)</code>.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">PlaneGeometry</span>(width, height, widthSegments, heightSegments)</h3>
+  <p><code>width</code>/<code>height</code> по умолчанию <code>1</code>;
+    счётчики сегментов по умолчанию <code>1</code> и округляются вниз с
+    ограничением снизу минимум <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>parameters</code></td><td>table</td><td>—</td><td><code>{ width, height, widthSegments, heightSegments }</code>, как разрешено конструктором.</td></tr>
+  </table>
+
+  <h2>Methods</h2>
+  <p>Нет методов, кроме конструктора и того, что предоставляет
+    <code>BufferGeometry</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>Строится через общий хелпер <code>three/geometries/build.lua</code>,
+        но передаётся с установленным флагом <code>flat</code>: у плоскости
+        нет «внутренней стороны», поэтому правило хелпера про выпуклый
+        внешний winding здесь не применяется и пропускается. Используется
+        собственный winding генератора (уже обращённый на <code>+Z</code>)
+        как есть.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/geometries/PlaneGeometry.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

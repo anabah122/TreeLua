@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>AmbientLight — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="AmbientLight" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">AmbientLight</h1>
+  <p class="lead">Extends Light, inherits its API. Uniform light from every
+    direction: has no position or direction, only colour and intensity are
+    read. These land in the shader's <code>u_ambient</code> uniform.</p>
+  <pre><code>scene:add(AmbientLight:new(0x404050, 1))</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">AmbientLight</span>(color, intensity)</h3>
+  <p>Same defaults as <code>Light</code>: <code>color</code>
+    <code>0xffffff</code>, <code>intensity</code> <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <p>Inherits <code>color</code> and <code>intensity</code> from <code>Light</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isAmbientLight()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <p>Several ambient lights in one scene sum together, as in three.js.</p>
+
+  <p class="source-link">Source: <code>three/lights/AmbientLight.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">AmbientLight</h1>
+  <p class="lead">Наследует Light, наследует её API. Равномерный свет со
+    всех направлений: не имеет позиции или направления, читаются только
+    цвет и интенсивность. Они попадают в uniform шейдера
+    <code>u_ambient</code>.</p>
+  <pre><code>scene:add(AmbientLight:new(0x404050, 1))</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">AmbientLight</span>(color, intensity)</h3>
+  <p>Те же значения по умолчанию, что и у <code>Light</code>:
+    <code>color</code> <code>0xffffff</code>, <code>intensity</code>
+    <code>1</code>.</p>
+
+  <h2>Properties</h2>
+  <p>Наследует <code>color</code> и <code>intensity</code> от <code>Light</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isAmbientLight()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <p>Несколько ambient-источников света в одной сцене суммируются, как и в
+    three.js.</p>
+
+  <p class="source-link">Source: <code>three/lights/AmbientLight.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

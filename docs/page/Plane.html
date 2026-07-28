@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plane — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Plane" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Plane</h1>
+<p class="lead">An infinite plane in Hessian normal form: the set of points where <code>dot(normal, point) + constant == 0</code>. <code>constant</code> is the signed distance from the origin to the plane along the negated normal, matching three.js.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Plane( normal, constant )</h3>
+<p>normal — a Vector3, cloned in, defaults to (1, 0, 0). constant defaults to 0.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>normal</td><td>Vector3</td><td>(1,0,0)</td><td></td></tr>
+<tr><td>constant</td><td>number</td><td>0</td><td></td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isPlane()</h3>
+<p>Returns true. Type-check facade.</p>
+
+<h3 class="member">.set( normal, constant )</h3>
+<p>Sets normal (copied) and constant. Returns self.</p>
+
+<h3 class="member">.setComponents( x, y, z, w )</h3>
+<p>Sets normal to (x, y, z) and constant to w. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Plane with the same normal and constant.</p>
+
+<h3 class="member">.copy( plane )</h3>
+<p>Copies plane's normal and constant into this plane. Returns self.</p>
+
+<h3 class="member">.setFromNormalAndCoplanarPoint( normal, point )</h3>
+<p>Sets this plane from a normal and a point known to lie on it. Returns self.</p>
+
+<h3 class="member">.setFromCoplanarPoints( a, b, c )</h3>
+<p>Sets this plane to pass through three coplanar points. Returns self.</p>
+
+<h3 class="member">.normalizeSelf()</h3>
+<p>Scales the plane equation so the normal is unit length, which is what makes <code>distanceToPoint</code> return a true distance rather than a proportional value. Returns self.</p>
+
+<h3 class="member">.negate()</h3>
+<p>Flips the plane to face the opposite direction, in place. Returns self.</p>
+
+<h3 class="member">.distanceToPoint( point )</h3>
+<p>Returns the signed distance from point to this plane.</p>
+
+<h3 class="member">.distanceToSphere( sphere )</h3>
+<p>Returns the signed distance from sphere's surface to this plane.</p>
+
+<h3 class="member">.projectPoint( point, target )</h3>
+<p>Writes the projection of point onto this plane into target and returns it.</p>
+
+<h3 class="member">.coplanarPoint( target )</h3>
+<p>Writes an arbitrary point lying on this plane into target and returns it.</p>
+
+<h3 class="member">.translate( offset )</h3>
+<p>Moves this plane by offset, in place. Returns self.</p>
+
+<h3 class="member">.equals( plane )</h3>
+<p>Returns true if this plane and plane have equal normal and constant.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>The mutating normalize method is named <code>.normalizeSelf()</code> rather than three.js's <code>.normalize()</code>, for consistency with the rest of TreeLua's math classes where a bare <code>normalize</code> often means "return a new value" — here there is only the mutating form.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/plane.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Plane</h1>
+<p class="lead">Бесконечная плоскость в нормальной форме Гессе: множество точек, где <code>dot(normal, point) + constant == 0</code>. <code>constant</code> — знаковое расстояние от начала координат до плоскости вдоль отрицательной нормали, как в three.js.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Plane( normal, constant )</h3>
+<p>normal — Vector3, клонируется при передаче, по умолчанию (1, 0, 0). constant по умолчанию 0.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>normal</td><td>Vector3</td><td>(1,0,0)</td><td></td></tr>
+<tr><td>constant</td><td>number</td><td>0</td><td></td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">.isPlane()</h3>
+<p>Возвращает true. Фасад проверки типа.</p>
+
+<h3 class="member">.set( normal, constant )</h3>
+<p>Устанавливает normal (копируется) и constant. Возвращает self.</p>
+
+<h3 class="member">.setComponents( x, y, z, w )</h3>
+<p>Устанавливает normal в (x, y, z) и constant в w. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новую Plane с той же нормалью и константой.</p>
+
+<h3 class="member">.copy( plane )</h3>
+<p>Копирует normal и constant из plane в эту плоскость. Возвращает self.</p>
+
+<h3 class="member">.setFromNormalAndCoplanarPoint( normal, point )</h3>
+<p>Устанавливает эту плоскость по нормали и точке, заведомо лежащей на ней. Возвращает self.</p>
+
+<h3 class="member">.setFromCoplanarPoints( a, b, c )</h3>
+<p>Устанавливает эту плоскость так, чтобы она проходила через три компланарные точки. Возвращает self.</p>
+
+<h3 class="member">.normalizeSelf()</h3>
+<p>Масштабирует уравнение плоскости так, чтобы нормаль имела единичную длину, благодаря чему <code>distanceToPoint</code> возвращает истинное расстояние, а не пропорциональное значение. Возвращает self.</p>
+
+<h3 class="member">.negate()</h3>
+<p>Разворачивает плоскость в противоположную сторону, на месте. Возвращает self.</p>
+
+<h3 class="member">.distanceToPoint( point )</h3>
+<p>Возвращает знаковое расстояние от point до этой плоскости.</p>
+
+<h3 class="member">.distanceToSphere( sphere )</h3>
+<p>Возвращает знаковое расстояние от поверхности sphere до этой плоскости.</p>
+
+<h3 class="member">.projectPoint( point, target )</h3>
+<p>Записывает проекцию point на эту плоскость в target и возвращает его.</p>
+
+<h3 class="member">.coplanarPoint( target )</h3>
+<p>Записывает произвольную точку, лежащую на этой плоскости, в target и возвращает его.</p>
+
+<h3 class="member">.translate( offset )</h3>
+<p>Сдвигает эту плоскость на offset, на месте. Возвращает self.</p>
+
+<h3 class="member">.equals( plane )</h3>
+<p>Возвращает true, если у этой плоскости и plane равны normal и constant.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Изменяющий метод нормализации называется <code>.normalizeSelf()</code>, а не <code>.normalize()</code>, как в three.js, для согласованности с остальными математическими классами TreeLua, где голый <code>normalize</code> часто означает "вернуть новое значение" — здесь есть только изменяющая форма.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/plane.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

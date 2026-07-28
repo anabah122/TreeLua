@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>AnimationAction — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="AnimationAction" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">AnimationAction</h1>
+<p class="lead">Controls the scheduling and playback of a single <a href="AnimationClip.html">AnimationClip</a> on an <a href="AnimationMixer.html">AnimationMixer</a>. An action tracks its own local time, weight and loop mode, and is advanced each frame by the mixer that created it.</p>
+
+<h2>Constructor</h2>
+<p><code>AnimationAction.new(mixer, clip)</code></p>
+<p>Actions are normally not constructed directly — use <code>mixer:clipAction(clip)</code>, which returns a shared action per clip and caches it on the mixer.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td>mixer</td><td>AnimationMixer</td><td>—</td><td>Owning mixer.</td></tr>
+<tr><td>clip</td><td>AnimationClip</td><td>—</td><td>Clip this action plays.</td></tr>
+<tr><td>time</td><td>number</td><td>0</td><td>Current local playback time in seconds.</td></tr>
+<tr><td>timeScale</td><td>number</td><td>1</td><td>Playback speed multiplier.</td></tr>
+<tr><td>weight</td><td>number</td><td>1</td><td>Blend weight used when accumulating this action's pose against others running on the same mixer.</td></tr>
+<tr><td>loop</td><td>boolean</td><td>true</td><td>Whether the clip wraps around at its end instead of clamping.</td></tr>
+<tr><td>paused</td><td>boolean</td><td>false</td><td>When true, the action stops advancing but stays part of the mix.</td></tr>
+<tr><td>enabled</td><td>boolean</td><td>true</td><td>When false, the action is skipped entirely during mixing.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:play()</h3>
+<p>Enables the action and resets it to run from its current time, marking it active on the mixer.</p>
+
+<h3 class="member">:stop()</h3>
+<p>Disables the action and resets its time to 0.</p>
+
+<h3 class="member">:setEffectiveWeight(weight)</h3>
+<p>Sets <code>weight</code>, controlling how strongly this action's pose contributes when the mixer accumulates all enabled actions.</p>
+
+<h3 class="member">:setLoop(loop)</h3>
+<p>Sets whether the action's time wraps (<code>true</code>) or clamps to the clip duration (<code>false</code>).</p>
+
+<h3 class="member">:update(delta)</h3>
+<p>Advances <code>time</code> by <code>delta * timeScale</code> (a no-op while <code>paused</code>), wrapping or clamping against <code>clip.duration</code> depending on <code>loop</code>. Called internally by the mixer.</p>
+
+<h3 class="member">:evaluate(track, time)</h3>
+<p>Samples a single track of this action's clip at a given time and returns the interpolated value (a vector for translation/scale tracks, a quaternion for rotation tracks). This is the per-track entry point the mixer's <a href="PoseAccumulator.html">PoseAccumulator</a> calls for every active action so it can blend translation and scale linearly and rotation via quaternion slerp across all contributing actions — replacing the older per-clip <code>sample()</code> path that picked one whole clip instead of blending per track.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>No fade (<code>fadeIn</code>/<code>fadeOut</code>/<code>crossFadeTo</code>), warp, or additive-blending API — weight must be set manually via <code>setEffectiveWeight</code>.</li>
+<li>No <code>clampWhenFinished</code>, <code>zeroSlopeAtStart/End</code>, or repetition-count controls; looping is a plain boolean.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/animation/AnimationAction.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Animation</p>
+<h1 class="title">AnimationAction</h1>
+<p class="lead">Управляет планированием и воспроизведением одного <a href="AnimationClip.html">AnimationClip</a> на <a href="AnimationMixer.html">AnimationMixer</a>. Экшен хранит собственное локальное время, вес и режим зацикливания и продвигается каждый кадр миксером, который его создал.</p>
+
+<h2>Constructor</h2>
+<p><code>AnimationAction.new(mixer, clip)</code></p>
+<p>Экшены обычно не создаются напрямую — используйте <code>mixer:clipAction(clip)</code>, который возвращает общий экшен для каждого клипа и кэширует его на миксере.</p>
+
+<h2>Properties</h2>
+<table>
+<tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+<tr><td>mixer</td><td>AnimationMixer</td><td>—</td><td>Владеющий миксер.</td></tr>
+<tr><td>clip</td><td>AnimationClip</td><td>—</td><td>Клип, который воспроизводит этот экшен.</td></tr>
+<tr><td>time</td><td>number</td><td>0</td><td>Текущее локальное время воспроизведения в секундах.</td></tr>
+<tr><td>timeScale</td><td>number</td><td>1</td><td>Множитель скорости воспроизведения.</td></tr>
+<tr><td>weight</td><td>number</td><td>1</td><td>Вес смешивания, используемый при накоплении позы этого экшена вместе с другими, работающими на том же миксере.</td></tr>
+<tr><td>loop</td><td>boolean</td><td>true</td><td>Зацикливается ли клип по достижении конца вместо ограничения (clamp).</td></tr>
+<tr><td>paused</td><td>boolean</td><td>false</td><td>Если true, экшен перестаёт продвигаться, но остаётся частью смешивания.</td></tr>
+<tr><td>enabled</td><td>boolean</td><td>true</td><td>Если false, экшен полностью пропускается при смешивании.</td></tr>
+</table>
+
+<h2>Methods</h2>
+
+<h3 class="member">:play()</h3>
+<p>Включает экшен и сбрасывает его для запуска с текущего времени, помечая его активным на миксере.</p>
+
+<h3 class="member">:stop()</h3>
+<p>Отключает экшен и сбрасывает его время в 0.</p>
+
+<h3 class="member">:setEffectiveWeight(weight)</h3>
+<p>Устанавливает <code>weight</code>, определяя, насколько сильно поза этого экшена влияет при накоплении миксером всех включённых экшенов.</p>
+
+<h3 class="member">:setLoop(loop)</h3>
+<p>Устанавливает, зацикливается ли время экшена (<code>true</code>) или ограничивается длительностью клипа (<code>false</code>).</p>
+
+<h3 class="member">:update(delta)</h3>
+<p>Продвигает <code>time</code> на <code>delta * timeScale</code> (не действует, пока <code>paused</code>), зацикливая или ограничивая относительно <code>clip.duration</code> в зависимости от <code>loop</code>. Вызывается внутренне миксером.</p>
+
+<h3 class="member">:evaluate(track, time)</h3>
+<p>Сэмплирует одну дорожку клипа этого экшена в заданный момент времени и возвращает интерполированное значение (вектор для дорожек translation/scale, кватернион для дорожек rotation). Это точка входа по дорожкам, которую <a href="PoseAccumulator.html">PoseAccumulator</a> миксера вызывает для каждого активного экшена, чтобы смешивать translation и scale линейно, а rotation — через кватернионный slerp по всем участвующим экшенам — заменяя старый путь <code>sample()</code> по целому клипу, который выбирал один целый клип вместо смешивания по дорожкам.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Нет API для fade (<code>fadeIn</code>/<code>fadeOut</code>/<code>crossFadeTo</code>), warp или аддитивного смешивания — вес нужно устанавливать вручную через <code>setEffectiveWeight</code>.</li>
+<li>Нет <code>clampWhenFinished</code>, <code>zeroSlopeAtStart/End</code> или управления количеством повторов; зацикливание — обычное булево значение.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>three/animation/AnimationAction.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

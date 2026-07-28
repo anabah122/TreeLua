@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Material — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Material" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Materials</div>
+  <h1 class="title">Material</h1>
+  <p class="lead">Base material: the uniform side of a shader program. The
+    engine ships one forward-lit shader, so a material never selects a
+    program — only feeds its uniforms. Every PBR field (metalness,
+    roughness, emissive, normal/AO maps) is declared here with a default
+    rather than pushed down to <code>MeshStandardMaterial</code>, so the
+    renderer can send them unconditionally: an absent map means a plain
+    matte dielectric, not a nil check at the send site.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Material</span>(params)</h3>
+  <p><code>params</code> is an optional table of any of the properties
+    below.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>id</code></td><td>number</td><td>—</td><td>Unique, auto-incrementing.</td></tr>
+    <tr><td><code>uuid</code></td><td>string</td><td>—</td><td><code>"mat-&lt;id&gt;"</code>, not a real UUID.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td></td></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Material"</code></td><td>Set by <code>extend()</code> for subclasses.</td></tr>
+    <tr><td><code>color</code></td><td>Color</td><td><code>0xffffff</code></td><td></td></tr>
+    <tr><td><code>opacity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>metalness</code></td><td>number</td><td><code>0</code></td><td>PBR field, declared on the base so the renderer never needs a nil check.</td></tr>
+    <tr><td><code>roughness</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>emissive</code></td><td>Color</td><td><code>0x000000</code></td><td></td></tr>
+    <tr><td><code>emissiveIntensity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>normalMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>normalScale</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>aoMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>aoMapIntensity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>transparent</code></td><td>boolean</td><td><code>false</code></td><td></td></tr>
+    <tr><td><code>visible</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>side</code></td><td>string</td><td><code>"front"</code></td><td><code>"front"</code> | <code>"back"</code> | <code>"double"</code>.</td></tr>
+    <tr><td><code>map</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>depthTest</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>depthWrite</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>alphaTest</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>wireframe</code></td><td>boolean</td><td><code>false</code></td><td></td></tr>
+    <tr><td><code>userData</code></td><td>table</td><td><code>{}</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isMaterial()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.extend(typeName)</h3>
+  <p>TreeLua's subclassing hook, used by <code>MeshStandardMaterial</code>.
+    Returns a subclass whose <code>:new()</code> sets <code>.type</code> to
+    <code>typeName</code> after delegating to the parent constructor.</p>
+
+  <h3 class="member">.baseColorArray()</h3>
+  <p>Returns <code>{ r, g, b, opacity }</code>, the shape the shader's
+    <code>u_baseColor</code> uniform wants: rgb from <code>.color</code>,
+    alpha from <code>.opacity</code>, matching how three.js keeps the two
+    separate.</p>
+
+  <h3 class="member">.setValues(params)</h3>
+  <p>Assigns each key in <code>params</code> onto the material. A
+    <code>color</code> value that is not a table is passed through
+    <code>self.color:set(v)</code> instead of overwriting the Color object.</p>
+
+  <h3 class="member">.copy(source)</h3>
+  <h3 class="member">.clone()</h3>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Clears <code>.map</code>. LÖVE frees images by garbage collection, so
+    this exists for API compatibility with three.js's explicit GPU-resource
+    teardown, not because it releases anything itself.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>PBR fields (<code>metalness</code>, <code>roughness</code>,
+        <code>emissive</code>, <code>normalMap</code>, <code>aoMap</code>, …)
+        live on the base <code>Material</code> rather than only on
+        <code>MeshStandardMaterial</code>, since this engine has a single
+        shader and every material feeds the same uniform set.</li>
+      <li><code>.extend(typeName)</code> is TreeLua's subclassing hook and
+        has no three.js equivalent.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/materials/Material.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Materials</div>
+  <h1 class="title">Material</h1>
+  <p class="lead">Базовый материал: единообразная сторона шейдерной
+    программы. Движок поставляется с одним forward-lit шейдером, поэтому
+    материал никогда не выбирает программу — только подаёт её uniforms.
+    Каждое PBR-поле (metalness, roughness, emissive, карты normal/AO)
+    объявлено здесь со значением по умолчанию, а не спущено вниз в
+    <code>MeshStandardMaterial</code>, чтобы рендерер мог отправлять их
+    безусловно: отсутствующая карта означает обычный матовый диэлектрик, а
+    не проверку на nil в месте отправки.</p>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Material</span>(params)</h3>
+  <p><code>params</code> — необязательная таблица с любыми из свойств
+    ниже.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>id</code></td><td>number</td><td>—</td><td>Уникальный, инкрементный.</td></tr>
+    <tr><td><code>uuid</code></td><td>string</td><td>—</td><td><code>"mat-&lt;id&gt;"</code>, не настоящий UUID.</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td><code>""</code></td><td></td></tr>
+    <tr><td><code>type</code></td><td>string</td><td><code>"Material"</code></td><td>Устанавливается <code>extend()</code> для подклассов.</td></tr>
+    <tr><td><code>color</code></td><td>Color</td><td><code>0xffffff</code></td><td></td></tr>
+    <tr><td><code>opacity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>metalness</code></td><td>number</td><td><code>0</code></td><td>PBR-поле, объявлено в базовом классе, чтобы рендереру никогда не требовалась проверка на nil.</td></tr>
+    <tr><td><code>roughness</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>emissive</code></td><td>Color</td><td><code>0x000000</code></td><td></td></tr>
+    <tr><td><code>emissiveIntensity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>normalMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>normalScale</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>aoMap</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>aoMapIntensity</code></td><td>number</td><td><code>1</code></td><td></td></tr>
+    <tr><td><code>transparent</code></td><td>boolean</td><td><code>false</code></td><td></td></tr>
+    <tr><td><code>visible</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>side</code></td><td>string</td><td><code>"front"</code></td><td><code>"front"</code> | <code>"back"</code> | <code>"double"</code>.</td></tr>
+    <tr><td><code>map</code></td><td>love.Image</td><td><code>nil</code></td><td></td></tr>
+    <tr><td><code>depthTest</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>depthWrite</code></td><td>boolean</td><td><code>true</code></td><td></td></tr>
+    <tr><td><code>alphaTest</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>wireframe</code></td><td>boolean</td><td><code>false</code></td><td></td></tr>
+    <tr><td><code>userData</code></td><td>table</td><td><code>{}</code></td><td></td></tr>
+  </table>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isMaterial()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.extend(typeName)</h3>
+  <p>Хук наследования TreeLua, используется <code>MeshStandardMaterial</code>.
+    Возвращает подкласс, чей <code>:new()</code> устанавливает
+    <code>.type</code> в <code>typeName</code> после делегирования
+    родительскому конструктору.</p>
+
+  <h3 class="member">.baseColorArray()</h3>
+  <p>Возвращает <code>{ r, g, b, opacity }</code> — форму, которую хочет
+    uniform шейдера <code>u_baseColor</code>: rgb из <code>.color</code>,
+    альфа из <code>.opacity</code>, так же как three.js хранит их
+    раздельно.</p>
+
+  <h3 class="member">.setValues(params)</h3>
+  <p>Присваивает каждый ключ из <code>params</code> материалу. Значение
+    <code>color</code>, не являющееся таблицей, передаётся через
+    <code>self.color:set(v)</code> вместо перезаписи объекта Color.</p>
+
+  <h3 class="member">.copy(source)</h3>
+  <h3 class="member">.clone()</h3>
+
+  <h3 class="member">.dispose()</h3>
+  <p>Очищает <code>.map</code>. LÖVE освобождает изображения через сборщик
+    мусора, поэтому этот метод существует ради совместимости API с явным
+    высвобождением GPU-ресурсов в three.js, а не потому что сам что-то
+    освобождает.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li>PBR-поля (<code>metalness</code>, <code>roughness</code>,
+        <code>emissive</code>, <code>normalMap</code>, <code>aoMap</code>, …)
+        живут в базовом <code>Material</code>, а не только в
+        <code>MeshStandardMaterial</code>, поскольку в этом движке один
+        шейдер и каждый материал подаёт один и тот же набор uniforms.</li>
+      <li><code>.extend(typeName)</code> — хук наследования TreeLua и не
+        имеет аналога в three.js.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/materials/Material.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

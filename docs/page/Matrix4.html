@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Matrix4 — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Matrix4" data-depth="../">
+<main>
+
+<div lang="en">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Matrix4</h1>
+<p class="lead">A 4x4 transformation matrix. Internally stored row-major (translation at indices 4, 8, 12), with a three.js-compatible column-major surface layered on top for anything reading against the three.js docs.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Matrix4()</h3>
+<p>Creates a new identity matrix.</p>
+<h3 class="member">Matrix4.newFromArr( arr )</h3>
+<p>Creates a matrix from a flat 16-element row-major array.</p>
+
+<h2>Properties</h2>
+<p>The matrix itself is the array — its 16 elements live at indices 1..16 (row-major: row 1 is elements 1-4, row 2 is 5-8, and so on).</p>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( n11, n12, ..., n44 )</h3>
+<p>Sets all 16 elements, given in visual row order — matching the three.js <code>Matrix4.set</code> argument order — even though storage is row-major internally.</p>
+
+<h3 class="member">.identity()</h3>
+<p>Resets this matrix to the identity matrix. Returns self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Returns a new Matrix4 with the same elements.</p>
+
+<h3 class="member">.copy( m )</h3>
+<p>Copies the elements of m into this matrix. Returns self.</p>
+
+<h3 class="member">.elements() / .asLinearArray()</h3>
+<p>Returns the 16 elements as a flat array in three.js's column-major order. <code>asLinearArray</code> is the name Vector3/Vector4's matrix-consuming methods look for.</p>
+
+<h3 class="member">.multiplyMatrices( a, b )</h3>
+<p>Sets this matrix to a * b. Equivalent to the original <code>mul(A, B)</code>.</p>
+
+<h3 class="member">.multiply( m )</h3>
+<p>Sets this matrix to this * m, mutating in place. Returns self.</p>
+
+<h3 class="member">.premultiply( m )</h3>
+<p>Sets this matrix to m * this, mutating in place. Returns self.</p>
+
+<h3 class="member">.multiplyScalar( s )</h3>
+<p>Multiplies every element by s. Returns self.</p>
+
+<h3 class="member">.transpose()</h3>
+<p>Returns a <em>new</em> matrix that is the transpose of this one. Does not modify self.</p>
+
+<h3 class="member">.transposeSelf()</h3>
+<p>Transposes this matrix in place. Returns self.</p>
+
+<h3 class="member">.determinant()</h3>
+<p>Returns the determinant of this matrix.</p>
+
+<h3 class="member">.inverse()</h3>
+<p>Returns a new matrix that is the inverse of this one, or <code>nil</code> if the matrix is singular.</p>
+
+<h3 class="member">.invert()</h3>
+<p>Inverts this matrix in place. Returns self. If singular, resets to identity instead of returning nil.</p>
+
+<h3 class="member">.makePerspective( fov, aspect, near, far )</h3>
+<p>Sets this matrix to a perspective projection matrix. Facade over <code>setProjectionMatrix</code>.</p>
+
+<h3 class="member">.makeOrthographic( left, right, top, bottom, near, far )</h3>
+<p>Sets this matrix to an orthographic projection matrix, given frustum edges directly.</p>
+
+<h3 class="member">.lookAt( eye, target, up )</h3>
+<p>Sets this matrix's rotation basis to face from eye toward target (translation untouched), the same convention as three.js's <code>Matrix4.lookAt</code>.</p>
+
+<h3 class="member">.makeTranslation( x, y, z )</h3>
+<h3 class="member">.makeScale( x, y, z )</h3>
+<h3 class="member">.makeRotationX( theta ) / .makeRotationY( theta ) / .makeRotationZ( theta )</h3>
+<h3 class="member">.makeRotationFromQuaternion( q )</h3>
+
+<h3 class="member">.compose( position, quaternion, scale )</h3>
+<p>Builds this matrix from a position, quaternion, and scale. Accepts either <code>{x,y,z}</code>-style tables or plain arrays.</p>
+
+<h3 class="member">.decompose( position, quaternion, scale )</h3>
+<p>Extracts position, quaternion, and scale from this matrix, writing into the three arguments. Returns self.</p>
+
+<h3 class="member">.setPosition( x, y, z )</h3>
+<p>Sets the translation component. Also accepts a single vector-like table.</p>
+
+<h3 class="member">.toArray()</h3>
+<p>Alias for <code>.elements()</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Sets this matrix's elements from a flat column-major array, mirroring <code>.elements()</code>.</p>
+
+<h3 class="member">.setOrthographicMatrix( fov, size, near, far, aspectRatio )</h3>
+<p>Original (pre-three.js-facade) orthographic projection setter, deriving frustum edges from a fov and size rather than taking them directly.</p>
+
+<h3 class="member">.setTransformationMatrix( translation, rotation, scale )</h3>
+<p>Original TRS composer taking plain Euler-angle arrays rather than a quaternion.</p>
+
+<h3 class="member">.setProjectionMatrix( fov, near, far, aspectRatio )</h3>
+<p>Original perspective projection setter.</p>
+
+<h3 class="member">.setViewMatrix( eye, target, up )</h3>
+<p>Builds a camera view matrix (the inverse of a camera's world transform) looking from eye toward target.</p>
+
+<h3 class="member">.mul( A, B )</h3>
+<p>Sets this matrix to the product A * B.</p>
+
+<h3 class="member">.mulVec4( x, y, z, w )</h3>
+<p>Multiplies this matrix by a column vector, returning the transformed x, y, z, w.</p>
+
+<h3 class="member">.mulPoint( point )</h3>
+<p>Transforms a point (w = 1) by this matrix, applying perspective divide. Returns a plain <code>{x, y, z}</code> table.</p>
+
+<h3 class="member">.mulVec3( vec )</h3>
+<p>Transforms a direction (w = 0, no translation) by this matrix. Returns a plain <code>{x, y, z}</code> table.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Storage is row-major, not column-major: translation lives at raw indices 4, 8, 12 instead of three.js's 13, 14, 15. Code that needs the three.js layout should read through <code>.elements()</code> / <code>.asLinearArray()</code> (which transpose on the way out) rather than indexing the matrix directly, and write through <code>.set()</code> or <code>.fromArray()</code>, which take the arguments/data in the same order the three.js docs describe.</li>
+<li>Two parallel sets of transform builders exist: the original <code>setProjectionMatrix</code>/<code>setOrthographicMatrix</code>/<code>setTransformationMatrix</code>/<code>setViewMatrix</code>/<code>mul</code> (predate the three.js facade, some take fov+size or Euler arrays instead of a quaternion) alongside the three.js-named <code>makePerspective</code>/<code>makeOrthographic</code>/<code>compose</code>/<code>multiplyMatrices</code>. Both are kept because the internals and importers still call the originals directly.</li>
+<li><code>.transpose()</code> returns a new matrix; <code>.transposeSelf()</code> mutates in place and matches three.js's mutating <code>transpose()</code>.</li>
+<li><code>.inverse()</code> returns a new matrix or <code>nil</code> on a singular matrix; <code>.invert()</code> mutates in place and resets to identity instead of returning nil, matching three.js's <code>invert()</code> behavior.</li>
+<li><code>Matrix4.lookAt</code> only builds the rotation basis (translation untouched), which is the inverse of <code>setViewMatrix</code>'s already-inverted camera transform — the two are not interchangeable.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/mat4.lua</code></p>
+</div>
+
+<div lang="ru">
+<p class="crumb"><a href="../index.html">TreeLua</a> / Math</p>
+<h1 class="title">Matrix4</h1>
+<p class="lead">Матрица трансформации 4x4. Внутренне хранится в row-major порядке (трансляция по индексам 4, 8, 12), поверх которой надстроен совместимый с three.js column-major интерфейс для всего, что сверяется с документацией three.js.</p>
+
+<h2>Constructor</h2>
+<h3 class="member">Matrix4()</h3>
+<p>Создаёт новую единичную матрицу.</p>
+<h3 class="member">Matrix4.newFromArr( arr )</h3>
+<p>Создаёт матрицу из плоского row-major массива из 16 элементов.</p>
+
+<h2>Properties</h2>
+<p>Матрица сама является массивом — её 16 элементов лежат по индексам 1..16 (row-major: строка 1 — элементы 1-4, строка 2 — 5-8, и так далее).</p>
+
+<h2>Methods</h2>
+
+<h3 class="member">.set( n11, n12, ..., n44 )</h3>
+<p>Устанавливает все 16 элементов, заданных в визуальном порядке строк — соответствуя порядку аргументов <code>Matrix4.set</code> в three.js — хотя внутреннее хранение row-major.</p>
+
+<h3 class="member">.identity()</h3>
+<p>Сбрасывает эту матрицу к единичной. Возвращает self.</p>
+
+<h3 class="member">.clone()</h3>
+<p>Возвращает новую Matrix4 с теми же элементами.</p>
+
+<h3 class="member">.copy( m )</h3>
+<p>Копирует элементы m в эту матрицу. Возвращает self.</p>
+
+<h3 class="member">.elements() / .asLinearArray()</h3>
+<p>Возвращает 16 элементов как плоский массив в column-major порядке three.js. <code>asLinearArray</code> — имя, которое ищут матрично-потребляющие методы Vector3/Vector4.</p>
+
+<h3 class="member">.multiplyMatrices( a, b )</h3>
+<p>Устанавливает эту матрицу в a * b. Эквивалентно исходному <code>mul(A, B)</code>.</p>
+
+<h3 class="member">.multiply( m )</h3>
+<p>Устанавливает эту матрицу в this * m, изменяя на месте. Возвращает self.</p>
+
+<h3 class="member">.premultiply( m )</h3>
+<p>Устанавливает эту матрицу в m * this, изменяя на месте. Возвращает self.</p>
+
+<h3 class="member">.multiplyScalar( s )</h3>
+<p>Умножает каждый элемент на s. Возвращает self.</p>
+
+<h3 class="member">.transpose()</h3>
+<p>Возвращает <em>новую</em> матрицу, являющуюся транспонированием этой. Не изменяет self.</p>
+
+<h3 class="member">.transposeSelf()</h3>
+<p>Транспонирует эту матрицу на месте. Возвращает self.</p>
+
+<h3 class="member">.determinant()</h3>
+<p>Возвращает определитель этой матрицы.</p>
+
+<h3 class="member">.inverse()</h3>
+<p>Возвращает новую матрицу, являющуюся обратной к этой, или <code>nil</code>, если матрица вырождена.</p>
+
+<h3 class="member">.invert()</h3>
+<p>Обращает эту матрицу на месте. Возвращает self. Если матрица вырождена, вместо nil сбрасывает её к единичной.</p>
+
+<h3 class="member">.makePerspective( fov, aspect, near, far )</h3>
+<p>Устанавливает эту матрицу как матрицу перспективной проекции. Фасад над <code>setProjectionMatrix</code>.</p>
+
+<h3 class="member">.makeOrthographic( left, right, top, bottom, near, far )</h3>
+<p>Устанавливает эту матрицу как матрицу ортографической проекции, задавая границы усечённой пирамиды напрямую.</p>
+
+<h3 class="member">.lookAt( eye, target, up )</h3>
+<p>Устанавливает базис вращения этой матрицы, чтобы смотреть от eye к target (трансляция не затрагивается) — та же конвенция, что и <code>Matrix4.lookAt</code> в three.js.</p>
+
+<h3 class="member">.makeTranslation( x, y, z )</h3>
+<h3 class="member">.makeScale( x, y, z )</h3>
+<h3 class="member">.makeRotationX( theta ) / .makeRotationY( theta ) / .makeRotationZ( theta )</h3>
+<h3 class="member">.makeRotationFromQuaternion( q )</h3>
+
+<h3 class="member">.compose( position, quaternion, scale )</h3>
+<p>Собирает эту матрицу из позиции, кватерниона и масштаба. Принимает таблицы вида <code>{x,y,z}</code> либо обычные массивы.</p>
+
+<h3 class="member">.decompose( position, quaternion, scale )</h3>
+<p>Извлекает позицию, кватернион и масштаб из этой матрицы, записывая их в три аргумента. Возвращает self.</p>
+
+<h3 class="member">.setPosition( x, y, z )</h3>
+<p>Устанавливает компонент трансляции. Также принимает одну таблицу вида вектора.</p>
+
+<h3 class="member">.toArray()</h3>
+<p>Псевдоним для <code>.elements()</code>.</p>
+
+<h3 class="member">.fromArray( array, offset )</h3>
+<p>Устанавливает элементы этой матрицы из плоского column-major массива, зеркально к <code>.elements()</code>.</p>
+
+<h3 class="member">.setOrthographicMatrix( fov, size, near, far, aspectRatio )</h3>
+<p>Исходный (до появления three.js-фасада) сеттер ортографической проекции, вычисляющий границы усечённой пирамиды из fov и size, а не принимающий их напрямую.</p>
+
+<h3 class="member">.setTransformationMatrix( translation, rotation, scale )</h3>
+<p>Исходный TRS-компоновщик, принимающий обычные массивы углов Эйлера вместо кватерниона.</p>
+
+<h3 class="member">.setProjectionMatrix( fov, near, far, aspectRatio )</h3>
+<p>Исходный сеттер перспективной проекции.</p>
+
+<h3 class="member">.setViewMatrix( eye, target, up )</h3>
+<p>Строит матрицу вида камеры (обратную мировому трансформу камеры), смотрящую от eye к target.</p>
+
+<h3 class="member">.mul( A, B )</h3>
+<p>Устанавливает эту матрицу в произведение A * B.</p>
+
+<h3 class="member">.mulVec4( x, y, z, w )</h3>
+<p>Умножает эту матрицу на вектор-столбец, возвращая преобразованные x, y, z, w.</p>
+
+<h3 class="member">.mulPoint( point )</h3>
+<p>Преобразует точку (w = 1) этой матрицей, применяя перспективное деление. Возвращает обычную таблицу <code>{x, y, z}</code>.</p>
+
+<h3 class="member">.mulVec3( vec )</h3>
+<p>Преобразует направление (w = 0, без трансляции) этой матрицей. Возвращает обычную таблицу <code>{x, y, z}</code>.</p>
+
+<div class="diff">
+<h4>Differences from three.js</h4>
+<ul>
+<li>Хранение row-major, а не column-major: трансляция лежит по «сырым» индексам 4, 8, 12, а не 13, 14, 15, как в three.js. Коду, которому нужна раскладка three.js, следует читать через <code>.elements()</code> / <code>.asLinearArray()</code> (которые транспонируют на выходе), а не индексировать матрицу напрямую, и записывать через <code>.set()</code> или <code>.fromArray()</code>, которые принимают аргументы/данные в том же порядке, что описан в документации three.js.</li>
+<li>Существуют два параллельных набора построителей трансформаций: исходные <code>setProjectionMatrix</code>/<code>setOrthographicMatrix</code>/<code>setTransformationMatrix</code>/<code>setViewMatrix</code>/<code>mul</code> (появились раньше three.js-фасада, некоторые принимают fov+size или массивы углов Эйлера вместо кватерниона) наряду с названными по three.js <code>makePerspective</code>/<code>makeOrthographic</code>/<code>compose</code>/<code>multiplyMatrices</code>. Оба набора сохранены, потому что внутренние механизмы и импортёры до сих пор напрямую вызывают исходные.</li>
+<li><code>.transpose()</code> возвращает новую матрицу; <code>.transposeSelf()</code> изменяет на месте и соответствует мутирующему <code>transpose()</code> в three.js.</li>
+<li><code>.inverse()</code> возвращает новую матрицу или <code>nil</code> при вырожденной матрице; <code>.invert()</code> изменяет на месте и вместо nil сбрасывает к единичной, соответствуя поведению <code>invert()</code> в three.js.</li>
+<li><code>Matrix4.lookAt</code> строит только базис вращения (трансляция не затрагивается), что является обратным к уже инвертированному трансформу камеры в <code>setViewMatrix</code> — эти два метода не взаимозаменяемы.</li>
+</ul>
+</div>
+
+<p class="source-link">Source: <code>math/mat4.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

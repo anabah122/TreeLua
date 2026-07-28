@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>SkinnedMesh — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="SkinnedMesh" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">SkinnedMesh</h1>
+  <p class="lead">A <code>Mesh</code> deformed by a skeleton. Extends
+    <code>Mesh</code> (and through it <code>Object3D</code>) and inherits
+    their APIs. The palette maths lives in <code>importer.common</code> and
+    is shared with the raw importer path; this class only decides which
+    nodes to read and caches the resulting matrices for the renderer.</p>
+  <pre><code>local mesh = SkinnedMesh:new(geometry, material)
+mesh:bind(skeleton)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">SkinnedMesh</span>(geometry, material)</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>skeleton</code></td><td>Skeleton</td><td><code>nil</code></td><td>Set by <code>.bind()</code>.</td></tr>
+    <tr><td><code>bindMatrix</code></td><td>Matrix4</td><td><code>nil</code></td><td>Set by <code>.bind()</code> when a matrix is passed.</td></tr>
+    <tr><td><code>bindMatrixInverse</code></td><td>Matrix4</td><td><code>nil</code></td><td>Inverse of <code>bindMatrix</code>, computed in <code>.bind()</code>.</td></tr>
+  </table>
+  <p>Also inherits <code>.geometry</code>, <code>.material</code>,
+    <code>.skin</code>, <code>.bindShapeMatrix</code> from <code>Mesh</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSkinnedMesh()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.bind(skeleton, bindMatrix)</h3>
+  <p>Attaches a <code>Skeleton</code>. If <code>bindMatrix</code> is given,
+    also stores it and its inverse.</p>
+
+  <h3 class="member">.palette()</h3>
+  <p>Returns the array of bone matrices for this frame, or <code>nil</code>
+    if there is no bound skeleton with a skin. The skeleton owns the node
+    list, so the palette follows whatever the animation mixer last wrote
+    into it. If <code>bindShapeMatrix</code> is set (Collada), it is
+    multiplied onto every bone.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Extends <code>Mesh.copy</code>; carries over <code>skeleton</code>,
+    <code>bindMatrix</code>, <code>bindMatrixInverse</code> by reference.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>The mesh node's own transform is not cancelled out of the
+        palette.</strong> Skinned vertices already sit in skeleton space, so
+        <code>jointWorld * inverseBind</code> places them correctly; folding
+        in <code>inverse(meshWorld)</code> — as three.js's
+        <code>bindMode == "attached"</code> path does — would apply the
+        node's scale a second time here. This is a deliberate, baked-in
+        engine convention rather than a configurable <code>bindMode</code>.</li>
+      <li>No <code>boneTexture</code>/uniform-array split — the palette is a
+        plain Lua array of <code>Matrix4</code>, handed to the shader by the
+        renderer.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/SkinnedMesh.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">SkinnedMesh</h1>
+  <p class="lead"><code>Mesh</code>, деформируемый скелетом. Наследует
+    <code>Mesh</code> (а через него <code>Object3D</code>) и получает их
+    API. Математика палитры живёт в <code>importer.common</code> и
+    используется совместно с путём сырого импортёра; этот класс только
+    решает, какие узлы читать, и кэширует получившиеся матрицы для
+    рендерера.</p>
+  <pre><code>local mesh = SkinnedMesh:new(geometry, material)
+mesh:bind(skeleton)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">SkinnedMesh</span>(geometry, material)</h3>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>skeleton</code></td><td>Skeleton</td><td><code>nil</code></td><td>Устанавливается <code>.bind()</code>.</td></tr>
+    <tr><td><code>bindMatrix</code></td><td>Matrix4</td><td><code>nil</code></td><td>Устанавливается <code>.bind()</code>, когда передана матрица.</td></tr>
+    <tr><td><code>bindMatrixInverse</code></td><td>Matrix4</td><td><code>nil</code></td><td>Обратная к <code>bindMatrix</code>, вычисляется в <code>.bind()</code>.</td></tr>
+  </table>
+  <p>Также наследует <code>.geometry</code>, <code>.material</code>,
+    <code>.skin</code>, <code>.bindShapeMatrix</code> от <code>Mesh</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSkinnedMesh()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.bind(skeleton, bindMatrix)</h3>
+  <p>Прикрепляет <code>Skeleton</code>. Если передан
+    <code>bindMatrix</code>, также сохраняет его и обратную к нему.</p>
+
+  <h3 class="member">.palette()</h3>
+  <p>Возвращает массив матриц костей для текущего кадра, либо
+    <code>nil</code>, если нет привязанного скелета со скином. Скелет
+    владеет списком узлов, поэтому палитра следует за тем, что последним
+    записал в него миксер анимации. Если задан <code>bindShapeMatrix</code>
+    (Collada), он умножается на каждую кость.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+  <p>Расширяет <code>Mesh.copy</code>; переносит <code>skeleton</code>,
+    <code>bindMatrix</code>, <code>bindMatrixInverse</code> по ссылке.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Собственный трансформ узла меша не вычитается из
+        палитры.</strong> Скиннированные вершины уже находятся в
+        пространстве скелета, поэтому <code>jointWorld * inverseBind</code>
+        размещает их корректно; добавление <code>inverse(meshWorld)</code>
+        — как это делает путь three.js с <code>bindMode == "attached"</code>
+        — применило бы масштаб узла второй раз. Это осознанная, зашитая в
+        движок конвенция, а не настраиваемый <code>bindMode</code>.</li>
+      <li>Нет разделения <code>boneTexture</code>/uniform-массив —
+        палитра — это обычный Lua-массив <code>Matrix4</code>,
+        передаваемый шейдеру рендерером.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/SkinnedMesh.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

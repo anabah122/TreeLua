@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>SpotLight — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="SpotLight" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">SpotLight</h1>
+  <p class="lead">Extends Light, inherits its API. A cone of light aimed at
+    a target. Like <code>DirectionalLight</code>, the aim comes from
+    <code>.target</code> rather than a stored vector, so moving either end
+    re-aims the cone.</p>
+  <pre><code>local spot = SpotLight:new(0xffffff, 3, 20, math.pi / 6, 0.3)
+spot.position:set(0, 5, 0)
+spot.target.position:set(0, 0, 0)
+scene:add(spot)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">SpotLight</span>(color, intensity, distance, angle, penumbra, decay)</h3>
+  <p>Same <code>color</code>/<code>intensity</code> defaults as
+    <code>Light</code>. Sets <code>.position</code> to <code>(0, 1, 0)</code>
+    and creates a fresh <code>Object3D</code> as <code>.target</code>.
+    <code>distance</code> defaults to <code>0</code>. <code>angle</code>
+    (the half-angle, in radians) defaults to <code>π/3</code>.
+    <code>penumbra</code> defaults to <code>0</code>. <code>decay</code>
+    defaults to <code>2</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>target</code></td><td>Object3D</td><td>new Object3D at origin</td><td>Not added to the scene automatically.</td></tr>
+    <tr><td><code>distance</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>angle</code></td><td>number (radians)</td><td><code>π/3</code></td><td>Half-angle of the cone.</td></tr>
+    <tr><td><code>penumbra</code></td><td>number</td><td><code>0</code></td><td>In <code>[0,1]</code>; softens the rim.</td></tr>
+    <tr><td><code>decay</code></td><td>number</td><td><code>2</code></td><td>Physical inverse-square falloff.</td></tr>
+  </table>
+  <p>Inherits <code>color</code> and <code>intensity</code> from <code>Light</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSpotLight()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <h3 class="member">.getPower()</h3>
+  <h3 class="member">.setPower(power)</h3>
+  <p>Luminous-power accessor pair, accounting for the cone's solid angle:
+    <code>power = intensity * 2π * (1 - cos(angle/2))</code>.</p>
+
+  <h3 class="member">.direction(target)</h3>
+  <p>Unit vector along which the light travels, from the cone's apex toward
+    <code>.target</code> — the same convention as
+    <code>DirectionalLight:direction</code>, including the
+    <code>(0, -1, 0)</code> fallback when apex and target coincide.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Not sampled by the bundled shader.</strong> As with
+        <code>PointLight</code>, the shader only takes one directional light
+        plus ambient; a <code>SpotLight</code> sits in the graph and tracks
+        its cone parameters and aim, but contributes no illumination yet.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/lights/SpotLight.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Lights</div>
+  <h1 class="title">SpotLight</h1>
+  <p class="lead">Наследует Light, наследует её API. Конус света,
+    направленный на цель. Как и у <code>DirectionalLight</code>, наведение
+    задаётся через <code>.target</code>, а не хранимый вектор, поэтому
+    перемещение любого из концов переориентирует конус.</p>
+  <pre><code>local spot = SpotLight:new(0xffffff, 3, 20, math.pi / 6, 0.3)
+spot.position:set(0, 5, 0)
+spot.target.position:set(0, 0, 0)
+scene:add(spot)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">SpotLight</span>(color, intensity, distance, angle, penumbra, decay)</h3>
+  <p>Те же значения по умолчанию для <code>color</code>/<code>intensity</code>,
+    что и у <code>Light</code>. Устанавливает <code>.position</code> в
+    <code>(0, 1, 0)</code> и создаёт свежий <code>Object3D</code> как
+    <code>.target</code>. <code>distance</code> по умолчанию <code>0</code>.
+    <code>angle</code> (половинный угол, в радианах) по умолчанию
+    <code>π/3</code>. <code>penumbra</code> по умолчанию <code>0</code>.
+    <code>decay</code> по умолчанию <code>2</code>.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>target</code></td><td>Object3D</td><td>новый Object3D в начале координат</td><td>Автоматически не добавляется в сцену.</td></tr>
+    <tr><td><code>distance</code></td><td>number</td><td><code>0</code></td><td></td></tr>
+    <tr><td><code>angle</code></td><td>number (радианы)</td><td><code>π/3</code></td><td>Половинный угол конуса.</td></tr>
+    <tr><td><code>penumbra</code></td><td>number</td><td><code>0</code></td><td>В диапазоне <code>[0,1]</code>; смягчает край.</td></tr>
+    <tr><td><code>decay</code></td><td>number</td><td><code>2</code></td><td>Физическое затухание по обратному квадрату.</td></tr>
+  </table>
+  <p>Наследует <code>color</code> и <code>intensity</code> от <code>Light</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSpotLight()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <h3 class="member">.getPower()</h3>
+  <h3 class="member">.setPower(power)</h3>
+  <p>Пара акцессоров светового потока, учитывающая телесный угол конуса:
+    <code>power = intensity * 2π * (1 - cos(angle/2))</code>.</p>
+
+  <h3 class="member">.direction(target)</h3>
+  <p>Единичный вектор, вдоль которого распространяется свет, от вершины
+    конуса к <code>.target</code> — та же конвенция, что и
+    <code>DirectionalLight:direction</code>, включая запасное значение
+    <code>(0, -1, 0)</code>, когда вершина и цель совпадают.</p>
+
+  <h3 class="member">.copy(source, recursive)</h3>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Не сэмплируется встроенным шейдером.</strong> Как и с
+        <code>PointLight</code>, шейдер принимает только один направленный
+        источник плюс ambient; <code>SpotLight</code> находится в графе и
+        отслеживает параметры своего конуса и наведение, но пока не вносит
+        вклада в освещение.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/lights/SpotLight.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>
