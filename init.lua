@@ -31,6 +31,9 @@ local TL = {}
 
 TL.VERSION = "0.1.0"
 
+-- ── settings ─────────────────────────────────────────────────────────────────
+TL.settings = require "three.settings"
+
 -- ── math ─────────────────────────────────────────────────────────────────────
 TL.Vector3    = require "math.vec3"
 TL.Vector4    = require "math.vec4"
@@ -60,6 +63,7 @@ TL.Skeleton      = require "three.objects.Skeleton"
 TL.InstancedMesh = require "three.objects.InstancedMesh"
 TL.LOD           = require "three.objects.LOD"
 TL.Model         = require "three.objects.Model"
+TL.Sprite        = require "three.objects.Sprite"
 
 -- ── geometries ───────────────────────────────────────────────────────────────
 -- Generated primitives, so a scene can be built without loading a file.

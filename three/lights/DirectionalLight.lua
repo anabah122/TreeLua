@@ -12,6 +12,7 @@
 local Light   = require "three.lights.Light"
 local Object3D = require "three.core.Object3D"
 local Vector3 = require "math.vec3"
+local OrthographicCamera = require "three.cameras.OrthographicCamera"
 
 local DirectionalLight = Light:extend("DirectionalLight")
 
@@ -22,6 +23,18 @@ function DirectionalLight:new(color, intensity)
     -- three.js defaults the light to (0,1,0) looking at the origin
     l.position:set(0, 1, 0)
     l.target = Object3D:new()
+
+    -- Off by default: only a light actually being used as a shadow caster
+    -- should cost the renderer a second pass. Mirrors three.js's
+    -- `light.castShadow` flag plus its `light.shadow` (a DirectionalLightShadow,
+    -- here just an OrthographicCamera -- parallel rays need no perspective).
+    -- `shadow.mapSize`/`shadow.camera` read the same as three.js's fields.
+    l.castShadow = false
+    l.shadow = {
+        mapSize = 1024,
+        bias    = 0.003,
+        camera  = OrthographicCamera:new(-10, 10, 10, -10, 0.1, 50),
+    }
 
     return l
 end
@@ -49,6 +62,29 @@ function DirectionalLight:direction(target)
     if target:lengthSq() == 0 then return target:set(0, -1, 0) end
 
     return target:normalizeSelf()
+end
+
+-- Point `shadow.camera` down this light's direction, centred on `target`
+-- (world space -- typically the scene's centre or whatever the shadow should
+-- follow, e.g. the player). three.js does the same thing at render time on
+-- its light's own shadow camera; called from WebGLRenderer before the
+-- shadow pass runs.
+function DirectionalLight:updateShadowCamera(target)
+    local cam = self.shadow.camera
+    local dir = self:direction()
+
+    self:updateWorldMatrix(true, false)
+    local lightPos = Vector3:new():setFromMatrixPosition(self.matrixWorld)
+
+    -- Sit the camera back along -direction from `target` so `target` lands
+    -- mid-frustum, then aim it forward along `direction` -- the light's own
+    -- distance from `target` does not matter for parallel rays, only that the
+    -- camera is far enough back to clear whatever casts shadows near it.
+    local back = target:clone():sub(dir:clone():multiplyScalar(cam.far * 0.5))
+    cam.position:copy(back)
+    cam:lookAt(target.x, target.y, target.z)
+
+    return cam
 end
 
 function DirectionalLight:copy(source, recursive)

@@ -73,6 +73,12 @@ function WebGLRenderer:new(params)
     r.frustumCulling = params.frustumCulling ~= false
     r._cameraPos = Vector3:new()
 
+    -- World point the shadow camera centres its frustum on. three.js's
+    -- CSM/shadow cameras follow the main camera automatically; this engine
+    -- has one shadow map for one directional light, so the caller says what
+    -- matters most (e.g. the player), defaulting to the origin.
+    r.shadowTarget = params.shadowTarget or Vector3:new()
+
     -- A 1x1 white pixel for sampler uniforms with nothing bound to them.
     --
     -- LOVE does supply a default for a uniform that was never sent, so this is
@@ -92,6 +98,15 @@ function WebGLRenderer:new(params)
 
     r._warnedBones  = {}
     r._warnedLights = false
+
+    -- Shadow pass state, built lazily on first use (see _shadowMapFor) so a
+    -- scene with no castShadow light never allocates the canvas or compiles
+    -- the depth shader.
+    r._depthShader   = nil
+    r._shadowCanvas  = nil
+    r._shadowTarget  = Vector3:new()
+    r._lightViewProj = Matrix4:new()
+    r._noShadow      = love.graphics.newImage(blank)   -- u_shadowMap when unbound
 
     return r
 end
@@ -142,6 +157,10 @@ function WebGLRenderer:_collect(scene)
 
     scene:traverseVisible(function(obj)
         if obj.isMesh and obj:isMesh() and obj.geometry then
+            if obj.isSprite and obj:isSprite() then
+                self:_billboard(obj)
+            end
+
             if self:_isSkinned(obj) then
                 -- skinned bounds describe the bind pose, which an animation
                 -- routinely leaves; see _inFrustum
@@ -182,6 +201,36 @@ function WebGLRenderer:_collect(scene)
     return static, skinned, directional, ambient
 end
 
+-- A sprite always faces the camera: three.js overwrites its world rotation
+-- with the camera's at render time, so the graph can still parent/move it
+-- like any other object while the orientation itself never comes from the
+-- object's own quaternion. Position and scale stay the object's own -- only
+-- the rotation columns are replaced, straight from the camera's world matrix,
+-- which is what "facing the camera" means (same basis, so the quad's local
+-- +Z lines up with the camera's).
+function WebGLRenderer:_billboard(sprite)
+    local cm = self._billboardCameraMatrix
+    if not cm then return end
+
+    sprite:updateWorldMatrix(true, false)
+
+    -- raw row-major slots throughout -- NOT :elements(), which transposes to
+    -- three.js's column-major docs order and would read the wrong indices
+    -- for both the translation and the camera's basis vectors
+    local m = sprite.matrixWorld
+    local px, py, pz = m[4], m[8], m[12]
+    local sx = sprite.scale.x
+    local sy = sprite.scale.y
+    local sz = sprite.scale.z
+
+    sprite.matrixWorld:set(
+        cm[1] * sx, cm[2] * sy, cm[3]  * sz, px,
+        cm[5] * sx, cm[6] * sy, cm[7]  * sz, py,
+        cm[9] * sx, cm[10] * sy, cm[11] * sz, pz,
+        0, 0, 0, 1
+    )
+end
+
 -- ── uniforms ─────────────────────────────────────────────────────────────────
 
 -- Frame-wide uniforms go to every variant that will be bound this frame, since
@@ -204,6 +253,27 @@ function WebGLRenderer:_sendLights(sh, directional, ambient)
     else
         sh:send("u_ambient", { 0, 0, 0 })
     end
+end
+
+-- Frame-wide shadow uniforms: the map and the light's view-proj are the same
+-- for every mesh, so they go out once per shader like the other lights.
+-- u_hasShadow itself is sent per-mesh in _drawBucket (see there), since
+-- `receiveShadow` is a per-object flag -- a mesh with it off must read as
+-- fully lit even while the map and matrix stay bound for meshes that don't.
+function WebGLRenderer:_sendShadowUniforms(sh, caster)
+    local has = caster ~= nil and self._shadowCanvas ~= nil
+    sh:send("u_shadowMap", has and self._shadowCanvas or self._noShadow)
+    sh:send("u_lightViewProj", has and self._lightViewProj or Matrix4:new())
+    sh:send("u_shadowBias", has and caster.shadow.bias or 0)
+    -- PCF's sample offsets are in texels of the actual map, not a fixed guess
+    local size = has and caster.shadow.mapSize or 1
+    sh:send("u_shadowMapSize", { size, size })
+
+    -- Global, not per-light: one game wants one softness everywhere. Clamped
+    -- to what shader/parts/shadow.lua's loop actually supports.
+    local settings = require "three.settings"
+    local kernel = math.max(0, math.min(3, math.floor(settings.shadowSoftness)))
+    sh:send("u_shadowKernel", kernel)
 end
 
 function WebGLRenderer:_sendMaterial(sh, material)
@@ -401,7 +471,7 @@ function WebGLRenderer:_instanceMatrices(mesh)
     return out
 end
 
-function WebGLRenderer:_drawBucket(bucket, variant, override, state, info)
+function WebGLRenderer:_drawBucket(bucket, variant, override, state, info, hasShadowMap)
     for _, mesh in ipairs(bucket) do
         local material = override or mesh.material
         local geometry = mesh.geometry
@@ -422,6 +492,7 @@ function WebGLRenderer:_drawBucket(bucket, variant, override, state, info)
 
             if variant == "skinned" then self:_sendSkin(sh, mesh) end
             local tex = self:_sendMaterial(sh, material)
+            sh:send("u_hasShadow", hasShadowMap and mesh.receiveShadow)
 
             -- the love.Mesh carries its own texture, so an unset map means
             -- unbinding rather than just muting the sample
@@ -441,6 +512,62 @@ function WebGLRenderer:_drawBucket(bucket, variant, override, state, info)
             end
         end
     end
+
+    return self
+end
+
+-- The shadow-casting light for this frame, or nil. Mirrors _collect's
+-- brightest-directional-wins rule for the main light, so the same light that
+-- lights the scene is the one that shadows it.
+function WebGLRenderer:_shadowCaster(directional)
+    if directional and directional.castShadow then return directional end
+    return nil
+end
+
+-- Render the scene's depth from `light`'s point of view into a square canvas,
+-- filling self._lightViewProj (for the main pass to sample with) and
+-- self._shadowCanvas (the depth-as-color texture, see shader/depth.lua).
+--
+-- Only castShadow meshes are drawn here -- a shadow only needs to know what
+-- can OCCLUDE, not what receives, so this walk is usually much smaller than
+-- the main scene traversal.
+function WebGLRenderer:_renderShadowMap(scene, light, focus)
+    local size = light.shadow.mapSize
+    if not self._shadowCanvas or self._shadowCanvas:getWidth() ~= size then
+        self._shadowCanvas = love.graphics.newCanvas(size, size, { format = "r32f" })
+    end
+
+    local getDepthShader = require "shader.depth"
+    local staticShader, skinnedShader = getDepthShader(false), getDepthShader(true)
+
+    local cam = light:updateShadowCamera(self._shadowTarget:copy(focus))
+    cam:updateMatrixWorld(true)
+    cam.matrixWorldInverse:copy(cam.matrixWorld):invert()
+    cam:viewProjectionMatrix(self._lightViewProj)
+
+    love.graphics.setCanvas(self._shadowCanvas)
+    love.graphics.clear(1, 1, 1, 1)   -- far plane: nothing is closer than this
+    love.graphics.setDepthMode("lequal", true)
+    staticShader:send("u_viewProj", self._lightViewProj)
+    skinnedShader:send("u_viewProj", self._lightViewProj)
+
+    scene:traverseVisible(function(obj)
+        if obj.isMesh and obj:isMesh() and obj.geometry and obj.geometry.mesh
+           and obj.castShadow then
+            local skinned = self:_isSkinned(obj)
+            local sh = skinned and skinnedShader or staticShader
+
+            love.graphics.setShader(sh)
+            sh:send("u_model", obj.matrixWorld)
+            if skinned then self:_sendSkin(sh, obj) end
+
+            love.graphics.draw(obj.geometry.mesh)
+        end
+    end)
+
+    love.graphics.setShader()
+    love.graphics.setCanvas()
+    love.graphics.setDepthMode()
 
     return self
 end
@@ -465,8 +592,7 @@ function WebGLRenderer:render(scene, camera)
     if self.autoUpdateScene then scene:updateMatrixWorld(false) end
     if camera.parent == nil then camera:updateMatrixWorld(false) end
     camera.matrixWorldInverse:copy(camera.matrixWorld):invert()
-
-    if self.autoClear then self:clear(scene) end
+    self._billboardCameraMatrix = camera.matrixWorld
 
     -- Camera state before collecting: _collect culls against the frustum and
     -- the sort needs the eye position, so both have to be current first.
@@ -477,6 +603,17 @@ function WebGLRenderer:render(scene, camera)
     if self.frustumCulling then self:_updateFrustum(self._viewProj) end
 
     local staticDraws, skinnedDraws, directional, ambient = self:_collect(scene)
+
+    -- The shadow pass renders to its own canvas and must finish (and restore
+    -- the real canvas/shader/depth state) before anything below touches the
+    -- screen -- hence doing it here, after collecting but before the clear
+    -- that would otherwise be undone by _renderShadowMap's own setCanvas.
+    local caster = self:_shadowCaster(directional)
+    if caster then
+        self:_renderShadowMap(scene, caster, self.shadowTarget)
+    end
+
+    if self.autoClear then self:clear(scene) end
 
     love.graphics.setDepthMode("lequal", true)
 
@@ -490,6 +627,7 @@ function WebGLRenderer:render(scene, camera)
         sh:send("u_cameraPos", eye)
         sh:send("u_diffuseWrap", self.diffuseWrap)
         self:_sendLights(sh, directional, ambient)
+        self:_sendShadowUniforms(sh, caster)
     end
 
     -- Order within a bucket: renderOrder first, then opaque before transparent
@@ -506,9 +644,11 @@ function WebGLRenderer:render(scene, camera)
     local override = scene.overrideMaterial
     local state = { cull = nil, shader = nil }
 
+    local hasShadowMap = caster ~= nil and self._shadowCanvas ~= nil
+
     -- Static first, then skinned: each program binds once for the whole frame.
-    self:_drawBucket(staticDraws,  "static",  override, state, info)
-    self:_drawBucket(skinnedDraws, "skinned", override, state, info)
+    self:_drawBucket(staticDraws,  "static",  override, state, info, hasShadowMap)
+    self:_drawBucket(skinnedDraws, "skinned", override, state, info, hasShadowMap)
 
     love.graphics.setShader()
     love.graphics.setMeshCullMode("none")

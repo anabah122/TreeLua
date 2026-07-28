@@ -112,8 +112,11 @@ return {
         // wrapping it would smear highlights around the back of the object.
         float _wrapped = _ndl * (1.0 - u_diffuseWrap) + u_diffuseWrap;
 
-        vec3 _lit = _diffuse * u_lightColor * _wrapped
-                  + _specular * u_lightColor * _ndl;
+        // shadowFactor is declared by shader/parts/shadow.lua, which runs
+        // before this part (see shader/init.lua's ALWAYS list) and is always
+        // 1.0 (fully lit) unless u_hasShadow is set.
+        vec3 _lit = (_diffuse * u_lightColor * _wrapped
+                  + _specular * u_lightColor * _ndl) * shadowFactor;
 
         // Ambient stands in for the environment this renderer has no probe for.
         //

@@ -34,10 +34,10 @@ local ShaderLib = {}
 ShaderLib.__index = ShaderLib
 
 -- Parts always present, in application order: normalmap writes shadingNormal
--- and ambientOcclusion, pbr reads them. Only `skinning` is optional -- see the
--- note in its file about the 2048 uniform components a bone array costs, which
--- is the whole reason variants exist.
-local ALWAYS = { "normalmap", "pbr" }
+-- and ambientOcclusion, shadow writes shadowFactor, pbr reads both. Only
+-- `skinning` is optional -- see the note in its file about the 2048 uniform
+-- components a bone array costs, which is the whole reason variants exist.
+local ALWAYS = { "normalmap", "shadow", "pbr" }
 
 local cache = {}
 local loaded = {}
@@ -81,6 +81,7 @@ local function assemble(parts)
         "uniform bool u_hasTexture;",
         "varying vec3 v_normal;",
         "varying vec3 v_worldPos;",
+        slot(parts, "varyings"),
         "",
         "#ifdef VERTEX",
         "attribute vec3 VertexNormal;",
