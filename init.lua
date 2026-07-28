@@ -69,6 +69,7 @@ TL.Model         = require "three.objects.Model"
 TL.Sprite        = require "three.objects.Sprite"
 TL.Line          = require "three.objects.Line"
 TL.LineSegments  = require "three.objects.LineSegments"
+TL.ParticleSystem = require "three.particles.ParticleSystem"
 
 -- ── geometries ───────────────────────────────────────────────────────────────
 -- Generated primitives, so a scene can be built without loading a file.

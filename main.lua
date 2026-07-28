@@ -8,7 +8,7 @@ for _, a in ipairs(arg or {}) do
     end
 end
 
-local game = require "demos.shadows.init"
+local game = require "demos.particles.init"
 
 function love.load()    game.init() end
 function love.update(dt) game.update(dt) end

@@ -1,4 +1,4 @@
--- Тестовая сцена для новых фич: Fog/FogExp2, HemisphereLight, Line/LineSegments.
+-- Тестовая сцена для новых фич: Fog/FogExp2, HemisphereLight, Line/LineSegments, ParticleSystem.
 -- Движок используется только как библиотека — вся логика лежит в three/ и
 -- shader/, здесь только сборка сцены и визуальная/консольная проверка.
 local TL = require "init"
@@ -67,6 +67,22 @@ function M.init()
         TL.LineBasicMaterial:new{ color = 0xffdd33 }
     )
     scene:add(loop)
+
+    -- GPU particles: a fire-like cone emitter, purely shader-simulated.
+    local fire = TL.ParticleSystem:new{
+        count      = 500,
+        lifetime   = 1.5,
+        spawnShape = "cone",
+        coneAngle  = 0.3,
+        direction  = TL.Vector3:new(0, 1, 0),
+        speed      = { 1, 2.5 },
+        gravity    = TL.Vector3:new(0, 0.5, 0),
+        size       = { 0.3, 0.05 },
+        color      = { TL.Color:new(0xffcc66), TL.Color:new(0xff2200) },
+        opacity    = { 1, 0 },
+    }
+    fire.position:set(0, 0.5, 0)
+    scene:add(fire)
 
     print("[demo] F: toggle fog mode (exp2 -> linear -> off), current: " .. fogMode)
 end

@@ -22,6 +22,7 @@ local Color     = require "math.color"
 local Vector3   = require "math.vec3"
 local Frustum   = require "math.frustum"
 local ShaderLib = require "shader"
+local getParticleShader = require "shader.particles"
 
 local WebGLRenderer = {}
 WebGLRenderer.__index = WebGLRenderer
@@ -64,6 +65,8 @@ function WebGLRenderer:new(params)
     r._staticList  = {}
     r._skinnedList = {}
     r._lineList    = {}
+    r._particleList = {}
+    r._clock = 0   -- seconds; particles derive state from this, not from dt accumulation elsewhere
     r._lightScratch = Color:new()
     r._depthScratch = {}
     r._frustum = Frustum:new()
@@ -146,12 +149,14 @@ end
 -- where sorting the combined list would cost O(n log n) every frame to
 -- rediscover a split already known here.
 function WebGLRenderer:_collect(scene)
-    local static  = self._staticList
-    local skinned = self._skinnedList
-    local lines   = self._lineList
-    for i = #static,  1, -1 do static[i]  = nil end
-    for i = #skinned, 1, -1 do skinned[i] = nil end
-    for i = #lines,   1, -1 do lines[i]   = nil end
+    local static    = self._staticList
+    local skinned   = self._skinnedList
+    local lines     = self._lineList
+    local particles = self._particleList
+    for i = #static,    1, -1 do static[i]    = nil end
+    for i = #skinned,   1, -1 do skinned[i]   = nil end
+    for i = #lines,     1, -1 do lines[i]     = nil end
+    for i = #particles, 1, -1 do particles[i] = nil end
 
     local directional, ambient, hemisphere = nil, nil, nil
     local extraDirectional = false
@@ -161,6 +166,9 @@ function WebGLRenderer:_collect(scene)
     scene:traverseVisible(function(obj)
         if obj.isLine and obj:isLine() and obj.geometry then
             lines[#lines + 1] = obj
+
+        elseif obj.isParticleSystem and obj:isParticleSystem() then
+            if obj.visible then particles[#particles + 1] = obj end
 
         elseif obj.isMesh and obj:isMesh() and obj.geometry then
             if obj.isSprite and obj:isSprite() then
@@ -210,7 +218,7 @@ function WebGLRenderer:_collect(scene)
 
     self.info.render.culled = culled
 
-    return static, skinned, lines, directional, ambient, hemisphere
+    return static, skinned, lines, particles, directional, ambient, hemisphere
 end
 
 -- A sprite always faces the camera: three.js overwrites its world rotation
@@ -619,6 +627,75 @@ function WebGLRenderer:_drawLines(bucket, camera)
     return self
 end
 
+-- Draw every ParticleSystem: one shared unlit billboard shader, one
+-- drawInstanced call per system.
+--
+-- There is no per-particle CPU work here -- shader/particles.lua derives
+-- every particle's position/size/color from (a_seed, u_time, the emitter's
+-- own uniforms) in the vertex stage, so this method only sets the emitter's
+-- uniforms once and issues one instanced draw of the shared unit quad.
+function WebGLRenderer:_drawParticles(bucket, camera)
+    if #bucket == 0 then return self end
+
+    local sh = getParticleShader()
+    love.graphics.setShader(sh)
+    love.graphics.setBlendMode("add", "alphamultiply")
+    love.graphics.setDepthMode("lequal", false)   -- test against the scene, don't occlude each other
+
+    sh:send("u_viewProj", self._viewProj)
+
+    -- billboard basis: the camera's own right/up, read straight off its world
+    -- matrix so every particle faces the camera without a per-particle
+    -- lookAt -- same trick as WebGLRenderer:_billboard for Sprite.
+    local cm = camera.matrixWorld
+    sh:send("u_cameraRight", { cm[1], cm[5], cm[9] })
+    sh:send("u_cameraUp",    { cm[2], cm[6], cm[10] })
+
+    for _, ps in ipairs(bucket) do
+        sh:send("u_model", ps.matrixWorld)
+        sh:send("u_time", self._clock)
+        sh:send("u_lifetime", ps.lifetime)
+
+        sh:send("u_spawnShape", ps.spawnShape)
+        sh:send("u_spawnRadius", ps.spawnRadius)
+        sh:send("u_coneAngle", ps.coneAngle)
+
+        sh:send("u_speedMin", ps.speedMin)
+        sh:send("u_speedMax", ps.speedMax)
+        sh:send("u_direction", { ps.direction.x, ps.direction.y, ps.direction.z })
+        sh:send("u_gravity", { ps.gravity.x, ps.gravity.y, ps.gravity.z })
+
+        sh:send("u_sizeStart", ps.sizeStart)
+        sh:send("u_sizeEnd", ps.sizeEnd)
+
+        sh:send("u_colorStart", { ps.colorStart.r, ps.colorStart.g, ps.colorStart.b, ps.opacityStart })
+        sh:send("u_colorEnd",   { ps.colorEnd.r,   ps.colorEnd.g,   ps.colorEnd.b,   ps.opacityEnd })
+
+        sh:send("u_burst", ps.burst)
+        sh:send("u_cycleDuration", ps.cycleDuration)
+        sh:send("u_riseFraction", ps.riseFraction)
+        sh:send("u_sustainFraction", ps.sustainFraction)
+        sh:send("u_decayFraction", ps.decayFraction)
+
+        -- sampler must stay bound to something even when unused, same reason
+        -- as _sendMaterial's blank texture: a driver may sample both branches
+        sh:send("u_hasMap", ps.map ~= nil)
+        sh:send("u_map", ps.map or self._blankTexture)
+
+        sh:send("u_isMesh", ps.shape ~= "billboard")
+        sh:send("u_rotationSpeed", ps.rotationSpeed)
+
+        love.graphics.drawInstanced(ps._mesh, ps.count)
+        self.info.render.calls = self.info.render.calls + 1
+    end
+
+    love.graphics.setDepthMode()
+    love.graphics.setBlendMode("alpha")
+    love.graphics.setShader()
+
+    return self
+end
+
 -- The shadow-casting light for this frame, or nil. Mirrors _collect's
 -- brightest-directional-wins rule for the main light, so the same light that
 -- lights the scene is the one that shadows it.
@@ -691,6 +768,11 @@ function WebGLRenderer:render(scene, camera)
     info.calls, info.triangles, info.meshes = 0, 0, 0
     info.shaderSwaps = 0
 
+    -- particles' clock: love.timer.getTime() rather than an accumulated dt,
+    -- so pausing/resuming the game loop cannot drift it out of sync with
+    -- anything else that reads the same clock
+    self._clock = love.timer.getTime()
+
     -- world matrices first: everything below reads matrixWorld
     if self.autoUpdateScene then scene:updateMatrixWorld(false) end
     if camera.parent == nil then camera:updateMatrixWorld(false) end
@@ -705,7 +787,7 @@ function WebGLRenderer:render(scene, camera)
 
     if self.frustumCulling then self:_updateFrustum(self._viewProj) end
 
-    local staticDraws, skinnedDraws, lineDraws, directional, ambient, hemisphere = self:_collect(scene)
+    local staticDraws, skinnedDraws, lineDraws, particleDraws, directional, ambient, hemisphere = self:_collect(scene)
 
     -- The shadow pass renders to its own canvas and must finish (and restore
     -- the real canvas/shader/depth state) before anything below touches the
@@ -757,6 +839,11 @@ function WebGLRenderer:render(scene, camera)
     love.graphics.setShader()
     love.graphics.setMeshCullMode("none")
     love.graphics.setDepthMode()
+
+    -- Particles draw after the opaque/skinned pass but before lines, so they
+    -- occlude against the depth buffer already written (smoke behind a wall
+    -- stays hidden) while gizmos still land on top of everything.
+    self:_drawParticles(particleDraws, camera)
 
     -- Lines draw last, screen-projected and depth-untested -- gizmos/debug
     -- overlays are meant to read on top of the scene, as in three.js's
