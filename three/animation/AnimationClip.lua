@@ -49,6 +49,47 @@ function AnimationClip:sample(time, loop)
     return self
 end
 
+local PATH_SIZE = { translation = 3, rotation = 4, scale = 3 }
+
+-- Wrap `time` the way the samplers do, so a blended clip and a directly
+-- sampled one agree on where in the clip they are.
+function AnimationClip:_wrapTime(time, loop)
+    if loop ~= false and self.duration > 0 then
+        return (time % self.duration) + (self._raw and self._raw.startTime or 0)
+    end
+    return time
+end
+
+-- Evaluate every track at `time` and hand the values to `accumulator` scaled by
+-- `weight`, instead of writing them into the nodes.
+--
+-- This is what makes blending possible without touching the importers: both
+-- already expose evaluate(track, time), which returns values, and both split a
+-- clip into per-node TRS tracks -- Collada's baked matrices are decomposed on
+-- load. Only their `sample` writes, and the mixer calls this instead.
+function AnimationClip:accumulate(accumulator, time, loop, weight)
+    if not self._sampler or not self._sampler.evaluate then return self end
+
+    time = self:_wrapTime(time, loop)
+
+    for _, track in ipairs(self.tracks) do
+        if PATH_SIZE[track.path] then
+            local v = self._sampler.evaluate(track, time)
+            if v then
+                if track.path == "translation" then
+                    accumulator:addTranslation(track.node, v, weight)
+                elseif track.path == "rotation" then
+                    accumulator:addRotation(track.node, v, weight)
+                elseif track.path == "scale" then
+                    accumulator:addScale(track.node, v, weight)
+                end
+            end
+        end
+    end
+
+    return self
+end
+
 function AnimationClip:resetDuration()
     local longest = 0
     for _, track in ipairs(self.tracks) do

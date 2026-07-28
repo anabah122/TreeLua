@@ -4,14 +4,7 @@
 --   action:setLoop("repeat"):setEffectiveTimeScale(1):play()
 --
 -- Holds time, weight and rate for a single clip. The mixer owns the set of
--- actions and decides which one actually writes the pose.
---
--- BLENDING IS NOT SUPPORTED. three.js evaluates every active action into an
--- accumulator and blends by weight; that requires the sampler to return values
--- rather than write them, and both importers' samplers write TRS straight into
--- the shared node list. So `weight` is respected only as a chooser -- the
--- highest-weight running action wins outright -- and crossFadeTo ramps weights
--- so the switch happens at the midpoint. See AnimationMixer:update.
+-- actions and blends every running one by weight -- see PoseAccumulator.
 
 local AnimationAction = {}
 AnimationAction.__index = AnimationAction
@@ -156,9 +149,8 @@ function AnimationAction:_scheduleFade(from, to, duration)
     return self
 end
 
--- Ramps this action in while `other` ramps out. Because the samplers cannot
--- blend, the visible switch is a cut at the crossover point rather than a
--- true blend -- the weights still ramp, so timing code behaves the same.
+-- Ramps this action in while `other` ramps out, the two poses blending by
+-- weight for the duration.
 function AnimationAction:crossFadeFrom(other, duration, warp)
     other:fadeOut(duration)
     self:fadeIn(duration)

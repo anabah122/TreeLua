@@ -98,6 +98,7 @@ TL.TextureLoader = require "three.loaders.TextureLoader"
 TL.AnimationClip   = require "three.animation.AnimationClip"
 TL.AnimationAction = require "three.animation.AnimationAction"
 TL.AnimationMixer  = require "three.animation.AnimationMixer"
+TL.PoseAccumulator = require "three.animation.PoseAccumulator"
 
 -- ── controls ─────────────────────────────────────────────────────────────────
 TL.FlyControls   = require "three.controls.FlyControls"

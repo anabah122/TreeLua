@@ -717,6 +717,193 @@ function T.integration()
     ok("FlyControls runs without lib.util globals", moved, tostring(cerr))
 end
 
+-- ── weighted blending of several clips ───────────────────────────────────────
+
+function T.blending()
+    local TL = require "init"
+
+    print("\n-- blending --")
+
+    -- PoseAccumulator on its own, where the expected numbers are exact
+    local Pose = TL.PoseAccumulator
+    local acc  = Pose:new()
+
+    local nodes = { { translation = { 0, 0, 0 }, rotation = { 0, 0, 0, 1 },
+                      scale = { 1, 1, 1 } } }
+
+    acc:addTranslation(1, { 0, 0, 0 }, 1)
+    acc:addTranslation(1, { 10, 0, 0 }, 1)
+    acc:commit(nodes)
+    ok("equal weights land halfway", near(nodes[1].translation[1], 5))
+
+    acc:addTranslation(1, { 0, 0, 0 }, 3)
+    acc:addTranslation(1, { 10, 0, 0 }, 1)
+    acc:commit(nodes)
+    ok("weights bias the result", near(nodes[1].translation[1], 2.5))
+
+    -- a single contributor must come through untouched, not scaled by weight
+    acc:addTranslation(1, { 7, 0, 0 }, 0.25)
+    acc:commit(nodes)
+    ok("one contributor is not scaled by its weight", near(nodes[1].translation[1], 7))
+
+    -- rotations blend on the arc: halfway between identity and a 90 degree turn
+    -- is 45 degrees, which a component-wise average would NOT give
+    local half = math.sqrt(0.5)
+    acc:addRotation(1, { 0, 0, 0, 1 }, 1)
+    acc:addRotation(1, { 0, half, 0, half }, 1)
+    acc:commit(nodes)
+
+    local angle = 2 * math.acos(math.min(1, math.abs(nodes[1].rotation[4])))
+    ok("rotations blend along the arc", near(angle, math.pi / 4, 1e-4))
+
+    -- q and -q are the same rotation; blending must not take the long way
+    acc:addRotation(1, { 0, 0, 0, 1 }, 1)
+    acc:addRotation(1, { 0, -half, 0, -half }, 1)
+    acc:commit(nodes)
+    local flipped = 2 * math.acos(math.min(1, math.abs(nodes[1].rotation[4])))
+    ok("rotation blending picks the short arc", near(flipped, math.pi / 4, 1e-4))
+
+    -- the result stays a unit quaternion, or the composed matrix would scale
+    local r = nodes[1].rotation
+    ok("blended rotation is normalised",
+        near(math.sqrt(r[1]^2 + r[2]^2 + r[3]^2 + r[4]^2), 1))
+
+    -- a channel nobody wrote keeps what the node already had
+    nodes[1].scale = { 2, 2, 2 }
+    acc:addTranslation(1, { 1, 1, 1 }, 1)
+    acc:commit(nodes)
+    ok("untouched channels survive a commit", near(nodes[1].scale[1], 2))
+
+    -- and the accumulator must be clean afterwards: a second commit with one
+    -- contributor must not remember the first
+    acc:addTranslation(1, { 100, 0, 0 }, 1)
+    acc:commit(nodes)
+    ok("commit clears the accumulator", near(nodes[1].translation[1], 100))
+
+    -- now against a real clip
+    local gltf = TL.GLTFLoader:new():load("assets/model/model3dtest.glb")
+    local clip = gltf.animations[1]
+    if not clip or clip.duration <= 0 then
+        ok("demo clip is animated", false, "no usable clip")
+        return
+    end
+
+    -- Sample the same clip at two different times through the mixer, then blend
+    -- the two and check the result sits between them. Two times of ONE clip is
+    -- the cleanest available two-pose test: the demo ships a single animation.
+    local tA, tB = 0, clip.duration * 0.5
+
+    local function poseAt(time)
+        local mixer = TL.AnimationMixer:new(gltf.scene)
+        local action = mixer:clipAction(clip)
+        action:play()
+        action.time = time
+        mixer:update(0)
+
+        local out = {}
+        for i, node in ipairs(clip._nodes) do
+            if node.translation then
+                out[i] = { node.translation[1], node.translation[2], node.translation[3] }
+            end
+        end
+        return out
+    end
+
+    local poseA = poseAt(tA)
+    local poseB = poseAt(tB)
+
+    -- find a node the clip genuinely moves, or the test proves nothing
+    local moving, spread = nil, 0
+    for i, a in pairs(poseA) do
+        local b = poseB[i]
+        if b then
+            local d = math.abs(a[1] - b[1]) + math.abs(a[2] - b[2]) + math.abs(a[3] - b[3])
+            if d > spread then moving, spread = i, d end
+        end
+    end
+
+    ok("the clip moves at least one node", moving ~= nil and spread > 1e-4)
+
+    if moving then
+        local blendMixer = TL.AnimationMixer:new(gltf.scene)
+
+        local first  = blendMixer:clipAction(clip)
+        -- a second action needs a second clip object, since actions are cached
+        -- per clip; a clone shares the same tracks and nodes
+        local second = blendMixer:clipAction(clip:clone())
+
+        first:play();  first.time  = tA
+        second:play(); second.time = tB
+
+        first:setEffectiveWeight(1)
+        second:setEffectiveWeight(1)
+
+        blendMixer:update(0)
+
+        local blended = clip._nodes[moving].translation
+        local a, b = poseA[moving], poseB[moving]
+
+        local expected = { (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, (a[3] + b[3]) / 2 }
+        ok("an even blend lands between the two poses",
+            near(blended[1], expected[1], 1e-4)
+            and near(blended[2], expected[2], 1e-4)
+            and near(blended[3], expected[3], 1e-4))
+
+        -- and it must differ from either input, or nothing was blended at all
+        ok("the blend is not simply one of the inputs",
+            math.abs(blended[1] - a[1]) + math.abs(blended[2] - a[2]) > 1e-6
+            and math.abs(blended[1] - b[1]) + math.abs(blended[2] - b[2]) > 1e-6)
+
+        -- weight must steer it: 3:1 lands a quarter of the way
+        first:setEffectiveWeight(3)
+        second:setEffectiveWeight(1)
+        blendMixer:update(0)
+
+        local biased = clip._nodes[moving].translation
+        ok("weight biases the blend",
+            near(biased[1], a[1] + (b[1] - a[1]) * 0.25, 1e-4))
+
+        -- turning blending off falls back to the dominant action alone
+        blendMixer.blending = false
+        blendMixer:update(0)
+        local dominant = clip._nodes[moving].translation
+        ok("blending = false samples the dominant action",
+            near(dominant[1], a[1], 1e-4))
+        blendMixer.blending = true
+
+        -- a zero-weight action must not drag the blend toward its pose
+        first:setEffectiveWeight(1)
+        second:setEffectiveWeight(0)
+        blendMixer:update(0)
+        local soloed = clip._nodes[moving].translation
+        ok("a zero-weight action contributes nothing",
+            near(soloed[1], a[1], 1e-4))
+    end
+
+    -- crossFadeTo must now ramp through intermediate poses rather than cut
+    local fadeMixer = TL.AnimationMixer:new(gltf.scene)
+    local from = fadeMixer:clipAction(clip)
+    local to   = fadeMixer:clipAction(clip:clone())
+
+    from:play()
+    from:setEffectiveWeight(1)
+    from:crossFadeTo(to, 1.0, false)
+
+    fadeMixer:update(0.5)
+    ok("crossFadeTo ramps the outgoing weight down",
+        from:getEffectiveWeight() < 1 and from:getEffectiveWeight() > 0)
+    ok("crossFadeTo ramps the incoming weight up",
+        to:getEffectiveWeight() > 0 and to:getEffectiveWeight() < 1)
+
+    -- both are contributing at once, which is what makes it a fade and not a cut
+    ok("both actions run during the fade", from:isRunning() and to:isRunning())
+
+    fadeMixer:update(0.6)
+    ok("the outgoing action retires when the fade completes", not from:isRunning())
+    ok("the incoming action is at full weight",
+        near(to:getEffectiveWeight(), 1, 1e-3))
+end
+
 -- ── the classes added to close the three.js gap ──────────────────────────────
 
 function T.additions()
@@ -998,6 +1185,7 @@ function T.run()
     T.geometry()
     T.hygiene()
     T.integration()
+    T.blending()
     T.additions()
 
     print(("\n%d passed, %d failed"):format(passed, failed))

@@ -4,17 +4,18 @@
 --   mixer:clipAction(gltf.animations[1]):play()
 --   function love.update(dt) mixer:update(dt) end
 --
--- Owns the actions for one root object, steps their clocks, samples the
--- winning one into the node hierarchy and refreshes world matrices so the
--- skinning palette is current.
+-- Owns the actions for one root object, steps their clocks, blends every
+-- running one into the node hierarchy by weight and refreshes world matrices so
+-- the skinning palette is current.
 --
--- ONE ACTION WRITES THE POSE. three.js accumulates every running action and
--- blends by weight; that needs samplers that RETURN a pose, and both importers
--- write TRS directly into the shared node list instead. Rather than fake it,
--- the mixer picks the highest-weight running action and samples only that.
--- Crossfades still ramp weights, so the switch lands at the crossover point.
+-- Blending goes through PoseAccumulator, which sits above the importers rather
+-- than inside them: both already expose evaluate(track, time) returning values,
+-- so nothing about the format modules had to change. Set `blending = false` for
+-- the cheaper single-clip path, where the highest-weight action writes the pose
+-- outright.
 
 local AnimationAction = require "three.animation.AnimationAction"
+local PoseAccumulator = require "three.animation.PoseAccumulator"
 local common          = require "importer.common"
 
 local AnimationMixer = {}
@@ -28,9 +29,11 @@ function AnimationMixer:new(root)
         _actions = {},        -- clip -> action
         _active  = {},        -- ordered list of running actions
         _listeners = {},
+        _pose    = PoseAccumulator:new(),
 
         time      = 0,
         timeScale = 1,
+        blending  = true,
     }, AnimationMixer)
 end
 
@@ -117,8 +120,9 @@ end
 
 -- ── stepping ─────────────────────────────────────────────────────────────────
 
--- Which action gets to write the pose: highest effective weight, ties going to
--- whichever started first, so the choice never flickers frame to frame.
+-- Which action gets to write the pose when blending is off: highest effective
+-- weight, ties going to whichever started first, so the choice never flickers
+-- frame to frame.
 function AnimationMixer:_dominant()
     local best, bestWeight = nil, -1
     for _, action in ipairs(self._active) do
@@ -134,8 +138,8 @@ function AnimationMixer:update(dt)
     local step = dt * self.timeScale
     self.time = self.time + step
 
-    -- advance every clock first, so weights and crossfades resolve before the
-    -- winner is chosen
+    -- advance every clock first, so weights and crossfades resolve before
+    -- anything is sampled
     for i = #self._active, 1, -1 do
         local action = self._active[i]
         if not action:_advance(step) then
@@ -143,20 +147,56 @@ function AnimationMixer:update(dt)
         end
     end
 
-    local action = self:_dominant()
-    if not action then return self end
+    local nodes = self.blending and self:_blend() or self:_sampleDominant()
 
-    local clip = action:getClip()
-    clip:sample(action.time, action.loop ~= "once")
-
-    -- the sampler wrote local TRS; world matrices have to follow or the
-    -- skinning palette reads last frame's pose
-    local nodes = clip._nodes
+    -- the pose is local TRS; world matrices have to follow or the skinning
+    -- palette reads last frame's
     if nodes then
         common.update_world(nodes, nodes.rootMatrix)
     end
 
     return self
+end
+
+-- Accumulate every running action, weighted, into one pose.
+--
+-- An action contributing nothing is skipped outright rather than added at
+-- weight zero: a fully faded-out clip must not drag the blend toward its own
+-- pose, and dividing by an accumulated weight of zero has no meaning either.
+function AnimationMixer:_blend()
+    local nodes, total = nil, 0
+
+    for _, action in ipairs(self._active) do
+        if action:isRunning() then
+            local weight = action:getEffectiveWeight()
+            if weight > 0 then
+                local clip = action:getClip()
+                clip:accumulate(self._pose, action.time,
+                                action.loop ~= "once", weight)
+                nodes = nodes or clip._nodes
+                total = total + weight
+            end
+        end
+    end
+
+    if total == 0 then return nil end
+
+    self._pose:commit(nodes)
+    return nodes
+end
+
+-- The pre-blending path, kept because it is strictly cheaper: one clip's tracks
+-- straight into the nodes, no accumulator, no per-node normalise. Reachable by
+-- setting `blending = false`, and the only path a sampler without an
+-- `evaluate` could take.
+function AnimationMixer:_sampleDominant()
+    local action = self:_dominant()
+    if not action then return nil end
+
+    local clip = action:getClip()
+    clip:sample(action.time, action.loop ~= "once")
+
+    return clip._nodes
 end
 
 -- three.js exposes this for scrubbing; here it also re-poses immediately so a
