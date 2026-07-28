@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sprite — TreeLua docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-page="Sprite" data-depth="../">
+<main>
+
+<div lang="en">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Sprite</h1>
+  <p class="lead">Extends Mesh, inherits its API. A flat quad whose world
+    <em>rotation</em> the renderer overwrites every frame to face the camera
+    — position and scale stay under your own transform, like any Mesh.</p>
+  <pre><code>local sprite = Sprite:new(MeshStandardMaterial:new{ map = texture })
+sprite.position:set(0, 1.2, 0)
+sprite.scale:set(0.5, 0.5, 1)
+scene:add(sprite)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Sprite</span>(material)</h3>
+  <p>Geometry is a shared unit <code>PlaneGeometry</code> (1x1, lying in XY
+    facing +Z), scaled per instance via <code>.scale</code> — every sprite in
+    a scene reuses the same one. With no rotation applied it already faces
+    the camera along -Z the way three.js sprites do.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>center</code></td><td>{x, y}</td><td><code>{0.5, 0.5}</code></td><td>three.js's pivot field, kept for parity — not read by the quad above.</td></tr>
+  </table>
+  <p>Otherwise inherits every <code>Mesh</code> property.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSprite()</h3>
+  <p>Returns <code>true</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Billboarding happens in the renderer, not the object.</strong>
+        <code>WebGLRenderer</code> checks <code>.isSprite()</code> during its
+        scene walk and overwrites the sprite's world rotation with the
+        camera's, matching three.js's effective behaviour without a
+        dedicated <code>SpriteMaterial</code>/<code>raycast</code> path.</li>
+      <li>Takes any <code>Material</code> (typically
+        <code>MeshStandardMaterial</code> with a <code>map</code>) rather
+        than three.js's dedicated <code>SpriteMaterial</code>.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/Sprite.lua</code></p>
+</div>
+
+<div lang="ru">
+  <div class="crumb"><a href="../index.html">TreeLua</a> / Objects</div>
+  <h1 class="title">Sprite</h1>
+  <p class="lead">Наследует Mesh, наследует её API. Плоский квад, чей мировой
+    <em>поворот</em> рендерер перезаписывает каждый кадр, чтобы он смотрел на
+    камеру — позиция и масштаб остаются под вашим собственным transform, как
+    у любого Mesh.</p>
+  <pre><code>local sprite = Sprite:new(MeshStandardMaterial:new{ map = texture })
+sprite.position:set(0, 1.2, 0)
+sprite.scale:set(0.5, 0.5, 1)
+scene:add(sprite)</code></pre>
+
+  <h2>Constructor</h2>
+  <h3 class="member"><span class="name">Sprite</span>(material)</h3>
+  <p>Геометрия — общий единичный <code>PlaneGeometry</code> (1x1, лежит в XY,
+    смотрит в +Z), масштабируемый на каждый инстанс через <code>.scale</code>
+    — все спрайты сцены переиспользуют один и тот же. Без поворота он уже
+    смотрит на камеру вдоль -Z, как спрайты в three.js.</p>
+
+  <h2>Properties</h2>
+  <table>
+    <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
+    <tr><td><code>center</code></td><td>{x, y}</td><td><code>{0.5, 0.5}</code></td><td>Поле pivot из three.js, оставлено для паритета — квадом выше не читается.</td></tr>
+  </table>
+  <p>В остальном наследует все свойства <code>Mesh</code>.</p>
+
+  <h2>Methods</h2>
+
+  <h3 class="member">.isSprite()</h3>
+  <p>Возвращает <code>true</code>.</p>
+
+  <div class="diff">
+    <h4>Differences from three.js</h4>
+    <ul>
+      <li><strong>Billboarding происходит в рендерере, а не в объекте.</strong>
+        <code>WebGLRenderer</code> проверяет <code>.isSprite()</code> во время
+        обхода сцены и перезаписывает мировой поворот спрайта поворотом
+        камеры, повторяя эффективное поведение three.js без отдельного
+        <code>SpriteMaterial</code>/<code>raycast</code>-пути.</li>
+      <li>Принимает любой <code>Material</code> (обычно
+        <code>MeshStandardMaterial</code> с <code>map</code>), а не
+        отдельный <code>SpriteMaterial</code> из three.js.</li>
+    </ul>
+  </div>
+
+  <p class="source-link">Source: <code>three/objects/Sprite.lua</code></p>
+</div>
+
+</main>
+<script src="../assets/nav.js"></script>
+<script src="../assets/lang.js"></script>
+</body>
+</html>

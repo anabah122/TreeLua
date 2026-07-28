@@ -31,8 +31,15 @@ scene:add(sun)</code></pre>
   <table>
     <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
     <tr><td><code>target</code></td><td>Object3D</td><td>new Object3D at origin</td><td>Not added to the scene automatically, matching three.js — add it yourself if you move it and want that reflected in the world matrix used for direction.</td></tr>
+    <tr><td><code>castShadow</code></td><td>boolean</td><td><code>false</code></td><td>Opts this light into the renderer's shadow pass. Off by default so a scene with no shadows never pays for the second pass.</td></tr>
+    <tr><td><code>shadow.mapSize</code></td><td>number</td><td><code>1024</code></td><td>Width/height of the (square) shadow map canvas.</td></tr>
+    <tr><td><code>shadow.bias</code></td><td>number</td><td><code>0.003</code></td><td>Depth offset subtracted before the comparison, against shadow acne.</td></tr>
+    <tr><td><code>shadow.camera</code></td><td>OrthographicCamera</td><td><code>(-10,10,10,-10,0.1,50)</code></td><td>Frustum the shadow map is rendered from; widen it to cover the scene, repositioned each frame by <code>.updateShadowCamera</code>.</td></tr>
   </table>
-  <p>Inherits <code>color</code> and <code>intensity</code> from <code>Light</code>.</p>
+  <p>Inherits <code>color</code> and <code>intensity</code> from <code>Light</code>.
+    See <a href="WebGLRenderer.html">WebGLRenderer</a> for <code>shadowTarget</code>
+    and <code>TL.settings.shadowSoftness</code>, and <code>Object3D</code>'s
+    <code>castShadow</code>/<code>receiveShadow</code> for the per-mesh side.</p>
 
   <h2>Methods</h2>
 
@@ -46,6 +53,12 @@ scene:add(sun)</code></pre>
     both world matrices first. A light sitting exactly on its target has no
     direction; rather than hand back a zero vector, it returns
     <code>(0, -1, 0)</code>.</p>
+
+  <h3 class="member">.updateShadowCamera(target)</h3>
+  <p>Points <code>.shadow.camera</code> (an <code>OrthographicCamera</code> —
+    parallel rays need no perspective) down this light's direction, centred
+    on world-space <code>target</code>. Called by <code>WebGLRenderer</code>
+    before the shadow pass; not usually called by hand.</p>
 
   <h3 class="member">.copy(source, recursive)</h3>
 
@@ -93,8 +106,15 @@ scene:add(sun)</code></pre>
   <table>
     <tr><th>Свойство</th><th>Тип</th><th>По умолчанию</th><th>Описание</th></tr>
     <tr><td><code>target</code></td><td>Object3D</td><td>новый Object3D в начале координат</td><td>Автоматически не добавляется в сцену, как и в three.js — добавьте сами, если перемещаете его и хотите, чтобы это отразилось в мировой матрице, используемой для направления.</td></tr>
+    <tr><td><code>castShadow</code></td><td>boolean</td><td><code>false</code></td><td>Включает для этого света теневой проход рендерера. По умолчанию выключен, чтобы сцена без теней не платила за второй проход.</td></tr>
+    <tr><td><code>shadow.mapSize</code></td><td>number</td><td><code>1024</code></td><td>Сторона (квадратного) канваса карты теней.</td></tr>
+    <tr><td><code>shadow.bias</code></td><td>number</td><td><code>0.003</code></td><td>Смещение глубины перед сравнением, против shadow acne.</td></tr>
+    <tr><td><code>shadow.camera</code></td><td>OrthographicCamera</td><td><code>(-10,10,10,-10,0.1,50)</code></td><td>Фрустум, из которого рендерится карта теней; расширьте, чтобы покрыть сцену — позиция пересчитывается каждый кадр через <code>.updateShadowCamera</code>.</td></tr>
   </table>
-  <p>Наследует <code>color</code> и <code>intensity</code> от <code>Light</code>.</p>
+  <p>Наследует <code>color</code> и <code>intensity</code> от <code>Light</code>.
+    См. <a href="WebGLRenderer.html">WebGLRenderer</a> про <code>shadowTarget</code>
+    и <code>TL.settings.shadowSoftness</code>, а также <code>castShadow</code>/
+    <code>receiveShadow</code> у <code>Object3D</code> для стороны меша.</p>
 
   <h2>Methods</h2>
 
@@ -108,6 +128,13 @@ scene:add(sun)</code></pre>
     источников света. Сначала обновляет обе мировые матрицы. Источник,
     находящийся точно на цели, не имеет направления; вместо возврата
     нулевого вектора возвращается <code>(0, -1, 0)</code>.</p>
+
+  <h3 class="member">.updateShadowCamera(target)</h3>
+  <p>Направляет <code>.shadow.camera</code> (<code>OrthographicCamera</code> —
+    параллельным лучам перспектива не нужна) вдоль направления этого света,
+    центрируя на мировой точке <code>target</code>. Вызывается
+    <code>WebGLRenderer</code> перед теневым проходом; вручную обычно не
+    нужен.</p>
 
   <h3 class="member">.copy(source, recursive)</h3>
 

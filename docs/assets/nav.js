@@ -10,7 +10,7 @@ const TREE_NAV = [
   ]},
   { title: "Scenes", items: ["Scene"] },
   { title: "Objects", items: [
-    "Mesh", "SkinnedMesh", "Skeleton", "InstancedMesh", "LOD", "Model",
+    "Mesh", "SkinnedMesh", "Skeleton", "InstancedMesh", "LOD", "Model", "Sprite",
   ]},
   { title: "Geometries", items: [
     "BoxGeometry", "SphereGeometry", "PlaneGeometry", "CylinderGeometry",

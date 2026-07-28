@@ -31,6 +31,7 @@
     <tr><td><code>autoUpdateScene</code></td><td>boolean</td><td><code>true</code></td><td>Whether <code>render()</code> calls <code>scene:updateMatrixWorld()</code> itself.</td></tr>
     <tr><td><code>diffuseWrap</code></td><td>number</td><td><code>0.25</code></td><td>How far the diffuse term wraps past the terminator; 0 is physically strict, 1 is flat. Compensates for having only one light and no global illumination.</td></tr>
     <tr><td><code>frustumCulling</code></td><td>boolean</td><td><code>true</code></td><td>three.js flag of the same name; off draws everything.</td></tr>
+    <tr><td><code>shadowTarget</code></td><td>Vector3</td><td>origin</td><td>World point the shadow camera centres on each frame — usually the scene centre or whatever the shadow should follow (e.g. the player).</td></tr>
   </table>
 
   <h2>Properties</h2>
@@ -89,8 +90,13 @@
         <code>DirectionalLight</code>s, the brightest is used and the rest
         are ignored (a warning is printed once). Multiple
         <code>AmbientLight</code>s are summed rather than picking one.</li>
-      <li><strong>No shadow mapping.</strong> <code>castShadow</code> /
-        <code>receiveShadow</code> on objects and lights are not read.</li>
+      <li><strong>One shadow map for one directional light.</strong> Set
+        <code>light.castShadow = true</code> on a <code>DirectionalLight</code>
+        to opt it into a second depth pass; <code>mesh.castShadow</code> /
+        <code>mesh.receiveShadow</code> gate per-object as in three.js. Filter
+        quality is <code>TL.settings.shadowSoftness</code> (global PCF kernel
+        radius in texels), not per-light. <code>PointLight</code>/
+        <code>SpotLight</code> never cast.</li>
       <li><strong>Skinned meshes are capped at
         <code>WebGLRenderer.MAX_BONES</code> (128 bones)</strong>, matching
         the shader's uniform array size. A longer skeleton is truncated and
@@ -131,6 +137,7 @@
     <tr><td><code>autoUpdateScene</code></td><td>boolean</td><td><code>true</code></td><td>Вызывает ли <code>render()</code> сам <code>scene:updateMatrixWorld()</code>.</td></tr>
     <tr><td><code>diffuseWrap</code></td><td>number</td><td><code>0.25</code></td><td>Насколько диффузный член заходит за терминатор; 0 — физически строго, 1 — плоско. Компенсирует наличие только одного источника света и отсутствие глобального освещения.</td></tr>
     <tr><td><code>frustumCulling</code></td><td>boolean</td><td><code>true</code></td><td>Флаг three.js с тем же именем; при отключении рисуется всё.</td></tr>
+    <tr><td><code>shadowTarget</code></td><td>Vector3</td><td>начало координат</td><td>Мировая точка, вокруг которой теневая камера центрируется каждый кадр — обычно центр сцены или то, за чем должна следовать тень (например, игрок).</td></tr>
   </table>
 
   <h2>Properties</h2>
@@ -193,9 +200,15 @@
         <code>DirectionalLight</code>, используется самый яркий, остальные
         игнорируются (предупреждение печатается один раз). Несколько
         <code>AmbientLight</code> суммируются, а не выбирается один.</li>
-      <li><strong>Нет карт теней.</strong> <code>castShadow</code> /
-        <code>receiveShadow</code> у объектов и источников света не
-        читаются.</li>
+      <li><strong>Одна карта теней на один направленный источник.</strong>
+        Установите <code>light.castShadow = true</code> на
+        <code>DirectionalLight</code>, чтобы включить для него второй
+        depth-проход; <code>mesh.castShadow</code> / <code>mesh.receiveShadow</code>
+        управляют этим на каждом объекте, как в three.js. Качество фильтрации —
+        <code>TL.settings.shadowSoftness</code> (глобальный радиус PCF-ядра в
+        текселях), а не свойство конкретного источника.
+        <code>PointLight</code>/<code>SpotLight</code> теней не отбрасывают
+        никогда.</li>
       <li><strong>Скиннинговые меши ограничены
         <code>WebGLRenderer.MAX_BONES</code> (128 костей)</strong>, что
         соответствует размеру uniform-массива шейдера. Более длинный

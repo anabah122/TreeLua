@@ -90,7 +90,16 @@ local mesh = TL.Mesh:new(
 `mesh:rotateX(-math.pi / 2)`.
 
 ### Objects
-`Mesh` `SkinnedMesh` `Skeleton` `InstancedMesh` `LOD`
+`Mesh` `SkinnedMesh` `Skeleton` `InstancedMesh` `LOD` `Sprite`
+
+`Sprite` is a quad whose world *rotation* the renderer overwrites every frame
+to face the camera — position/scale stay under your control like any `Mesh`:
+
+```lua
+local sprite = TL.Sprite:new(TL.MeshStandardMaterial:new{ map = texture })
+sprite.position:set(0, 1.2, 0)
+scene:add(sprite)
+```
 
 `LOD` needs no renderer support — it only toggles which child is visible, which
 the renderer's traversal already respects. Call `lod:update(camera)` yourself,
@@ -169,6 +178,20 @@ Two departures from strict PBR, both deliberate and both adjustable:
 `PointLight` and `SpotLight` sit in the graph and carry their three.js fields,
 but the bundled shader takes one directional light plus ambient, so they are
 not yet sampled — they are there so scene code written against three.js loads.
+
+`DirectionalLight` can cast one shadow map (single light, single map — see
+[Limitations](#limitations)):
+
+```lua
+sun.castShadow = true          -- opt this light into the shadow pass
+mesh.castShadow = true         -- per-mesh, mirrors three.js
+floor.receiveShadow = true
+```
+
+`renderer = TL.WebGLRenderer:new{ shadowTarget = TL.Vector3:new(0,0,0) }` sets
+what the shadow camera centres on each frame (usually the scene origin or the
+player). `TL.settings.shadowSoftness` (default `1`) is the PCF kernel radius
+in texels, global like a GPU capability rather than per-light.
 
 ### Renderer
 `WebGLRenderer` — `render(scene, camera)`, `setClearColor`, `setSize`, `info.render`
@@ -287,7 +310,7 @@ its mutating three.js behaviour.
 | `three/objects/Model.lua` | one loaded asset, instantiated cheaply any number of times |
 | `class/` | legacy, superseded by the facade — see the note at the top of each |
 | `lib/util/` | demo scaffolding only; installs globals, not used by the library |
-| `game_test/` | a small game built on the engine as a plain library, used to exercise it end to end — not part of the engine itself |
+| `demos/` | scenes built on the engine as a plain library, used to exercise it end to end — not part of the engine itself |
 
 ## Shaders
 
@@ -311,12 +334,19 @@ guaranteed floor of 1024, so a static mesh must not declare it.
 256 assertions covering the maths, the object graph, the generators, library
 hygiene, and the loaders/animation/renderer against a real graphics context.
 
-## Running the test game
+## Running a demo
 
     love .
 
-`main.lua` delegates entirely to `game_test/`, a small top-down shooter built
-on TreeEngine used strictly as a library — no engine file is touched to make
-it work, so it doubles as an integration check. It is not part of the engine
-and not the place to look for API examples beyond what's already inlined
-above; read `game_test/init.lua` if you want to see a full scene assembled.
+`main.lua` delegates to one scene under `demos/` (currently `demos/shadows`),
+each built on TreeEngine used strictly as a library — no engine file is
+touched to make them work, so they double as integration checks:
+
+| Demo | |
+|---|---|
+| `demos/shadows` | directional-light shadow mapping, PCF softness, a skinned caster |
+| `demos/isaac` | a small top-down shooter — rooms, enemies, pickups, billboarded sprites |
+
+They are not part of the engine and not the place to look for API examples
+beyond what's already inlined above; read a demo's `init.lua` for a full scene
+assembled end to end.
