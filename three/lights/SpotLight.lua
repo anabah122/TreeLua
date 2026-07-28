@@ -8,13 +8,11 @@
 -- Like DirectionalLight, the aim comes from `target` rather than a stored
 -- vector, so moving either end re-aims the cone. `angle` is the half-angle in
 -- radians; `penumbra` in [0,1] softens the rim.
---
--- Not sampled by the bundled shader yet -- see PointLight for why it exists
--- anyway.
 
-local Light    = require "three.lights.Light"
-local Object3D = require "three.core.Object3D"
-local Vector3  = require "math.vec3"
+local Light             = require "three.lights.Light"
+local Object3D          = require "three.core.Object3D"
+local Vector3           = require "math.vec3"
+local PerspectiveCamera = require "three.cameras.PerspectiveCamera"
 
 local SpotLight = Light:extend("SpotLight")
 
@@ -29,6 +27,15 @@ function SpotLight:new(color, intensity, distance, angle, penumbra, decay)
     l.angle    = angle    or math.pi / 3
     l.penumbra = penumbra or 0
     l.decay    = decay == nil and 2 or decay
+
+    -- Off by default, same convention as DirectionalLight. The cone maps
+    -- directly onto a perspective camera: fov = 2*angle, aspect 1 (square map).
+    l.castShadow = false
+    l.shadow = {
+        mapSize = 1024,
+        bias    = 0.003,
+        camera  = PerspectiveCamera:new(math.deg(angle or math.pi / 3) * 2, 1, 0.1, distance and distance > 0 and distance or 50),
+    }
 
     return l
 end
@@ -61,6 +68,23 @@ function SpotLight:direction(target)
 
     if target:lengthSq() == 0 then return target:set(0, -1, 0) end
     return target:normalizeSelf()
+end
+
+-- Aim `shadow.camera` from the light's own position toward its target, cone
+-- angle already baked into the camera's fov at construction. Unlike
+-- DirectionalLight there is no external focus point -- a spot's frustum is
+-- fully determined by where the light itself sits.
+function SpotLight:updateShadowCamera()
+    local cam = self.shadow.camera
+
+    self:updateWorldMatrix(true, false)
+    local pos = Vector3:new():setFromMatrixPosition(self.matrixWorld)
+    local dir = self:direction()
+
+    cam.position:copy(pos)
+    cam:lookAt(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z)
+
+    return cam
 end
 
 function SpotLight:copy(source, recursive)

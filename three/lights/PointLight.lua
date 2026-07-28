@@ -8,15 +8,27 @@
 -- `distance` of 0 means the light never cuts off; `decay` of 2 is the physical
 -- inverse-square falloff and three.js's default.
 --
--- The bundled shader takes one directional light plus ambient, so this is not
--- sampled yet -- it sits in the graph, reports its world position and waits for
--- the shader to grow a point-light slot. Added now so scene code written
--- against three.js loads rather than erroring on a missing class.
+-- Shadows: an omnidirectional light has no single view direction, so its
+-- shadow needs all 6 cube faces. `shadow.cameras` holds one 90-degree
+-- PerspectiveCamera per face (+X,-X,+Y,-Y,+Z,-Z, three.js's cube-map order),
+-- aimed by `updateShadowCameras` right before the renderer's shadow pass.
 
-local Light   = require "three.lights.Light"
-local Vector3 = require "math.vec3"
+local Light             = require "three.lights.Light"
+local Vector3            = require "math.vec3"
+local PerspectiveCamera  = require "three.cameras.PerspectiveCamera"
 
 local PointLight = Light:extend("PointLight")
+
+-- three.js's CubeCamera face order: dirs paired with an up vector that keeps
+-- each face's basis consistent (no face ends up mirrored against its neighbors).
+local FACES = {
+    { dir = Vector3:new( 1,  0,  0), up = Vector3:new(0, -1,  0) },
+    { dir = Vector3:new(-1,  0,  0), up = Vector3:new(0, -1,  0) },
+    { dir = Vector3:new( 0,  1,  0), up = Vector3:new(0,  0,  1) },
+    { dir = Vector3:new( 0, -1,  0), up = Vector3:new(0,  0, -1) },
+    { dir = Vector3:new( 0,  0,  1), up = Vector3:new(0, -1,  0) },
+    { dir = Vector3:new( 0,  0, -1), up = Vector3:new(0, -1,  0) },
+}
 
 function PointLight:new(color, intensity, distance, decay)
     local l = Light.new(self, color, intensity)
@@ -24,6 +36,17 @@ function PointLight:new(color, intensity, distance, decay)
 
     l.distance = distance or 0
     l.decay    = decay == nil and 2 or decay
+
+    -- Off by default, same convention as DirectionalLight/SpotLight.
+    l.castShadow = false
+    l.shadow = {
+        mapSize = 512,   -- smaller default: this is 6 faces, not 1
+        bias    = 0.005,
+        cameras = {},
+    }
+    for i = 1, 6 do
+        l.shadow.cameras[i] = PerspectiveCamera:new(90, 1, 0.1, distance and distance > 0 and distance or 50)
+    end
 
     return l
 end
@@ -46,6 +69,20 @@ function PointLight:worldPosition(target)
     target = target or Vector3:new()
     self:updateWorldMatrix(true, false)
     return target:setFromMatrixPosition(self.matrixWorld)
+end
+
+-- Point all 6 face cameras at the light's current world position. Called by
+-- the renderer once per frame before the point-light shadow pass, since the
+-- light (and thus every face's frustum) may have moved.
+function PointLight:updateShadowCameras()
+    local pos = self:worldPosition()
+    for i, cam in ipairs(self.shadow.cameras) do
+        local face = FACES[i]
+        cam.position:copy(pos)
+        cam.up:copy(face.up)
+        cam:lookAt(pos.x + face.dir.x, pos.y + face.dir.y, pos.z + face.dir.z)
+    end
+    return self.shadow.cameras
 end
 
 function PointLight:copy(source, recursive)

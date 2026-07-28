@@ -1,8 +1,13 @@
--- shader/parts/pbr.lua — metallic-roughness shading
+-- shader/parts/pbr.lua — metallic-roughness shading, up to MAX_LIGHTS lights
 --
 -- Cook-Torrance: GGX distribution, Smith geometry, Schlick Fresnel. This is
 -- the model glTF stores and both importers already extract, so nothing has to
 -- be converted on the way in.
+--
+-- Directional/point/spot all sit in one uniform array rather than three
+-- separate ones: a scene mixes them freely, and one loop that branches on
+-- u_lightType is simpler than unrolling three loops of different lengths.
+-- MAX_LIGHTS must match WebGLRenderer.MAX_LIGHTS.
 --
 -- Always included -- unlike skinning it costs no uniform array, and a variant
 -- without it would just be a second lighting model to keep in step. If an
@@ -12,8 +17,18 @@ return {
     name = "pbr",
 
     fragmentUniforms = [[
-        uniform vec3  u_lightDir;
-        uniform vec3  u_lightColor;
+        // MAX_LIGHTS is defined by shader/parts/shadow.lua, whose slot is
+        // assembled first (see shader/init.lua's ALWAYS list).
+        uniform int   u_lightCount;
+        uniform int   u_lightType[MAX_LIGHTS];       // 0 directional, 1 point, 2 spot
+        uniform vec3  u_lightPos[MAX_LIGHTS];         // point/spot: world position
+        uniform vec3  u_lightDir[MAX_LIGHTS];         // directional/spot: ray direction (light -> scene)
+        uniform vec3  u_lightColor[MAX_LIGHTS];       // color * intensity
+        uniform float u_lightDistance[MAX_LIGHTS];    // point/spot cutoff, 0 = infinite
+        uniform float u_lightDecay[MAX_LIGHTS];
+        uniform float u_lightAngleCos[MAX_LIGHTS];    // spot: cos(angle), outer cone edge
+        uniform float u_lightPenumbraCos[MAX_LIGHTS]; // spot: cos(angle*(1-penumbra)), inner edge
+
         uniform vec3  u_ambient;
         uniform bool  u_hasHemi;
         uniform vec3  u_hemiSkyColor;
@@ -60,6 +75,19 @@ return {
         {
             return f0 + (1.0 - f0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
         }
+
+        // Physical inverse-square falloff, windowed to zero at `distance`
+        // (0 = never cuts off) so a point/spot light does not light the whole
+        // level. Same smoothstep-based window three.js's punctual lights use.
+        float punctualAttenuation(float dist, float range, float decay)
+        {
+            float atten = 1.0 / max(pow(dist, decay), 1e-4);
+            if (range > 0.0) {
+                float falloff = clamp(1.0 - pow(dist / range, 4.0), 0.0, 1.0);
+                atten *= falloff * falloff;
+            }
+            return atten;
+        }
     ]],
 
     -- Reads `baseColor` and the varyings; leaves the result in `_shaded`.
@@ -80,57 +108,84 @@ return {
 
         vec3 _n = shadingNormal;
         vec3 _v = normalize(u_cameraPos - v_worldPos);
-        vec3 _l = -normalize(u_lightDir);
-        vec3 _h = normalize(_v + _l);
 
-        float _ndl = max(dot(_n, _l), 0.0);
         float _ndv = max(dot(_n, _v), 1e-4);
-        float _ndh = max(dot(_n, _h), 0.0);
-        float _vdh = max(dot(_v, _h), 0.0);
 
         // Dielectrics reflect ~4% head-on; metals reflect their own base
         // colour and have no diffuse lobe at all.
         vec3 _f0 = mix(vec3(0.04), baseColor.rgb, _metalness);
 
-        float _d = distributionGGX(_ndh, _roughness);
-        float _g = geometrySmith(_ndv, _ndl, _roughness);
-        vec3  _f = fresnelSchlick(_vdh, _f0);
+        // shadowFactor[i] is declared by shader/parts/shadow.lua, which runs
+        // before this part (see shader/init.lua's ALWAYS list) and is 1.0
+        // (fully lit) for any light with no bound shadow map.
+        vec3 _lit = vec3(0.0);
+        for (int i = 0; i < MAX_LIGHTS; i++) {
+            if (i >= u_lightCount) break;
 
-        vec3 _specular = (_d * _g * _f) / max(4.0 * _ndv * _ndl, 1e-4);
+            vec3 _l;
+            float _atten = 1.0;
 
-        // Energy conservation: what is not reflected is available to scatter.
-        //
-        // The Lambert lobe is albedo/pi, but the pi is folded away rather than
-        // divided out: light intensities in this engine are authored against
-        // the old lambert shader, where a directional light of 1.0 meant "full
-        // brightness". Keeping the pi would darken every existing scene by
-        // 3.14x and force every caller to retune. Physically this just rolls
-        // the constant into the light's units.
-        vec3 _kd = (vec3(1.0) - _f) * (1.0 - _metalness);
-        vec3 _diffuse = _kd * baseColor.rgb;
+            if (u_lightType[i] == 0) {
+                // directional: parallel rays, no distance falloff
+                _l = -normalize(u_lightDir[i]);
+            } else {
+                vec3 _toLight = u_lightPos[i] - v_worldPos;
+                float _dist = length(_toLight);
+                _l = _toLight / max(_dist, 1e-4);
+                _atten = punctualAttenuation(_dist, u_lightDistance[i], u_lightDecay[i]);
 
-        // Wrapped diffuse: the lit side follows ndl, but the terminator softens
-        // so faces angled away stay readable instead of dropping to flat black.
-        // With a single light and no bounce it is the difference between a
-        // shaded model and a silhouette. The specular lobe keeps the true ndl --
-        // wrapping it would smear highlights around the back of the object.
-        float _wrapped = _ndl * (1.0 - u_diffuseWrap) + u_diffuseWrap;
+                if (u_lightType[i] == 2) {
+                    // spot: cone falloff between the outer and inner (penumbra) edge
+                    float _cosAngle = dot(-_l, normalize(u_lightDir[i]));
+                    float _spot = clamp(
+                        (_cosAngle - u_lightAngleCos[i]) /
+                        max(u_lightPenumbraCos[i] - u_lightAngleCos[i], 1e-4),
+                        0.0, 1.0);
+                    _atten *= _spot * _spot;
+                }
+            }
 
-        // shadowFactor is declared by shader/parts/shadow.lua, which runs
-        // before this part (see shader/init.lua's ALWAYS list) and is always
-        // 1.0 (fully lit) unless u_hasShadow is set.
-        vec3 _lit = (_diffuse * u_lightColor * _wrapped
-                  + _specular * u_lightColor * _ndl) * shadowFactor;
+            if (_atten <= 0.0) continue;
+
+            vec3 _h = normalize(_v + _l);
+            float _ndl = max(dot(_n, _l), 0.0);
+            float _ndh = max(dot(_n, _h), 0.0);
+            float _vdh = max(dot(_v, _h), 0.0);
+
+            float _d = distributionGGX(_ndh, _roughness);
+            float _g = geometrySmith(_ndv, _ndl, _roughness);
+            vec3  _f = fresnelSchlick(_vdh, _f0);
+
+            vec3 _specular = (_d * _g * _f) / max(4.0 * _ndv * _ndl, 1e-4);
+
+            // Energy conservation: what is not reflected is available to
+            // scatter. The Lambert lobe is albedo/pi, but the pi is folded
+            // away rather than divided out: light intensities in this engine
+            // are authored against the old lambert shader, where a directional
+            // light of 1.0 meant "full brightness". Keeping the pi would
+            // darken every scene by 3.14x and force every caller to retune.
+            vec3 _kd = (vec3(1.0) - _f) * (1.0 - _metalness);
+            vec3 _diffuse = _kd * baseColor.rgb;
+
+            // Wrapped diffuse: the lit side follows ndl, but the terminator
+            // softens so faces angled away stay readable instead of dropping
+            // to flat black. The specular lobe keeps the true ndl -- wrapping
+            // it would smear highlights around the back of the object.
+            float _wrapped = _ndl * (1.0 - u_diffuseWrap) + u_diffuseWrap;
+
+            _lit += (_diffuse * u_lightColor[i] * _wrapped
+                  +  _specular * u_lightColor[i] * _ndl) * _atten * shadowFactor[i];
+        }
 
         // Ambient stands in for the environment this renderer has no probe for.
         //
         // This matters most for metal. A metal has no diffuse lobe at all: it
-        // is lit purely by what it reflects, so with a single light and no
-        // environment map it renders nearly black -- physically right, and
-        // useless on screen. So the ambient term doubles as a crude
-        // environment: metals reflect it tinted by f0 (their own colour),
-        // dielectrics scatter it as albedo. A rough surface gathers it from a
-        // wider cone, so roughness does not dim it the way a mirror lobe would.
+        // is lit purely by what it reflects, so with no environment map it
+        // renders nearly black -- physically right, and useless on screen. So
+        // the ambient term doubles as a crude environment: metals reflect it
+        // tinted by f0 (their own colour), dielectrics scatter it as albedo. A
+        // rough surface gathers it from a wider cone, so roughness does not
+        // dim it the way a mirror lobe would.
         //
         // A real IBL probe would replace these two lines.
         // Hemisphere term: same environment stand-in as u_ambient, but split

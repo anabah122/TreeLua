@@ -34,9 +34,10 @@ local ShaderLib = {}
 ShaderLib.__index = ShaderLib
 
 -- Parts always present, in application order: normalmap writes shadingNormal
--- and ambientOcclusion, shadow writes shadowFactor, pbr reads both. Only
--- `skinning` is optional -- see the note in its file about the 2048 uniform
--- components a bone array costs, which is the whole reason variants exist.
+-- and ambientOcclusion, shadow writes shadowFactor[], pbr reads both and loops
+-- over u_light*[]. Only `skinning` is optional -- see the note in its file
+-- about the 2048 uniform components a bone array costs, which is the whole
+-- reason variants exist.
 local ALWAYS = { "normalmap", "shadow", "pbr", "fog" }
 
 local cache = {}

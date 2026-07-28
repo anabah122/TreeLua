@@ -57,6 +57,11 @@ end
 -- World point -> pixel coords for a `width`x`height` viewport (defaults to the
 -- LÖVE window). Third return is visible: false when the point is behind the
 -- camera (NDC z outside [-1,1]), same test as three.js's frustum check.
+--
+-- projectedVisible() checks camera-space z instead: NDC's perspective divide
+-- flips sign for points behind the eye, so a behind-camera point can still
+-- land in [-1,1] after projecting and read as "visible" -- that garbage
+-- screen position is what caused stray lines in _drawLines.
 function Camera:worldToScreen(v, width, height)
     if not width then width, height = love.graphics.getDimensions() end
 
@@ -64,6 +69,13 @@ function Camera:worldToScreen(v, width, height)
     local sx = (ndc.x * 0.5 + 0.5) * width
     local sy = (1 - (ndc.y * 0.5 + 0.5)) * height
     return sx, sy, ndc.z > -1 and ndc.z < 1
+end
+
+-- true when the point is in front of the camera (camera-space z < 0, LÖVE/
+-- three.js convention: camera looks down -Z).
+function Camera:isInFrontOf(v)
+    local view = v:clone():applyMatrix4(self.matrixWorldInverse)
+    return view.z < 0
 end
 
 -- Pixel coords (+ NDC depth, default mid-frustum) -> world point.

@@ -33,7 +33,22 @@ function M.init()
 
     local sun = TL.DirectionalLight:new(0xfff3e0, 0.8)
     sun.position:set(3, 6, 2)
+    sun.castShadow = true
     scene:add(sun)
+
+    -- PointLight + SpotLight, both shadow-casting: exercises the multi-light
+    -- array and the cube/perspective shadow-map paths added alongside them.
+    local lamp = TL.PointLight:new(0xff8844, 3, 12)
+    lamp.position:set(0, 2, -3)
+    lamp.castShadow = true
+    scene:add(lamp)
+
+    local spot = TL.SpotLight:new(0x88ccff, 4, 15, math.pi / 6, 0.3)
+    spot.position:set(-3, 5, -6)
+    spot.target.position:set(0, 0, -6)
+    spot.castShadow = true
+    scene:add(spot)
+    scene:add(spot.target)
 
     -- A grid of boxes receding into the distance, so the fog falloff is visible.
     for i = 1, 8 do

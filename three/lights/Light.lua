@@ -4,10 +4,10 @@
 -- matters for DirectionalLight, whose direction is derived from where it sits
 -- relative to its target rather than stored as a vector.
 --
--- The bundled shader takes exactly one directional light plus one ambient
--- term. The scene may hold more; the renderer picks (see WebGLRenderer) and
--- says so rather than silently dropping them. PointLight and SpotLight sit in
--- the graph but are not sampled at all yet.
+-- The bundled shader takes up to WebGLRenderer.MAX_LIGHTS directional/point/
+-- spot lights (see shader/parts/pbr.lua) plus one ambient term. A scene with
+-- more gets the brightest MAX_LIGHTS, picked by the renderer, which says so
+-- rather than silently dropping the rest.
 
 local Object3D = require "three.core.Object3D"
 local Color    = require "math.color"

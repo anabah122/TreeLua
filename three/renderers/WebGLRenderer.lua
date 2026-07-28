@@ -13,9 +13,11 @@
 -- 128-bone array is 2048 vertex uniform components, and a static mesh has no
 -- reason to declare it. `render` groups draws so each variant is bound once.
 --
--- The shader takes ONE directional light and ONE ambient term. A scene with
--- more gets the brightest directional and the sum of the ambients, and says so
--- once rather than silently dropping the rest.
+-- The shader takes up to MAX_LIGHTS directional/point/spot lights (brightest
+-- win beyond the cap) plus the sum of every ambient. Up to MAX_SHADOWS of
+-- those lights may cast a shadow simultaneously -- one 2D depth map each for
+-- directional/spot, one 6-face cube map each for point, since an omni light
+-- has no single view direction to project a flat map from.
 
 local Matrix4   = require "math.mat4"
 local Color     = require "math.color"
@@ -29,6 +31,10 @@ WebGLRenderer.__index = WebGLRenderer
 
 -- must match MAX_BONES in shader/parts/skinning.lua
 WebGLRenderer.MAX_BONES = 128
+-- must match MAX_LIGHTS in shader/parts/pbr.lua
+WebGLRenderer.MAX_LIGHTS = 16
+-- must match MAX_SHADOWS in shader/parts/shadow.lua
+WebGLRenderer.MAX_SHADOWS = 4
 
 function WebGLRenderer:new(params)
     params = params or {}
@@ -77,10 +83,11 @@ function WebGLRenderer:new(params)
     r.frustumCulling = params.frustumCulling ~= false
     r._cameraPos = Vector3:new()
 
-    -- World point the shadow camera centres its frustum on. three.js's
-    -- CSM/shadow cameras follow the main camera automatically; this engine
-    -- has one shadow map for one directional light, so the caller says what
-    -- matters most (e.g. the player), defaulting to the origin.
+    -- World point directional shadow cameras centre their frustum on (a
+    -- directional light has no position that bounds its coverage, unlike
+    -- point/spot). three.js's CSM follows the main camera automatically;
+    -- here the caller says what matters most (e.g. the player), defaulting
+    -- to the origin.
     r.shadowTarget = params.shadowTarget or Vector3:new()
 
     -- A 1x1 white pixel for sampler uniforms with nothing bound to them.
@@ -103,14 +110,18 @@ function WebGLRenderer:new(params)
     r._warnedBones  = {}
     r._warnedLights = false
 
-    -- Shadow pass state, built lazily on first use (see _shadowMapFor) so a
-    -- scene with no castShadow light never allocates the canvas or compiles
-    -- the depth shader.
-    r._depthShader   = nil
-    r._shadowCanvas  = nil
-    r._shadowTarget  = Vector3:new()
-    r._lightViewProj = Matrix4:new()
-    r._noShadow      = love.graphics.newImage(blank)   -- u_shadowMap when unbound
+    -- Shadow pass state, built lazily on first use (see _renderShadowMaps) so
+    -- a scene with no castShadow light never allocates a canvas. Indexed 1..
+    -- MAX_SHADOWS, one slot per simultaneous caster; a slot holds either a 2D
+    -- canvas+viewProj (directional/spot) or a cube canvas+far (point), never
+    -- both, decided per-frame by the light at that slot.
+    r._shadowTarget    = Vector3:new()
+    r._shadow2DCanvas  = {}
+    r._shadowCubeCanvas = {}
+    r._shadowViewProj  = {}
+    for i = 1, WebGLRenderer.MAX_SHADOWS do r._shadowViewProj[i] = Matrix4:new() end
+    r._noShadow2D   = love.graphics.newImage(blank)     -- u_shadowMap2D[i] when unbound
+    r._noShadowCube = love.graphics.newCubeImage({ blank, blank, blank, blank, blank, blank })
 
     return r
 end
@@ -148,6 +159,28 @@ end
 -- no sort: bucketing during the walk is O(n) and the walk happens anyway,
 -- where sorting the combined list would cost O(n log n) every frame to
 -- rediscover a split already known here.
+-- Insert `light` into `lights` (a flat array, brightest first) if it still
+-- fits under MAX_LIGHTS, otherwise displace the dimmest entry if `light` is
+-- brighter than it. O(n) per light, n <= MAX_LIGHTS -- fine at this scale,
+-- and simpler than a heap for a cap this small.
+local function considerLight(lights, light)
+    local max = WebGLRenderer.MAX_LIGHTS
+    if #lights < max then
+        lights[#lights + 1] = light
+        return true
+    end
+
+    local dimmestIdx, dimmest = nil, math.huge
+    for i, l in ipairs(lights) do
+        if l.intensity < dimmest then dimmestIdx, dimmest = i, l.intensity end
+    end
+    if light.intensity > dimmest then
+        lights[dimmestIdx] = light
+        return true
+    end
+    return false
+end
+
 function WebGLRenderer:_collect(scene)
     local static    = self._staticList
     local skinned   = self._skinnedList
@@ -158,8 +191,12 @@ function WebGLRenderer:_collect(scene)
     for i = #lines,     1, -1 do lines[i]     = nil end
     for i = #particles, 1, -1 do particles[i] = nil end
 
-    local directional, ambient, hemisphere = nil, nil, nil
-    local extraDirectional = false
+    local lights = self._lightList or {}
+    self._lightList = lights
+    for i = #lights, 1, -1 do lights[i] = nil end
+
+    local ambient, hemisphere = nil, nil
+    local droppedLights = false
 
     local culled = 0
 
@@ -185,15 +222,10 @@ function WebGLRenderer:_collect(scene)
                 culled = culled + 1
             end
 
-        elseif obj.isDirectionalLight and obj:isDirectionalLight() then
-            if directional == nil then
-                directional = obj
-            else
-                extraDirectional = true
-                -- keep the brighter of the two, so the choice is at least
-                -- predictable rather than depending on graph order
-                if obj.intensity > directional.intensity then directional = obj end
-            end
+        elseif (obj.isDirectionalLight and obj:isDirectionalLight())
+            or (obj.isPointLight and obj:isPointLight())
+            or (obj.isSpotLight and obj:isSpotLight()) then
+            if not considerLight(lights, obj) then droppedLights = true end
 
         elseif obj.isAmbientLight and obj:isAmbientLight() then
             if ambient == nil then
@@ -203,22 +235,23 @@ function WebGLRenderer:_collect(scene)
             end
 
         elseif obj.isHemisphereLight and obj:isHemisphereLight() then
-            -- brightest wins, same rule as directional -- the shader takes one
+            -- brightest wins, same rule as the main lights -- the shader
+            -- takes one hemisphere term
             if hemisphere == nil or obj.intensity > hemisphere.intensity then
                 hemisphere = obj
             end
         end
     end)
 
-    if extraDirectional and not self._warnedLights then
-        print("[renderer] scene has several directional lights; " ..
-              "the shader takes one, using the brightest")
+    if droppedLights and not self._warnedLights then
+        print(("[renderer] scene has more than %d directional/point/spot lights; " ..
+               "using the brightest %d"):format(WebGLRenderer.MAX_LIGHTS, WebGLRenderer.MAX_LIGHTS))
         self._warnedLights = true
     end
 
     self.info.render.culled = culled
 
-    return static, skinned, lines, particles, directional, ambient, hemisphere
+    return static, skinned, lines, particles, lights, ambient, hemisphere
 end
 
 -- A sprite always faces the camera: three.js overwrites its world rotation
@@ -253,20 +286,69 @@ end
 
 -- ── uniforms ─────────────────────────────────────────────────────────────────
 
+local LIGHT_TYPE = { directional = 0, point = 1, spot = 2 }
+
 -- Frame-wide uniforms go to every variant that will be bound this frame, since
 -- each is a separate program with its own uniform storage.
-function WebGLRenderer:_sendLights(sh, directional, ambient, hemisphere)
-    if directional then
-        local dir = directional:direction()
-        local col = Color:new():copy(directional.color):multiplyScalar(directional.intensity)
-        sh:send("u_lightDir",   { dir.x, dir.y, dir.z })
-        sh:send("u_lightColor", { col.r, col.g, col.b })
-    else
-        -- no light in the scene: kill the diffuse term rather than leaving
-        -- whatever the last frame sent
-        sh:send("u_lightDir",   { 0, -1, 0 })
-        sh:send("u_lightColor", { 0, 0, 0 })
+--
+-- Every u_light* array is sent full-width (MAX_LIGHTS entries) each frame:
+-- LOVE requires an exact-length array for a `send`, and padding with inert
+-- entries (type -1, color 0) is simpler than tracking a previous frame's
+-- count to know how many stale slots need clearing.
+function WebGLRenderer:_sendLights(sh, lights, ambient, hemisphere)
+    local max = WebGLRenderer.MAX_LIGHTS
+    sh:send("u_lightCount", #lights)
+
+    local types, pos, dir, col = {}, {}, {}, {}
+    local dist, decay, angleCos, penumbraCos = {}, {}, {}, {}
+
+    for i = 1, max do
+        local light = lights[i]
+        if light then
+            local c = self._lightScratch:copy(light.color):multiplyScalar(light.intensity)
+            col[i] = { c.r, c.g, c.b }
+
+            if light.isPointLight and light:isPointLight() then
+                local p = light:worldPosition()
+                types[i] = LIGHT_TYPE.point
+                pos[i] = { p.x, p.y, p.z }
+                dir[i] = { 0, -1, 0 }
+                dist[i], decay[i] = light.distance, light.decay
+                angleCos[i], penumbraCos[i] = -1, -1
+
+            elseif light.isSpotLight and light:isSpotLight() then
+                local p = Vector3:new():setFromMatrixPosition(light.matrixWorld)
+                local d = light:direction()
+                types[i] = LIGHT_TYPE.spot
+                pos[i] = { p.x, p.y, p.z }
+                dir[i] = { d.x, d.y, d.z }
+                dist[i], decay[i] = light.distance, light.decay
+                angleCos[i] = math.cos(light.angle)
+                penumbraCos[i] = math.cos(light.angle * (1 - light.penumbra))
+
+            else -- directional
+                local d = light:direction()
+                types[i] = LIGHT_TYPE.directional
+                pos[i] = { 0, 0, 0 }
+                dir[i] = { d.x, d.y, d.z }
+                dist[i], decay[i] = 0, 0
+                angleCos[i], penumbraCos[i] = -1, -1
+            end
+        else
+            types[i] = -1
+            pos[i], dir[i], col[i] = { 0, 0, 0 }, { 0, -1, 0 }, { 0, 0, 0 }
+            dist[i], decay[i], angleCos[i], penumbraCos[i] = 0, 0, -1, -1
+        end
     end
+
+    sh:send("u_lightType", unpack(types))
+    sh:send("u_lightPos", unpack(pos))
+    sh:send("u_lightDir", unpack(dir))
+    sh:send("u_lightColor", unpack(col))
+    sh:send("u_lightDistance", unpack(dist))
+    sh:send("u_lightDecay", unpack(decay))
+    sh:send("u_lightAngleCos", unpack(angleCos))
+    sh:send("u_lightPenumbraCos", unpack(penumbraCos))
 
     if ambient then
         sh:send("u_ambient", { ambient.r, ambient.g, ambient.b })
@@ -290,19 +372,60 @@ function WebGLRenderer:_sendLights(sh, directional, ambient, hemisphere)
     end
 end
 
--- Frame-wide shadow uniforms: the map and the light's view-proj are the same
--- for every mesh, so they go out once per shader like the other lights.
+-- Frame-wide shadow uniforms: each caster's map and matrix are the same for
+-- every mesh, so they go out once per shader like the other lights.
 -- u_hasShadow itself is sent per-mesh in _drawBucket (see there), since
 -- `receiveShadow` is a per-object flag -- a mesh with it off must read as
--- fully lit even while the map and matrix stay bound for meshes that don't.
-function WebGLRenderer:_sendShadowUniforms(sh, caster)
-    local has = caster ~= nil and self._shadowCanvas ~= nil
-    sh:send("u_shadowMap", has and self._shadowCanvas or self._noShadow)
-    sh:send("u_lightViewProj", has and self._lightViewProj or Matrix4:new())
-    sh:send("u_shadowBias", has and caster.shadow.bias or 0)
-    -- PCF's sample offsets are in texels of the actual map, not a fixed guess
-    local size = has and caster.shadow.mapSize or 1
-    sh:send("u_shadowMapSize", { size, size })
+-- fully lit even while the maps stay bound for meshes that don't.
+--
+-- `casters` is an array of { light, lightIndex } built by _renderShadowMaps,
+-- lightIndex being this light's slot in the u_light* arrays so the shader
+-- knows which light a given shadow slot darkens.
+function WebGLRenderer:_sendShadowUniforms(sh, casters)
+    local max = WebGLRenderer.MAX_SHADOWS
+    sh:send("u_shadowCount", #casters)
+
+    local lightIndex, isCube, bias, mapSize = {}, {}, {}, {}
+    local viewProj, lightPos, far = {}, {}, {}
+    local maps2D, mapsCube = {}, {}
+
+    for i = 1, max do
+        local entry = casters[i]
+        if entry then
+            local light = entry.light
+            local cube = (light.isPointLight and light:isPointLight()) or false
+            lightIndex[i] = entry.lightIndex - 1   -- GLSL is 0-based
+            isCube[i] = cube
+            bias[i] = light.shadow.bias
+            mapSize[i] = { light.shadow.mapSize, light.shadow.mapSize }
+
+            if cube then
+                viewProj[i] = Matrix4:new()
+                lightPos[i] = { entry.lightPos.x, entry.lightPos.y, entry.lightPos.z }
+                far[i] = light.shadow.cameras[1].far
+                maps2D[i], mapsCube[i] = self._noShadow2D, self._shadowCubeCanvas[i]
+            else
+                viewProj[i] = self._shadowViewProj[i]
+                lightPos[i] = { 0, 0, 0 }
+                far[i] = 0
+                maps2D[i], mapsCube[i] = self._shadow2DCanvas[i], self._noShadowCube
+            end
+        else
+            lightIndex[i], isCube[i], bias[i] = -1, false, 0
+            mapSize[i], viewProj[i], lightPos[i], far[i] = { 1, 1 }, Matrix4:new(), { 0, 0, 0 }, 0
+            maps2D[i], mapsCube[i] = self._noShadow2D, self._noShadowCube
+        end
+    end
+
+    sh:send("u_shadowMap2D", unpack(maps2D))
+    sh:send("u_shadowMapCube", unpack(mapsCube))
+    sh:send("u_shadowLightIndex", unpack(lightIndex))
+    sh:send("u_shadowIsCube", unpack(isCube))
+    sh:send("u_shadowBias", unpack(bias))
+    sh:send("u_shadowMapSize", unpack(mapSize))
+    sh:send("u_shadowViewProj", unpack(viewProj))
+    sh:send("u_shadowLightPos", unpack(lightPos))
+    sh:send("u_shadowFar", unpack(far))
 
     -- Global, not per-light: one game wants one softness everywhere. Clamped
     -- to what shader/parts/shadow.lua's loop actually supports.
@@ -584,8 +707,8 @@ function WebGLRenderer:_drawLines(bucket, camera)
     if #bucket == 0 then return self end
 
     local width, height = love.graphics.getDimensions()
-    local screen = self._lineScratch or {}
-    self._lineScratch = screen
+    local sx, sy, front = self._lineSx or {}, self._lineSy or {}, self._lineFront or {}
+    self._lineSx, self._lineSy, self._lineFront = sx, sy, front
 
     for _, line in ipairs(bucket) do
         local material = line.material
@@ -593,29 +716,29 @@ function WebGLRenderer:_drawLines(bucket, camera)
         if material and material.visible and geometry and #geometry.points > 0 then
             line:updateWorldMatrix(true, false)
 
-            for i = #screen, 1, -1 do screen[i] = nil end
-            local anyVisible = false
-            for _, p in ipairs(geometry.points) do
-                local world = p:clone():applyMatrix4(line.matrixWorld)
-                local sx, sy, visible = camera:worldToScreen(world, width, height)
-                screen[#screen + 1] = sx
-                screen[#screen + 1] = sy
-                if visible then anyVisible = true end
+            local n = #geometry.points
+            for i = 1, n do
+                local world = geometry.points[i]:clone():applyMatrix4(line.matrixWorld)
+                sx[i], sy[i] = camera:worldToScreen(world, width, height)
+                front[i] = camera:isInFrontOf(world)
             end
 
-            if anyVisible then
-                local c = material.color
-                love.graphics.setColor(c.r, c.g, c.b, material.opacity)
-                love.graphics.setLineWidth(material.linewidth)
+            local c = material.color
+            love.graphics.setColor(c.r, c.g, c.b, material.opacity)
+            love.graphics.setLineWidth(material.linewidth)
 
-                if line.isLineSegments and line:isLineSegments() then
-                    for i = 1, #screen - 3, 4 do
-                        love.graphics.line(screen[i], screen[i + 1], screen[i + 2], screen[i + 3])
-                    end
-                else
-                    love.graphics.line(screen)
+            local drewAny = false
+            local segmented = line.isLineSegments and line:isLineSegments()
+            local step = segmented and 2 or 1
+            local last = segmented and (n - 1) or (n - 1)
+            for i = 1, last, step do
+                if front[i] and front[i + 1] then
+                    love.graphics.line(sx[i], sy[i], sx[i + 1], sy[i + 1])
+                    drewAny = true
                 end
+            end
 
+            if drewAny then
                 self.info.render.calls = self.info.render.calls + 1
             end
         end
@@ -696,40 +819,42 @@ function WebGLRenderer:_drawParticles(bucket, camera)
     return self
 end
 
--- The shadow-casting light for this frame, or nil. Mirrors _collect's
--- brightest-directional-wins rule for the main light, so the same light that
--- lights the scene is the one that shadows it.
-function WebGLRenderer:_shadowCaster(directional)
-    if directional and directional.castShadow then return directional end
-    return nil
-end
+-- Up to MAX_SHADOWS casters for this frame: every collected light with
+-- castShadow set, in `lights` order (already brightest-first from
+-- _collect), each paired with its index into u_light* so the shadow pass
+-- knows which light slot it darkens.
+function WebGLRenderer:_pickShadowCasters(lights)
+    local casters = self._casterScratch or {}
+    self._casterScratch = casters
+    for i = #casters, 1, -1 do casters[i] = nil end
 
--- Render the scene's depth from `light`'s point of view into a square canvas,
--- filling self._lightViewProj (for the main pass to sample with) and
--- self._shadowCanvas (the depth-as-color texture, see shader/depth.lua).
---
--- Only castShadow meshes are drawn here -- a shadow only needs to know what
--- can OCCLUDE, not what receives, so this walk is usually much smaller than
--- the main scene traversal.
-function WebGLRenderer:_renderShadowMap(scene, light, focus)
-    local size = light.shadow.mapSize
-    if not self._shadowCanvas or self._shadowCanvas:getWidth() ~= size then
-        self._shadowCanvas = love.graphics.newCanvas(size, size, { format = "r32f" })
+    for i, light in ipairs(lights) do
+        if #casters >= WebGLRenderer.MAX_SHADOWS then break end
+        if light.castShadow then
+            casters[#casters + 1] = { light = light, lightIndex = i }
+        end
     end
 
+    return casters
+end
+
+-- Depth-only pass shared by both shadow map kinds: draws every castShadow
+-- mesh with `viewProj`, into whatever canvas is currently bound. Only
+-- castShadow meshes are drawn -- a shadow only needs to know what can
+-- OCCLUDE, not what receives, so this walk is usually much smaller than the
+-- main scene traversal.
+function WebGLRenderer:_renderDepthPass(scene, viewProj, cube, lightPos, far)
     local getDepthShader = require "shader.depth"
-    local staticShader, skinnedShader = getDepthShader(false), getDepthShader(true)
+    local staticShader  = getDepthShader(false, cube)
+    local skinnedShader = getDepthShader(true, cube)
 
-    local cam = light:updateShadowCamera(self._shadowTarget:copy(focus))
-    cam:updateMatrixWorld(true)
-    cam.matrixWorldInverse:copy(cam.matrixWorld):invert()
-    cam:viewProjectionMatrix(self._lightViewProj)
-
-    love.graphics.setCanvas(self._shadowCanvas)
-    love.graphics.clear(1, 1, 1, 1)   -- far plane: nothing is closer than this
-    love.graphics.setDepthMode("lequal", true)
-    staticShader:send("u_viewProj", self._lightViewProj)
-    skinnedShader:send("u_viewProj", self._lightViewProj)
+    for _, sh in ipairs({ staticShader, skinnedShader }) do
+        sh:send("u_viewProj", viewProj)
+        if cube then
+            sh:send("u_lightPos", { lightPos.x, lightPos.y, lightPos.z })
+            sh:send("u_far", far)
+        end
+    end
 
     scene:traverseVisible(function(obj)
         if obj.isMesh and obj:isMesh() and obj.geometry and obj.geometry.mesh
@@ -744,6 +869,76 @@ function WebGLRenderer:_renderShadowMap(scene, light, focus)
             love.graphics.draw(obj.geometry.mesh)
         end
     end)
+
+    return self
+end
+
+-- Render every shadow-casting light's depth into its own map: a 2D canvas
+-- for directional/spot (one coherent view direction), a 6-face cube canvas
+-- for point (none). Fills self._shadow2DCanvas/self._shadowCubeCanvas and
+-- self._shadowViewProj, indexed the same as `casters`.
+function WebGLRenderer:_renderShadowMaps(scene, casters)
+    love.graphics.setDepthMode("lequal", true)
+    -- Standard shadow-mapping trick: cull FRONT faces (the ones facing the
+    -- light), so the map stores the BACK face's depth instead. This is what
+    -- actually fixes contact-shadow acne/peter-panning at an object's base --
+    -- comparing a fragment against its own front face needs a bias at all,
+    -- and any bias large enough to silence that self-shadowing on a
+    -- near-grazing surface is also large enough to detach the shadow from
+    -- the object that casts it. Culling the front face sidesteps the
+    -- self-compare entirely, no bias tuning required.
+    love.graphics.setMeshCullMode("front")
+
+    for i, entry in ipairs(casters) do
+        local light = entry.light
+
+        if light.isPointLight and light:isPointLight() then
+            local size = light.shadow.mapSize
+            local canvas = self._shadowCubeCanvas[i]
+            if not canvas or canvas:getWidth() ~= size then
+                canvas = love.graphics.newCanvas(size, size, 6, { type = "cube", format = "r32f" })
+                self._shadowCubeCanvas[i] = canvas
+            end
+
+            local pos = light:worldPosition()
+            entry.lightPos = pos
+            local far = light.shadow.cameras[1].far
+
+            for face, cam in ipairs(light:updateShadowCameras()) do
+                cam:updateMatrixWorld(true)
+                cam.matrixWorldInverse:copy(cam.matrixWorld):invert()
+                local vp = Matrix4:new()
+                cam:viewProjectionMatrix(vp)
+
+                love.graphics.setCanvas({ { canvas, face = face } })
+                love.graphics.clear(1, 1, 1, 1)
+                self:_renderDepthPass(scene, vp, true, pos, far)
+            end
+
+        else -- directional or spot
+            local size = light.shadow.mapSize
+            local canvas = self._shadow2DCanvas[i]
+            if not canvas or canvas:getWidth() ~= size then
+                canvas = love.graphics.newCanvas(size, size, { format = "r32f" })
+                self._shadow2DCanvas[i] = canvas
+            end
+
+            local cam
+            if light.isSpotLight and light:isSpotLight() then
+                cam = light:updateShadowCamera()
+            else
+                cam = light:updateShadowCamera(self._shadowTarget:copy(self.shadowTarget))
+            end
+
+            cam:updateMatrixWorld(true)
+            cam.matrixWorldInverse:copy(cam.matrixWorld):invert()
+            cam:viewProjectionMatrix(self._shadowViewProj[i])
+
+            love.graphics.setCanvas(canvas)
+            love.graphics.clear(1, 1, 1, 1)   -- far plane: nothing is closer than this
+            self:_renderDepthPass(scene, self._shadowViewProj[i], false)
+        end
+    end
 
     love.graphics.setShader()
     love.graphics.setCanvas()
@@ -794,15 +989,16 @@ function WebGLRenderer:render(scene, camera, renderTarget)
 
     if self.frustumCulling then self:_updateFrustum(self._viewProj) end
 
-    local staticDraws, skinnedDraws, lineDraws, particleDraws, directional, ambient, hemisphere = self:_collect(scene)
+    local staticDraws, skinnedDraws, lineDraws, particleDraws, lights, ambient, hemisphere = self:_collect(scene)
 
-    -- The shadow pass renders to its own canvas and must finish (and restore
-    -- the real canvas/shader/depth state) before anything below touches the
-    -- screen -- hence doing it here, after collecting but before the clear
-    -- that would otherwise be undone by _renderShadowMap's own setCanvas.
-    local caster = self:_shadowCaster(directional)
-    if caster then
-        self:_renderShadowMap(scene, caster, self.shadowTarget)
+    -- The shadow pass renders to its own canvases and must finish (and
+    -- restore the real canvas/shader/depth state) before anything below
+    -- touches the screen -- hence doing it here, after collecting but before
+    -- the clear that would otherwise be undone by _renderShadowMaps' own
+    -- setCanvas.
+    local casters = self:_pickShadowCasters(lights)
+    if #casters > 0 then
+        self:_renderShadowMaps(scene, casters)
     end
 
     love.graphics.setCanvas(renderTarget)
@@ -819,8 +1015,8 @@ function WebGLRenderer:render(scene, camera, renderTarget)
         -- the specular lobe depends on where it is viewed from
         sh:send("u_cameraPos", eye)
         sh:send("u_diffuseWrap", self.diffuseWrap)
-        self:_sendLights(sh, directional, ambient, hemisphere)
-        self:_sendShadowUniforms(sh, caster)
+        self:_sendLights(sh, lights, ambient, hemisphere)
+        self:_sendShadowUniforms(sh, casters)
         self:_sendFog(sh, scene.fog)
     end
 
@@ -838,7 +1034,7 @@ function WebGLRenderer:render(scene, camera, renderTarget)
     local override = scene.overrideMaterial
     local state = { cull = nil, shader = nil }
 
-    local hasShadowMap = caster ~= nil and self._shadowCanvas ~= nil
+    local hasShadowMap = #casters > 0
 
     -- Static first, then skinned: each program binds once for the whole frame.
     self:_drawBucket(staticDraws,  "static",  override, state, info, hasShadowMap)
