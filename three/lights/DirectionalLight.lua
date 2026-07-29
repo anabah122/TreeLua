@@ -36,7 +36,14 @@ function DirectionalLight:new(color, intensity)
         -- 0.0003 over the default 50-unit frustum is ~1.5cm, small enough to
         -- keep a shadow attached where its caster meets the ground.
         bias    = 0.0003,
+        -- world units along the normal; kills acne on faceted geometry, where
+        -- a flat face's depth disagrees with its interpolated shading normal
+        normalBias = 0.05,
         camera  = OrthographicCamera:new(-10, 10, 10, -10, 0.1, 50),
+        -- Mirrors three.js: false skips this light's shadow pass entirely
+        -- (reusing last frame's map) unless needsUpdate is set for one frame.
+        autoUpdate  = true,
+        needsUpdate = false,
     }
 
     return l

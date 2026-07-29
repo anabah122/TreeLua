@@ -62,6 +62,9 @@ function Object3D:new()
     o.visible          = true
     o.castShadow       = false
     o.receiveShadow    = false
+    -- static by default: set true on anything that moves, so its shadow
+    -- redraws every frame instead of being cached in the static layer
+    o.shadowMovable    = false
     o.frustumCulled    = true
     o.renderOrder      = 0
     o.userData         = {}

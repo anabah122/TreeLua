@@ -362,6 +362,15 @@ function matrix:clone()
     return matrix:new():copy(self)
 end
 
+-- three.js `equals`: exact element-wise compare, no epsilon (callers testing
+-- "did this matrix change since last frame" want the strict answer).
+function matrix:equals(m)
+    for i = 1, 16 do
+        if self[i] ~= m[i] then return false end
+    end
+    return true
+end
+
 -- three.js mutates in place and returns self, where the original `mul(A, B)`
 -- writes the product of two *other* matrices into self. Both are useful, so
 -- `multiplyMatrices` keeps the original's signature and `multiply` is the

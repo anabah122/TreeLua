@@ -34,7 +34,10 @@ function SpotLight:new(color, intensity, distance, angle, penumbra, decay)
     l.shadow = {
         mapSize = 1024,
         bias    = 0.003,
+        normalBias = 0.05,
         camera  = PerspectiveCamera:new(math.deg(angle or math.pi / 3) * 2, 1, 0.1, distance and distance > 0 and distance or 50),
+        autoUpdate  = true,
+        needsUpdate = false,
     }
 
     return l

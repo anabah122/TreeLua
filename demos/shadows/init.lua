@@ -56,9 +56,22 @@ function M.init()
     actor.position:set(0, 0, 0)
     actor.scale:set(1, 1, 1)
     actor:traverse(function(o)
-        if o.isMesh and o:isMesh() then o.castShadow = true end
+        if o.isMesh and o:isMesh() then
+            o.castShadow = true
+            o.shadowMovable = true -- spins every frame, opt out of the static cache
+        end
     end)
     scene:add(actor)
+
+    -- Static prop: castShadow with the default shadowMovable=false, so it
+    -- renders into the shadow map's static layer once instead of every
+    -- frame -- see WebGLRenderer's static/dynamic split.
+    local pillarGeo = TL.BoxGeometry:new(0.6, 2, 0.6)
+    local pillarMat = TL.MeshStandardMaterial:new{ color = 0x9c8a6a, roughness = 1 }
+    local pillar = TL.Mesh:new(pillarGeo, pillarMat)
+    pillar.position:set(-3, 1, -2)
+    pillar.castShadow = true
+    scene:add(pillar)
 
     mixer = instance.mixer
     if instance.animations[1] then

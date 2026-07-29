@@ -42,6 +42,8 @@ return {
         uniform vec3   u_shadowLightPos[MAX_SHADOWS];    // cube shadows only: distance is the depth metric
         uniform float  u_shadowFar[MAX_SHADOWS];         // cube shadows only: far plane, to normalize distance
         uniform float  u_shadowBias[MAX_SHADOWS];
+        uniform float  u_shadowNormalBias[MAX_SHADOWS];  // world units, offset along the normal
+        uniform vec3   u_shadowLightDir[MAX_SHADOWS];    // 2D shadows: direction the light travels
         uniform vec2   u_shadowMapSize[MAX_SHADOWS];
         uniform Image     u_shadowMap2D[MAX_SHADOWS];
         uniform CubeImage u_shadowMapCube[MAX_SHADOWS];
@@ -79,7 +81,9 @@ return {
                                        : slot == 1 ? Texel(u_shadowMap2D[1], texel3.xy + _offset).r
                                        : slot == 2 ? Texel(u_shadowMap2D[2], texel3.xy + _offset).r
                                        :             Texel(u_shadowMap2D[3], texel3.xy + _offset).r;
-                    if (texel3.z - bias <= _casterDepth) _lit += 1.0;
+                    // smoothstep, not a 0/1 test: N binary samples can only
+                    // produce N+1 distinct values, which band on smooth surfaces
+                    _lit += smoothstep(-bias, bias, _casterDepth - texel3.z);
                     _count += 1.0;
                 }
             }
@@ -97,15 +101,26 @@ return {
 
         // PCF for a cube map: there is no 2D texel grid to offset in, so the
         // kernel instead nudges the sample DIRECTION sideways, in a basis
-        // perpendicular to `dir`. u_shadowKernel drives the same softness
-        // knob as the 2D path, just scaled into radians instead of texels.
+        // perpendicular to `dir`.
+        //
+        // The basis is built with Duff's branchless method rather than picking
+        // an up vector by a threshold: a threshold flips the whole kernel's
+        // orientation as `dir` crosses it, which draws a hard seam across the
+        // surface exactly along that crossing.
         float sampleShadowCube(int slot, vec3 dir, float dist, float bias)
         {
-            vec3 _up = abs(dir.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
-            vec3 _right = normalize(cross(_up, dir));
-            _up = cross(dir, _right);
+            vec3 _n = normalize(dir);
+            float _sign = _n.z >= 0.0 ? 1.0 : -1.0;
+            float _a = -1.0 / (_sign + _n.z);
+            float _b = _n.x * _n.y * _a;
+            vec3 _right = vec3(1.0 + _sign * _n.x * _n.x * _a, _sign * _b, -_sign * _n.x);
+            vec3 _up     = vec3(_b, _sign + _n.y * _n.y * _a, -_n.y);
 
-            float _spread = 0.02 * float(max(u_shadowKernel, 0));
+            // Angular offsets on the unit direction, NOT scaled by distance:
+            // a far fragment would otherwise swing its taps wide enough to
+            // cross a cube face edge, where the neighbouring face holds a
+            // different projection and lights up a band along the seam.
+            float _spread = 0.006 * float(max(u_shadowKernel, 0));
             float _lit = 0.0;
             float _count = 0.0;
 
@@ -114,8 +129,8 @@ return {
                 for (int dy = -MAX_SHADOW_KERNEL; dy <= MAX_SHADOW_KERNEL; dy++) {
                     if (dy < -u_shadowKernel || dy > u_shadowKernel) continue;
 
-                    vec3 _sampleDir = dir + (_right * float(dx) + _up * float(dy)) * _spread;
-                    if (dist - bias <= texelCube(slot, _sampleDir)) _lit += 1.0;
+                    vec3 _sampleDir = _n + (_right * float(dx) + _up * float(dy)) * _spread;
+                    _lit += smoothstep(-bias, bias, texelCube(slot, _sampleDir) - dist);
                     _count += 1.0;
                 }
             }
@@ -129,18 +144,34 @@ return {
         for (int i = 0; i < MAX_LIGHTS; i++) { shadowFactor[i] = 1.0; }
 
         if (u_hasShadow) {
+            vec3 _shadowNormal = normalize(v_normal);
+
             for (int s = 0; s < MAX_SHADOWS; s++) {
                 if (s >= u_shadowCount) break;
 
                 int _light = u_shadowLightIndex[s];
                 if (_light < 0 || _light >= u_lightCount) continue;
 
+                // Normal bias: sample from just off the surface instead of on
+                // it, so a face never tests against its own depth. Scaled by
+                // sin of the light angle, so a face facing the light gets
+                // almost none -- the full offset near a silhouette edge would
+                // push the sample past the edge onto the neighbouring face and
+                // light up a band along it.
+                vec3 _lightDir = u_shadowIsCube[s]
+                    ? normalize(u_shadowLightPos[s] - v_worldPos)
+                    : -u_shadowLightDir[s];
+                float _cos = clamp(dot(_shadowNormal, _lightDir), 0.0, 1.0);
+                float _slope = sqrt(1.0 - _cos * _cos);
+                vec3 _biasedPos = v_worldPos
+                    + _shadowNormal * u_shadowNormalBias[s] * _slope;
+
                 if (u_shadowIsCube[s]) {
-                    vec3 _toFrag = v_worldPos - u_shadowLightPos[s];
+                    vec3 _toFrag = _biasedPos - u_shadowLightPos[s];
                     float _dist = length(_toFrag) / max(u_shadowFar[s], 1e-4);
                     shadowFactor[_light] = sampleShadowCube(s, _toFrag, _dist, u_shadowBias[s]);
                 } else {
-                    vec4 _clip = u_shadowViewProj[s] * vec4(v_worldPos, 1.0);
+                    vec4 _clip = u_shadowViewProj[s] * vec4(_biasedPos, 1.0);
                     vec3 _proj = _clip.xyz / _clip.w;
                     _proj = _proj * 0.5 + 0.5;
 

@@ -21,6 +21,9 @@ local PointLight = Light:extend("PointLight")
 
 -- three.js's CubeCamera face order: dirs paired with an up vector that keeps
 -- each face's basis consistent (no face ends up mirrored against its neighbors).
+-- `right` completes the basis (cross(up, dir), same convention a camera
+-- would use) -- WebGLRenderer's shadow composite pass needs it to
+-- reconstruct each fragment's sample direction across a cube face.
 local FACES = {
     { dir = Vector3:new( 1,  0,  0), up = Vector3:new(0, -1,  0) },
     { dir = Vector3:new(-1,  0,  0), up = Vector3:new(0, -1,  0) },
@@ -29,6 +32,11 @@ local FACES = {
     { dir = Vector3:new( 0,  0,  1), up = Vector3:new(0, -1,  0) },
     { dir = Vector3:new( 0,  0, -1), up = Vector3:new(0, -1,  0) },
 }
+for _, face in ipairs(FACES) do
+    face.right = Vector3:new():crossVectors(face.up, face.dir):normalizeSelf()
+end
+
+PointLight.FACES = FACES
 
 function PointLight:new(color, intensity, distance, decay)
     local l = Light.new(self, color, intensity)
@@ -42,7 +50,10 @@ function PointLight:new(color, intensity, distance, decay)
     l.shadow = {
         mapSize = 512,   -- smaller default: this is 6 faces, not 1
         bias    = 0.005,
+        normalBias = 0.05,
         cameras = {},
+        autoUpdate  = true,
+        needsUpdate = false,
     }
     for i = 1, 6 do
         l.shadow.cameras[i] = PerspectiveCamera:new(90, 1, 0.1, distance and distance > 0 and distance or 50)

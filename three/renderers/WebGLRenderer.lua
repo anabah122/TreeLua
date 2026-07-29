@@ -20,6 +20,10 @@
 -- has no single view direction to project a flat map from.
 
 local Matrix4   = require "math.mat4"
+-- Cube face basis, needed by the shadow composite pass to reconstruct a
+-- sample direction per face; required up here rather than inside the shadow
+-- loop, which runs once per face per light per frame.
+local PointLightFaces = require("three.lights.PointLight").FACES
 local Color     = require "math.color"
 local Vector3   = require "math.vec3"
 local Frustum   = require "math.frustum"
@@ -118,6 +122,21 @@ function WebGLRenderer:new(params)
     r._shadowTarget    = Vector3:new()
     r._shadow2DCanvas  = {}
     r._shadowCubeCanvas = {}
+    -- Static/dynamic split: each caster slot's static layer (redrawn only
+    -- when dirty) and dynamic layer (redrawn every frame) get merged into
+    -- the working canvas above every frame -- see _renderShadowMaps.
+    r._shadowStatic2DCanvas    = {}
+    r._shadowDynamic2DCanvas   = {}
+    r._shadowStaticCubeCanvas  = {}
+    r._shadowDynamicCubeCanvas = {}
+    r._shadowSlotSeen  = {}   -- which light last rendered into each caster slot
+    r._shadowFaceViewProj = Matrix4:new()  -- scratch, cube faces reuse it
+    r._shadowLastViewProj = {}  -- per slot: what the static layer was drawn with
+    r._shadowLastLightPos = {}   -- per slot: where a point light was when its static layer was drawn
+    r._shadowLightPosScratch = {}  -- per slot, so worldPosition allocates nothing per frame
+    r._depthPosScratch = { 0, 0, 0 }  -- reused for the depth shaders' u_lightPos
+    r._shadowFrustum = Frustum:new()  -- rebuilt per light (per cube face) to cull casters
+    r._shadowDirScratch = Vector3:new()
     r._shadowViewProj  = {}
     for i = 1, WebGLRenderer.MAX_SHADOWS do r._shadowViewProj[i] = Matrix4:new() end
     r._noShadow2D   = love.graphics.newImage(blank)     -- u_shadowMap2D[i] when unbound
@@ -388,6 +407,7 @@ function WebGLRenderer:_sendShadowUniforms(sh, casters)
     local lightIndex, isCube, bias, mapSize = {}, {}, {}, {}
     local viewProj, lightPos, far = {}, {}, {}
     local maps2D, mapsCube = {}, {}
+    local normalBias, lightDir = {}, {}
 
     for i = 1, max do
         local entry = casters[i]
@@ -397,22 +417,27 @@ function WebGLRenderer:_sendShadowUniforms(sh, casters)
             lightIndex[i] = entry.lightIndex - 1   -- GLSL is 0-based
             isCube[i] = cube
             bias[i] = light.shadow.bias
+            normalBias[i] = light.shadow.normalBias or 0
             mapSize[i] = { light.shadow.mapSize, light.shadow.mapSize }
 
             if cube then
                 viewProj[i] = Matrix4:new()
                 lightPos[i] = { entry.lightPos.x, entry.lightPos.y, entry.lightPos.z }
+                lightDir[i] = { 0, -1, 0 }
                 far[i] = light.shadow.cameras[1].far
                 maps2D[i], mapsCube[i] = self._noShadow2D, self._shadowCubeCanvas[i]
             else
+                local dir = light:direction(self._shadowDirScratch)
                 viewProj[i] = self._shadowViewProj[i]
                 lightPos[i] = { 0, 0, 0 }
+                lightDir[i] = { dir.x, dir.y, dir.z }
                 far[i] = 0
                 maps2D[i], mapsCube[i] = self._shadow2DCanvas[i], self._noShadowCube
             end
         else
-            lightIndex[i], isCube[i], bias[i] = -1, false, 0
+            lightIndex[i], isCube[i], bias[i], normalBias[i] = -1, false, 0, 0
             mapSize[i], viewProj[i], lightPos[i], far[i] = { 1, 1 }, Matrix4:new(), { 0, 0, 0 }, 0
+            lightDir[i] = { 0, -1, 0 }
             maps2D[i], mapsCube[i] = self._noShadow2D, self._noShadowCube
         end
     end
@@ -422,6 +447,8 @@ function WebGLRenderer:_sendShadowUniforms(sh, casters)
     sh:send("u_shadowLightIndex", unpack(lightIndex))
     sh:send("u_shadowIsCube", unpack(isCube))
     sh:send("u_shadowBias", unpack(bias))
+    sh:send("u_shadowNormalBias", unpack(normalBias))
+    sh:send("u_shadowLightDir", unpack(lightDir))
     sh:send("u_shadowMapSize", unpack(mapSize))
     sh:send("u_shadowViewProj", unpack(viewProj))
     sh:send("u_shadowLightPos", unpack(lightPos))
@@ -584,12 +611,17 @@ end
 --
 -- The sphere is expanded inline rather than through Frustum:intersectsObject
 -- so the hot path allocates nothing per mesh per frame.
-function WebGLRenderer:_inFrustum(mesh)
+--
+-- `frustum` defaults to the camera's; the shadow pass passes a light's
+-- instead, to cull casters that cannot project into that light's map.
+function WebGLRenderer:_inFrustum(mesh, frustum)
     if not mesh.frustumCulled then return true end
 
     local geometry = mesh.geometry
     local sphere = geometry.boundingSphere or geometry:computeBoundingSphere()
     if not sphere then return true end
+
+    frustum = frustum or self._frustum
 
     local e = mesh.matrixWorld:elements()
 
@@ -606,7 +638,7 @@ function WebGLRenderer:_inFrustum(mesh)
     local radius = sphere.radius * math.sqrt(math.max(sx, sy, sz))
 
     for i = 1, 6 do
-        local p = self._frustum.planes[i]
+        local p = frustum.planes[i]
         local n = p.normal
         if n.x * cx + n.y * cy + n.z * cz + p.constant < -radius then
             return false
@@ -838,28 +870,52 @@ function WebGLRenderer:_pickShadowCasters(lights)
     return casters
 end
 
--- Depth-only pass shared by both shadow map kinds: draws every castShadow
--- mesh with `viewProj`, into whatever canvas is currently bound. Only
--- castShadow meshes are drawn -- a shadow only needs to know what can
--- OCCLUDE, not what receives, so this walk is usually much smaller than the
--- main scene traversal.
-function WebGLRenderer:_renderDepthPass(scene, viewProj, cube, lightPos, far)
+-- Depth-only pass shared by both shadow map kinds: draws castShadow meshes
+-- with `viewProj`, into whatever canvas is currently bound. Only castShadow
+-- meshes are drawn -- a shadow only needs to know what can OCCLUDE, not what
+-- receives, so this walk is usually much smaller than the main scene
+-- traversal.
+--
+-- `wantMovable` filters by shadowMovable; nil draws every caster. Returns
+-- whether anything was drawn, so the caller can skip the composite. Casters
+-- outside the light's frustum are culled.
+function WebGLRenderer:_renderDepthPass(scene, viewProj, cube, lightPos, far, wantMovable)
     local getDepthShader = require "shader.depth"
     local staticShader  = getDepthShader(false, cube)
     local skinnedShader = getDepthShader(true, cube)
 
-    for _, sh in ipairs({ staticShader, skinnedShader }) do
-        sh:send("u_viewProj", viewProj)
-        if cube then
-            sh:send("u_lightPos", { lightPos.x, lightPos.y, lightPos.z })
-            sh:send("u_far", far)
-        end
+    local posScratch = self._depthPosScratch
+    if cube then
+        posScratch[1], posScratch[2], posScratch[3] = lightPos.x, lightPos.y, lightPos.z
+    end
+    staticShader:send("u_viewProj", viewProj)
+    skinnedShader:send("u_viewProj", viewProj)
+    if cube then
+        staticShader:send("u_lightPos", posScratch)
+        staticShader:send("u_far", far)
+        skinnedShader:send("u_lightPos", posScratch)
+        skinnedShader:send("u_far", far)
+    end
+
+    local drewAny = false
+
+    local lightFrustum
+    if self.frustumCulling then
+        lightFrustum = self._shadowFrustum
+        lightFrustum:setFromProjectionMatrix(viewProj)
     end
 
     scene:traverseVisible(function(obj)
         if obj.isMesh and obj:isMesh() and obj.geometry and obj.geometry.mesh
-           and obj.castShadow then
+           and obj.castShadow
+           and (wantMovable == nil or obj.shadowMovable == wantMovable) then
             local skinned = self:_isSkinned(obj)
+
+            -- skinned bounds are the bind pose, same exemption as the camera pass
+            if lightFrustum and not skinned and not self:_inFrustum(obj, lightFrustum) then
+                return
+            end
+
             local sh = skinned and skinnedShader or staticShader
 
             love.graphics.setShader(sh)
@@ -867,16 +923,66 @@ function WebGLRenderer:_renderDepthPass(scene, viewProj, cube, lightPos, far)
             if skinned then self:_sendSkin(sh, obj) end
 
             love.graphics.draw(obj.geometry.mesh)
+            drewAny = true
         end
     end)
 
-    return self
+    return drewAny
+end
+
+-- 2D depth maps sample linearly so PCF taps blend between texels. Cube maps
+-- stay nearest: filtering across a face boundary bleeds in the neighbouring
+-- face's depth, which shows up as a seam along the cube's edges.
+local function newShadowCanvas(size, cube)
+    if cube then
+        return love.graphics.newCanvas(size, size, 6, { type = "cube", format = "r32f" })
+    end
+    local canvas = love.graphics.newCanvas(size, size, { format = "r32f" })
+    canvas:setFilter("linear", "linear")
+    return canvas
+end
+
+-- Per-texel min of the static and dynamic depth canvases into `target`.
+-- `faceBasis` selects the cube variant.
+function WebGLRenderer:_compositeShadowMin(staticCanvas, dynamicCanvas, target, size, faceBasis)
+    local getCompositeShader = require "shader.shadowcomposite"
+    local sh = getCompositeShader(faceBasis ~= nil)
+    sh:send("u_static", staticCanvas)
+    sh:send("u_dynamic", dynamicCanvas)
+    if faceBasis then
+        local sent = faceBasis._uniforms   -- constants, built once per face
+        if not sent then
+            sent = {
+                dir   = { faceBasis.dir.x,   faceBasis.dir.y,   faceBasis.dir.z },
+                right = { faceBasis.right.x, faceBasis.right.y, faceBasis.right.z },
+                up    = { faceBasis.up.x,    faceBasis.up.y,    faceBasis.up.z },
+            }
+            faceBasis._uniforms = sent
+        end
+        sh:send("u_faceDir",   sent.dir)
+        sh:send("u_faceRight", sent.right)
+        sh:send("u_faceUp",    sent.up)
+    end
+
+    love.graphics.push("all")
+    love.graphics.setCanvas(target)
+    love.graphics.setShader(sh)
+    love.graphics.setDepthMode()
+    love.graphics.setBlendMode("replace", "premultiplied")
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.origin()
+    love.graphics.rectangle("fill", 0, 0, size, size)
+    love.graphics.pop()
 end
 
 -- Render every shadow-casting light's depth into its own map: a 2D canvas
 -- for directional/spot (one coherent view direction), a 6-face cube canvas
 -- for point (none). Fills self._shadow2DCanvas/self._shadowCubeCanvas and
 -- self._shadowViewProj, indexed the same as `casters`.
+--
+-- Each map is a static layer (redrawn only when dirty) plus a dynamic layer
+-- (every frame), merged into the working canvas. autoUpdate=false with no
+-- needsUpdate skips the light entirely, as in three.js.
 function WebGLRenderer:_renderShadowMaps(scene, casters)
     love.graphics.setDepthMode("lequal", true)
     -- Standard shadow-mapping trick: cull FRONT faces (the ones facing the
@@ -889,40 +995,119 @@ function WebGLRenderer:_renderShadowMaps(scene, casters)
     -- self-compare entirely, no bias tuning required.
     love.graphics.setMeshCullMode("front")
 
+    -- one walk for the whole pass, not one per light/face
+    local hasMovableCaster = false
+    scene:traverseVisible(function(obj)
+        if obj.castShadow and obj.shadowMovable
+           and obj.isMesh and obj:isMesh() and obj.geometry and obj.geometry.mesh then
+            hasMovableCaster = true
+        end
+    end)
+
     for i, entry in ipairs(casters) do
         local light = entry.light
+        local shadow = light.shadow
+
+        -- slots are not stable per-light, so a different light landing here
+        -- means the cached canvases hold someone else's depth
+        local isNewSlot = self._shadowSlotSeen[i] ~= light
+        self._shadowSlotSeen[i] = light
+
+        if shadow.autoUpdate == false and not shadow.needsUpdate and not isNewSlot then
+            -- reuse last frame's canvas; a point light still needs its position
+            if light.isPointLight and light:isPointLight() then
+                local pos = self._shadowLightPosScratch[i]
+                if not pos then
+                    pos = Vector3:new()
+                    self._shadowLightPosScratch[i] = pos
+                end
+                entry.lightPos = light:worldPosition(pos)
+            end
+            goto continue
+        end
+
+        local staticDirty = isNewSlot or shadow.needsUpdate
 
         if light.isPointLight and light:isPointLight() then
             local size = light.shadow.mapSize
             local canvas = self._shadowCubeCanvas[i]
             if not canvas or canvas:getWidth() ~= size then
-                canvas = love.graphics.newCanvas(size, size, 6, { type = "cube", format = "r32f" })
+                canvas = newShadowCanvas(size, true)
                 self._shadowCubeCanvas[i] = canvas
             end
-
-            local pos = light:worldPosition()
+            -- needed even on a cached frame: the shader measures distance from it
+            local pos = self._shadowLightPosScratch[i]
+            if not pos then
+                pos = Vector3:new()
+                self._shadowLightPosScratch[i] = pos
+            end
+            light:worldPosition(pos)
             entry.lightPos = pos
             local far = light.shadow.cameras[1].far
+
+            -- a moved lamp reprojects all 6 faces, so the static layer is stale
+            local lastPos = self._shadowLastLightPos[i]
+            if not lastPos then
+                lastPos = Vector3:new()
+                self._shadowLastLightPos[i] = lastPos
+                staticDirty = true
+            elseif not lastPos:equals(pos) then
+                staticDirty = true
+            end
+            lastPos:copy(pos)
+
+            -- nothing moves: draw static straight into the working canvas,
+            -- no dynamic layer and no composite
+            local direct = not hasMovableCaster
+            if direct and not staticDirty then goto continue end
+
+            local staticCanvas = canvas
+            if not direct then
+                staticCanvas = self._shadowStaticCubeCanvas[i]
+                if not staticCanvas or staticCanvas:getWidth() ~= size then
+                    staticCanvas = newShadowCanvas(size, true)
+                    self._shadowStaticCubeCanvas[i] = staticCanvas
+                    staticDirty = true
+                end
+            end
 
             for face, cam in ipairs(light:updateShadowCameras()) do
                 cam:updateMatrixWorld(true)
                 cam.matrixWorldInverse:copy(cam.matrixWorld):invert()
-                local vp = Matrix4:new()
+                local vp = self._shadowFaceViewProj
                 cam:viewProjectionMatrix(vp)
 
-                love.graphics.setCanvas({ { canvas, face = face } })
-                love.graphics.clear(1, 1, 1, 1)
-                self:_renderDepthPass(scene, vp, true, pos, far)
+                if staticDirty then
+                    love.graphics.setCanvas({ { staticCanvas, face = face } })
+                    love.graphics.clear(1, 1, 1, 1)
+                    love.graphics.setDepthMode("lequal", true)
+                    self:_renderDepthPass(scene, vp, true, pos, far, false)
+                end
+
+                if not direct then
+                    local dynamicCanvas = self._shadowDynamicCubeCanvas[i]
+                    if not dynamicCanvas or dynamicCanvas:getWidth() ~= size then
+                        dynamicCanvas = newShadowCanvas(size, true)
+                        self._shadowDynamicCubeCanvas[i] = dynamicCanvas
+                    end
+
+                    love.graphics.setCanvas({ { dynamicCanvas, face = face } })
+                    love.graphics.clear(1, 1, 1, 1)
+                    love.graphics.setDepthMode("lequal", true)
+                    self:_renderDepthPass(scene, vp, true, pos, far, true)
+
+                    self:_compositeShadowMin(staticCanvas, dynamicCanvas,
+                        { { canvas, face = face } }, size, PointLightFaces[face])
+                end
             end
 
         else -- directional or spot
             local size = light.shadow.mapSize
             local canvas = self._shadow2DCanvas[i]
             if not canvas or canvas:getWidth() ~= size then
-                canvas = love.graphics.newCanvas(size, size, { format = "r32f" })
+                canvas = newShadowCanvas(size, false)
                 self._shadow2DCanvas[i] = canvas
             end
-
             local cam
             if light.isSpotLight and light:isSpotLight() then
                 cam = light:updateShadowCamera()
@@ -934,10 +1119,55 @@ function WebGLRenderer:_renderShadowMaps(scene, casters)
             cam.matrixWorldInverse:copy(cam.matrixWorld):invert()
             cam:viewProjectionMatrix(self._shadowViewProj[i])
 
-            love.graphics.setCanvas(canvas)
-            love.graphics.clear(1, 1, 1, 1)   -- far plane: nothing is closer than this
-            self:_renderDepthPass(scene, self._shadowViewProj[i], false)
+            -- a moved light reprojects everything, so the static layer is stale
+            local lastViewProj = self._shadowLastViewProj[i]
+            if not lastViewProj then
+                lastViewProj = Matrix4:new()
+                self._shadowLastViewProj[i] = lastViewProj
+                staticDirty = true
+            elseif not lastViewProj:equals(self._shadowViewProj[i]) then
+                staticDirty = true
+            end
+            lastViewProj:copy(self._shadowViewProj[i])
+
+            local direct = not hasMovableCaster
+            if direct and not staticDirty then goto continue end
+
+            local staticCanvas = canvas
+            if not direct then
+                staticCanvas = self._shadowStatic2DCanvas[i]
+                if not staticCanvas or staticCanvas:getWidth() ~= size then
+                    staticCanvas = newShadowCanvas(size, false)
+                    self._shadowStatic2DCanvas[i] = staticCanvas
+                    staticDirty = true
+                end
+            end
+
+            if staticDirty then
+                love.graphics.setCanvas(staticCanvas)
+                love.graphics.clear(1, 1, 1, 1)
+                love.graphics.setDepthMode("lequal", true)
+                self:_renderDepthPass(scene, self._shadowViewProj[i], false, nil, nil, false)
+            end
+
+            if not direct then
+                local dynamicCanvas = self._shadowDynamic2DCanvas[i]
+                if not dynamicCanvas or dynamicCanvas:getWidth() ~= size then
+                    dynamicCanvas = newShadowCanvas(size, false)
+                    self._shadowDynamic2DCanvas[i] = dynamicCanvas
+                end
+                love.graphics.setCanvas(dynamicCanvas)
+                love.graphics.clear(1, 1, 1, 1)
+                love.graphics.setDepthMode("lequal", true)
+                self:_renderDepthPass(scene, self._shadowViewProj[i], false, nil, nil, true)
+
+                self:_compositeShadowMin(staticCanvas, dynamicCanvas, canvas, size)
+            end
         end
+
+        shadow.needsUpdate = false
+
+        ::continue::
     end
 
     love.graphics.setShader()
