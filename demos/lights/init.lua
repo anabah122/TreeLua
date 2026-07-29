@@ -118,8 +118,18 @@ end
 function M.mousemoved(x, y, dx, dy) controls:mousemoved(dx, dy) end
 function M.wheelmoved(dx, dy)       controls:wheelmoved(dy)     end
 
+local last, worst = love.timer.getTime(), 0
+
 function M.draw()
+    local now = love.timer.getTime()
+    local frame = (now - last) * 1000
+    last = now
+    worst = math.max(worst * 0.995, frame)   -- decays, so a spike stays visible then fades
+
     renderer:render(scene, camera)
+
+    love.graphics.print(("frame %.2f ms (%.0f fps)   worst %.1f ms   draws %d")
+        :format(frame, 1000 / math.max(frame, 1e-3), worst, renderer.info.render.calls), 10, 10)
 end
 
 return M
