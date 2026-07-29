@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>TreeLua — дерево зависимостей</title>
+<style>
+:root{
+  --bg:#faf9f7; --ink:#1c1b19; --sub:#6b6660; --line:#b9b2a6; --accent:#b5502e;
+  --node:#ffffff; --node-border:#c9c2b6;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+:root[data-theme="dark"]{
+  --bg:#17150f; --ink:#eee9e0; --sub:#a39c8e; --line:#4a4436; --accent:#e08a5e;
+  --node:#221f18; --node-border:#443d2e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17150f; --ink:#eee9e0; --sub:#a39c8e; --line:#4a4436; --accent:#e08a5e;
+    --node:#221f18; --node-border:#443d2e;
+  }
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--mono); padding:1.5rem; }
+h1{ font-size:1.05rem; margin:0 0 .3rem; }
+p{ color:var(--sub); font-size:.78rem; margin:0 0 1rem; max-width:90ch; }
+#wrap{ overflow:auto; border:1px solid var(--line); border-radius:6px; }
+.node rect{ fill:var(--node); stroke:var(--node-border); stroke-width:1; }
+.node .name{ fill:var(--ink); font-size:12px; font-weight:600; }
+.node .file{ fill:var(--sub); font-size:9.5px; }
+.link{ stroke:var(--line); stroke-width:1.2; fill:none; }
+</style>
+</head>
+<body>
+<h1>TreeLua — дерево require-зависимостей</h1>
+<p>Ствол TL (init.lua) слева. Каждая ветка вправо — прямой require. Дерево, не граф: файл нарисован там, где впервые подключается фасадом; повторные require того же модуля из других мест обозначены "↳" без нового поддерева.</p>
+<div id="wrap"><svg id="svg"></svg></div>
+<script>
+const data = { name:"TL", file:"init.lua", children:[
+  { name:"settings", file:"three/settings.lua" },
+  { name:"math.*", file:"math/vec3,vec4,mat4,quat,euler,color,box3,sphere,plane,ray,frustum.lua" },
+  { name:"Object3D", file:"three/core/Object3D.lua", children:[
+    { name:"↳ vec3,quat,euler,mat4", file:"math/*.lua" }
+  ]},
+  { name:"Group", file:"three/core/Group.lua" },
+  { name:"BufferGeometry", file:"three/core/BufferGeometry.lua" },
+  { name:"LineGeometry", file:"three/core/LineGeometry.lua" },
+  { name:"Raycaster", file:"three/core/Raycaster.lua", children:[
+    { name:"↳ ray,box3,sphere", file:"math/*.lua" }
+  ]},
+  { name:"Scene", file:"three/scenes/Scene.lua", children:[
+    { name:"↳ Object3D", file:"" }, { name:"↳ color", file:"" }
+  ]},
+  { name:"Fog / FogExp2", file:"three/scenes/Fog.lua, FogExp2.lua", children:[
+    { name:"↳ color", file:"" }
+  ]},
+  { name:"Mesh", file:"three/objects/Mesh.lua", children:[
+    { name:"↳ Object3D", file:"" }
+  ]},
+  { name:"SkinnedMesh", file:"three/objects/SkinnedMesh.lua", children:[
+    { name:"↳ Mesh", file:"" }, { name:"importer.common", file:"importer/common.lua" }, { name:"↳ mat4", file:"" }
+  ]},
+  { name:"Skeleton", file:"three/objects/Skeleton.lua", children:[
+    { name:"↳ importer.common", file:"" }
+  ]},
+  { name:"InstancedMesh", file:"three/objects/InstancedMesh.lua", children:[
+    { name:"↳ Mesh", file:"" }, { name:"↳ mat4,color", file:"" }
+  ]},
+  { name:"LOD", file:"three/objects/LOD.lua", children:[
+    { name:"↳ Object3D", file:"" }, { name:"↳ vec3", file:"" }
+  ]},
+  { name:"Model", file:"three/objects/Model.lua", children:[
+    { name:"↳ Group,Mesh,SkinnedMesh,Skeleton", file:"" },
+    { name:"AnimationMixer", file:"three/animation/AnimationMixer.lua", children:[
+      { name:"AnimationAction", file:"three/animation/AnimationAction.lua" },
+      { name:"PoseAccumulator", file:"three/animation/PoseAccumulator.lua", children:[
+        { name:"↳ importer.common", file:"" }
+      ]},
+      { name:"↳ importer.common", file:"" }
+    ]},
+    { name:"↳ LOD", file:"" },
+    { name:"SimplifyModifier", file:"three/modifiers/SimplifyModifier.lua" }
+  ]},
+  { name:"Sprite", file:"three/objects/Sprite.lua", children:[
+    { name:"↳ Mesh", file:"" }, { name:"↳ PlaneGeometry", file:"" }
+  ]},
+  { name:"Line", file:"three/objects/Line.lua", children:[
+    { name:"↳ Object3D", file:"" }
+  ]},
+  { name:"LineSegments", file:"three/objects/LineSegments.lua", children:[
+    { name:"↳ Line", file:"" }
+  ]},
+  { name:"ParticleSystem", file:"three/particles/ParticleSystem.lua", children:[
+    { name:"shader.particles", file:"shader/particles.lua" }
+  ]},
+  { name:"Geometries", file:"three/geometries/Box,Sphere,Plane,Cylinder,Cone,Torus.lua", children:[
+    { name:"build", file:"three/geometries/build.lua" }, { name:"↳ BufferGeometry", file:"" }
+  ]},
+  { name:"Material", file:"three/materials/Material.lua", children:[
+    { name:"↳ color", file:"" }
+  ]},
+  { name:"MeshStandardMaterial", file:"three/materials/MeshStandardMaterial.lua", children:[
+    { name:"↳ Material", file:"" }
+  ]},
+  { name:"LineBasicMaterial", file:"three/materials/LineBasicMaterial.lua", children:[
+    { name:"↳ Material", file:"" }
+  ]},
+  { name:"Camera", file:"three/cameras/Camera.lua", children:[
+    { name:"↳ Object3D", file:"" }, { name:"↳ mat4,frustum", file:"" }
+  ]},
+  { name:"PerspectiveCamera", file:"three/cameras/PerspectiveCamera.lua", children:[
+    { name:"↳ Camera", file:"" }
+  ]},
+  { name:"OrthographicCamera", file:"three/cameras/OrthographicCamera.lua", children:[
+    { name:"↳ Camera", file:"" }
+  ]},
+  { name:"Lights", file:"three/lights/Light,Ambient,Directional,Point,Spot,Hemisphere.lua", children:[
+    { name:"↳ Object3D", file:"" }, { name:"↳ color", file:"" }
+  ]},
+  { name:"WebGLRenderer", file:"three/renderers/WebGLRenderer.lua", children:[
+    { name:"↳ mat4,color,vec3,frustum", file:"" },
+    { name:"ShaderLib", file:"shader/init.lua" },
+    { name:"↳ shader.particles", file:"" },
+    { name:"shader.depth", file:"shader/depth.lua (внутри render)" },
+    { name:"shader.shadowcomposite", file:"shader/shadowcomposite.lua (внутри render)" },
+    { name:"↳ settings", file:"(внутри render)" }
+  ]},
+  { name:"EffectComposer", file:"three/postprocessing/EffectComposer.lua" },
+  { name:"RenderPass", file:"three/postprocessing/RenderPass.lua" },
+  { name:"BloomPass", file:"three/postprocessing/BloomPass.lua" },
+  { name:"Loader", file:"three/loaders/Loader.lua", children:[
+    { name:"↳ Group,Mesh,SkinnedMesh,Skeleton,BufferGeometry", file:"" },
+    { name:"↳ MeshStandardMaterial", file:"" },
+    { name:"AnimationClip", file:"three/animation/AnimationClip.lua" }
+  ]},
+  { name:"GLTFLoader", file:"three/loaders/GLTFLoader.lua", children:[
+    { name:"↳ Loader", file:"" },
+    { name:"importer.gltf", file:"importer/gltf/init.lua", children:[
+      { name:"json", file:"importer/gltf/json.lua" },
+      { name:"binary", file:"importer/gltf/binary.lua" },
+      { name:"geometry", file:"importer/gltf/geometry.lua" },
+      { name:"material", file:"importer/gltf/material.lua" },
+      { name:"skeleton", file:"importer/gltf/skeleton.lua" }
+    ]},
+    { name:"importer.gltf.animation", file:"importer/gltf/animation.lua" }
+  ]},
+  { name:"ColladaLoader", file:"three/loaders/ColladaLoader.lua", children:[
+    { name:"↳ Loader", file:"" },
+    { name:"importer.dae", file:"importer/dae/init.lua", children:[
+      { name:"xml", file:"importer/dae/xml.lua" },
+      { name:"sources", file:"importer/dae/sources.lua" },
+      { name:"geometry", file:"importer/dae/geometry.lua" },
+      { name:"material", file:"importer/dae/material.lua" },
+      { name:"skeleton", file:"importer/dae/skeleton.lua" }
+    ]},
+    { name:"importer.dae.animation", file:"importer/dae/animation.lua" }
+  ]},
+  { name:"TextureLoader", file:"three/loaders/TextureLoader.lua", children:[
+    { name:"↳ Loader", file:"" }
+  ]},
+  { name:"AnimationClip", file:"three/animation/AnimationClip.lua" },
+  { name:"Controls", file:"three/controls/FlyControls.lua, OrbitControls.lua", children:[
+    { name:"↳ Camera", file:"" }, { name:"↳ vec3", file:"" }
+  ]},
+  { name:"importer.obj", file:"importer/obj.lua" }
+]};
+
+// ── измерить каждый узел (ширина карточки под текст) ────────────────────────
+function measure(n){
+  const nameW = 14 + n.name.length * 7.2;
+  const fileW = n.file ? 14 + n.file.length * 6.1 : 0;
+  n._w = Math.max(nameW, fileW, 90);
+}
+function walk(n, f){ f(n); (n.children||[]).forEach(c=>walk(c,f)); }
+walk(data, measure);
+
+// ── ширина колонки на каждой глубине = максимум карточки на этой глубине ────
+const colW = [];
+walk(data, n => { colW[n.depth ?? 0] = 0; });
+function markDepth(n, d){ n.depth = d; (n.children||[]).forEach(c=>markDepth(c, d+1)); }
+markDepth(data, 0);
+walk(data, n => { colW[n.depth] = Math.max(colW[n.depth] || 0, n._w); });
+
+const COL_GAP = 46, ROW_H = 40, PAD = 24;
+const colX = [0];
+for(let i=1;i<colW.length;i++) colX[i] = colX[i-1] + colW[i-1] + COL_GAP;
+
+// ── layout по Y: листья идут подряд, родитель — по центру своих детей ───────
+let rowCounter = 0;
+function layoutY(n){
+  if(!n.children || n.children.length===0){
+    n.y = rowCounter * ROW_H; rowCounter++;
+    return n.y;
+  }
+  const ys = n.children.map(layoutY);
+  n.y = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return n.y;
+}
+layoutY(data);
+
+const svg = document.getElementById("svg");
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+const width = colX[colX.length-1] + colW[colW.length-1] + PAD*2;
+const height = rowCounter * ROW_H + PAD*2;
+svg.setAttribute("width", width);
+svg.setAttribute("height", height);
+svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+const NODE_H = 30;
+
+function drawLinks(n){
+  const x0 = colX[n.depth] + PAD + n._w;
+  const y0 = n.y + PAD + NODE_H/2;
+  (n.children||[]).forEach(c=>{
+    const x1 = colX[c.depth] + PAD;
+    const y1 = c.y + PAD + NODE_H/2;
+    const midX = x0 + (x1-x0)/2;
+    svg.appendChild(el("path", { class:"link", d:`M${x0},${y0} L${midX},${y0} L${midX},${y1} L${x1},${y1}` }));
+    drawLinks(c);
+  });
+}
+drawLinks(data);
+
+function drawNodes(n){
+  const x = colX[n.depth] + PAD;
+  const y = n.y + PAD;
+  const g = el("g", { class:"node", transform:`translate(${x},${y})` });
+  g.appendChild(el("rect", { width:n._w, height:NODE_H, rx:4 }));
+  const t1 = el("text", { class:"name", x:8, y: n.file ? 13 : 19 });
+  t1.textContent = n.name;
+  g.appendChild(t1);
+  if(n.file){
+    const t2 = el("text", { class:"file", x:8, y:25 });
+    t2.textContent = n.file;
+    g.appendChild(t2);
+  }
+  svg.appendChild(g);
+  (n.children||[]).forEach(drawNodes);
+}
+drawNodes(data);
+</script>
+</body>
+</html>

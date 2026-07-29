@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat ~/.claude/settings.json 2>/dev/null | head -50; echo \"---\"; ls ~/.claude/plugins/ 2>/dev/null)",
+      "Read(//c/Users/pcmaster/.claude/**)",
+      "Read(//c/Users/pcmaster/.claude/plugins/**)",
+      "Read(//c//**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\pcmaster\\.claude"
+    ]
+  }
+}
