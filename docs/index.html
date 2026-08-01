@@ -54,6 +54,23 @@ mixer:clipAction(gltf.animations[1]):play()
 function love.update(dt) mixer:update(dt) end
 function love.draw()     renderer:render(scene, camera) end</code></pre>
 
+  <h2>TL.baseCallbacks</h2>
+  <p>
+    Wires <code>love.load/update/draw/resize/keypressed/...</code> to a
+    table of handlers in one call, plus a work-time overlay in the corner.
+    Only the callbacks the table actually defines are hooked, so extra ones
+    (<code>keyreleased</code>, <code>mousepressed</code>, ...) can be added
+    freely and missing ones are simply not wired.
+  </p>
+  <pre><code>local TL = require "TreeEngine"
+
+TL.baseCallbacks{
+  init   = function() ... end,
+  update = function(dt) ... end,
+  draw   = function() renderer:render(scene, camera) end,
+  resize = function(w, h) renderer:setSize(w, h, camera) end,
+}</code></pre>
+
   <h2>Constants</h2>
   <table>
     <tr><th>Name</th><th>Value</th><th>Used by</th></tr>
@@ -140,6 +157,23 @@ mixer:clipAction(gltf.animations[1]):play()
 
 function love.update(dt) mixer:update(dt) end
 function love.draw()     renderer:render(scene, camera) end</code></pre>
+
+  <h2>TL.baseCallbacks</h2>
+  <p>
+    Одним вызовом подключает <code>love.load/update/draw/resize/keypressed/...</code>
+    к таблице обработчиков, плюс оверлей времени кадра в углу. Подключаются
+    только те колбэки, что реально заданы в таблице — лишние
+    (<code>keyreleased</code>, <code>mousepressed</code>, ...) можно
+    добавлять свободно, а отсутствующие просто не подключаются.
+  </p>
+  <pre><code>local TL = require "TreeEngine"
+
+TL.baseCallbacks{
+  init   = function() ... end,
+  update = function(dt) ... end,
+  draw   = function() renderer:render(scene, camera) end,
+  resize = function(w, h) renderer:setSize(w, h, camera) end,
+}</code></pre>
 
   <h2>Constants</h2>
   <table>

@@ -15,6 +15,16 @@
 --   function love.update(dt) mixer:update(dt) end
 --   function love.draw()     renderer:render(scene, camera) end
 --
+-- Or, to wire love.load/update/draw/resize/keypressed/... automatically
+-- (only the callbacks the module defines get hooked), plus a frame-timing
+-- overlay:
+--
+--   TL.baseCallbacks{
+--     init   = function() ... end,
+--     update = function(dt) ... end,
+--     draw   = function() renderer:render(scene, camera) end,
+--   }
+--
 -- Names and call signatures follow three.js, so its documentation reads across
 -- with two deliberate exceptions:
 --
@@ -33,6 +43,7 @@ TL.VERSION = "0.1.0"
 
 -- ── settings ─────────────────────────────────────────────────────────────────
 TL.settings = require "three.settings"
+TL.baseCallbacks = require "three.baseCallbacks"
 
 -- ── math ─────────────────────────────────────────────────────────────────────
 TL.Vector3    = require "math.vec3"

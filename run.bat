@@ -1,1 +1,1 @@
-"C:\LOVE\love-11.5-win64\lovec.exe" "C:\LOVE\TreeLua"
+"C:\Program Files\LOVE\lovec.exe" "C:\LOVE\TreeEngine"
