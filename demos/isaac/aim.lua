@@ -1,7 +1,7 @@
 -- Прицеливание мышью: луч камеры пересекается с плоскостью пола (Y=0).
-local Raycaster = require "three.core.Raycaster"
-local Plane     = require "math.plane"
-local Vector3   = require "math.vec3"
+local Raycaster = require "engine.core.Raycaster"
+local Plane     = require "engine.math.plane"
+local Vector3   = require "engine.math.vec3"
 
 local Aim = {}
 Aim.__index = Aim

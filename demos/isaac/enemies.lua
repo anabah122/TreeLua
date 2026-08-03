@@ -6,8 +6,8 @@
 -- конкурируют за одни и те же кости, а сама модель при этом не парсится
 -- заново на каждого врага.
 local cfg = require "demos.isaac.config"
-local Vector3 = require "math.vec3"
-local Quaternion = require "math.quat"
+local Vector3 = require "engine.math.vec3"
+local Quaternion = require "engine.math.quat"
 
 local MODEL_PATH = "assets/model/model3dtest.glb"
 local ENEMY_SCALE = 0.55

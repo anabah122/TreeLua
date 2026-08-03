@@ -1,8 +1,8 @@
 -- Декоративные камни по периметру комнаты, отрисованные одним InstancedMesh.
 local cfg     = require "demos.isaac.config"
-local Matrix4 = require "math.mat4"
-local Quaternion = require "math.quat"
-local Vector3 = require "math.vec3"
+local Matrix4 = require "engine.math.mat4"
+local Quaternion = require "engine.math.quat"
+local Vector3 = require "engine.math.vec3"
 
 local Decor = {}
 

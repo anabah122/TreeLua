@@ -1,5 +1,5 @@
 -- Проекция мировых координат на экран и отрисовка 2D HP-баров поверх 3D-сцены.
-local Vector3 = require "math.vec3"
+local Vector3 = require "engine.math.vec3"
 
 local HpBar = {}
 

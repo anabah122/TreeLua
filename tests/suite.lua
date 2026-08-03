@@ -26,11 +26,11 @@ end
 -- ── math ─────────────────────────────────────────────────────────────────────
 
 function T.math()
-    local V = require "math.vec3"
-    local M = require "math.mat4"
-    local Q = require "math.quat"
-    local E = require "math.euler"
-    local C = require "math.color"
+    local V = require "engine.math.vec3"
+    local M = require "engine.math.mat4"
+    local Q = require "engine.math.quat"
+    local E = require "engine.math.euler"
+    local C = require "engine.math.color"
 
     print("\n-- math --")
 
@@ -92,11 +92,116 @@ function T.math()
     ok("mat4 invert", M:new():compose(V:new(1, 2, 3), q, V:new(1, 1, 1)):invert() ~= nil)
 end
 
+-- ── collision ────────────────────────────────────────────────────────────────
+
+function T.collision()
+    local V       = require "engine.math.vec3"
+    local Box3    = require "engine.math.box3"
+    local Sphere  = require "engine.math.sphere"
+    local Capsule = require "engine.math.capsule"
+    local World   = require "engine.collision.World"
+    local Octree  = require "engine.collision.Octree"
+
+    print("\n-- collision --")
+
+    local box = Box3:new(V:new(-1, -1, -1), V:new(1, 1, 1))
+    -- axis starts at the box's top face, only the radius overlaps -- capsule
+    -- axis itself stays outside the box, so this is the "grazing" case, not
+    -- the axis-embedded-inside case (covered separately below)
+    local capsule = Capsule:new(V:new(0, 1, 0), V:new(0, 3, 0), 0.5)
+
+    local world = World:new()
+    world:add(box)
+    local hit = world:testCapsule(capsule)
+    ok("world flat broadphase finds capsule-box hit", hit ~= nil and near(hit.depth, 0.5))
+
+    local octWorld = World:new{ broadphase = Octree:new(Box3:new(V:new(-10, -10, -10), V:new(10, 10, 10))) }
+    octWorld:add(box)
+    local hit2 = octWorld:testCapsule(capsule)
+    ok("world octree broadphase finds capsule-box hit", hit2 ~= nil and near(hit2.depth, hit.depth))
+
+    -- capsule brushing a box from the side, its axis dipping inside the box's
+    -- interior (not just grazing the surface) -- push-out must aim sideways,
+    -- out through the nearest face, not default to "up" because the naive
+    -- clamp-to-box distance reads zero for a point already inside
+    local sideBox = Box3:new(V:new(-1, -1, -1), V:new(1, 1, 1))
+    local sideCapsule = Capsule:new(V:new(0.7, 0, 0), V:new(0.7, 2, 0), 0.5)
+    local sideHit = sideCapsule:intersectsBox(sideBox)
+    ok("capsule embedded sideways in a box pushes out sideways, not up",
+        sideHit ~= nil and sideHit.normal.x > 0.9 and near(sideHit.normal.y, 0))
+
+    local farBox = Box3:new(V:new(50, 50, 50), V:new(51, 51, 51))
+    local world2 = World:new()
+    world2:add(farBox)
+    ok("world reports no hit when nothing overlaps", world2:testCapsule(capsule) == nil)
+
+    local sphere = Sphere:new(V:new(0, 0, 0), 1)
+    local world3 = World:new()
+    world3:add(sphere)
+    local hit3 = world3:testCapsule(capsule)
+    ok("world finds capsule-sphere hit", hit3 ~= nil)
+
+    -- triangle
+    local Triangle = require "engine.math.triangle"
+    local tri = Triangle:new(V:new(-2, 0, -2), V:new(2, 0, -2), V:new(0, 0, 2))
+    local closest = tri:closestPointToPoint(V:new(0, 5, 0), V:new())
+    ok("triangle closest point projects straight down", near(closest.x, 0) and near(closest.y, 0))
+    ok("triangle contains its own centroid projection", tri:containsPoint(V:new(0, 0, 0)))
+
+    local groundCapsule = Capsule:new(V:new(0, 0.3, 0), V:new(0, 2, 0), 0.5)
+    local hitTri = groundCapsule:intersectsTriangle(tri)
+    ok("capsule intersects triangle just above it", hitTri ~= nil)
+    ok("push-out normal for a capsule above ground points up", hitTri ~= nil and hitTri.normal.y > 0)
+
+    -- capsule that has sunk BELOW the ground plane (e.g. shoved down by a
+    -- simultaneous side collision): the naive point-to-point vector flips
+    -- sign here and would push further underground instead of back up
+    local sunkCapsule = Capsule:new(V:new(0, -0.2, 0), V:new(0, 1.5, 0), 0.5)
+    local hitSunk = sunkCapsule:intersectsTriangle(tri)
+    ok("push-out normal for a capsule sunk below ground still points up",
+        hitSunk ~= nil and hitSunk.normal.y > 0)
+
+    -- mesh collider
+    local MeshCollider = require "engine.collision.MeshCollider"
+    local groundGeometry = {
+        vertices = {
+            { -5, 0, -5 }, { 5, 0, -5 }, { -5, 0, 5 }, { 5, 0, 5 },
+        },
+        indices = { 1, 2, 3, 2, 4, 3 },
+    }
+    local Object3D = require "engine.core.Object3D"
+    local groundMesh = setmetatable({ geometry = groundGeometry, matrixWorld = require("engine.math.mat4"):new() }, { __index = Object3D })
+    groundMesh.updateWorldMatrix = function() end
+
+    local meshCollider = MeshCollider:new(groundMesh)
+    local worldMesh = World:new()
+    worldMesh:add(meshCollider)
+    local hitMesh = worldMesh:testCapsule(groundCapsule)
+    ok("world finds capsule-mesh hit", hitMesh ~= nil)
+
+    local farCapsule = Capsule:new(V:new(0, 20, 0), V:new(0, 22, 0), 0.5)
+    ok("world reports no mesh hit far above ground", worldMesh:testCapsule(farCapsule) == nil)
+
+    -- heightfield
+    local Heightfield = require "engine.collision.Heightfield"
+    local heights = {
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 0, 0 },
+    }
+    local field = Heightfield:new(heights, 1, V:new(-1, 0, -1))
+    local worldField = World:new()
+    worldField:add(field)
+    local hitField = worldField:testCapsule(Capsule:new(V:new(0, 1.3, 0), V:new(0, 3, 0), 0.5))
+    ok("world finds capsule-heightfield hit", hitField ~= nil)
+    ok("world reports no heightfield hit far above", worldField:testCapsule(farCapsule) == nil)
+end
+
 -- ── scene graph ──────────────────────────────────────────────────────────────
 
 function T.object3d()
-    local O = require "three.core.Object3D"
-    local V = require "math.vec3"
+    local O = require "engine.core.Object3D"
+    local V = require "engine.math.vec3"
 
     print("\n-- Object3D --")
 
@@ -175,7 +280,7 @@ end
 
 function T.geometry()
     local TL   = require "init"
-    local Box3 = require "math.box3"
+    local Box3 = require "engine.math.box3"
 
     print("\n-- geometry --")
 
@@ -534,7 +639,7 @@ function T.integration()
     body.metalness, body.roughness = 0, 1
 
     -- and the importer must report absence as absence, not as a substituted 1
-    local rawMat = require("importer.gltf"):load{
+    local rawMat = require("engine.importer.gltf"):load{
         path = "assets/model/model3dtest.glb", mesh = false, tex = false,
     }[1].material
     ok("importer reports the file's own factor", rawMat.metallic == 0.5,
@@ -565,11 +670,14 @@ function T.integration()
     -- renderer forgot is caught. Comment lines are stripped first: the word
     -- "uniform" appears in prose too, and matching it there yields phantom
     -- names.
-    local ShaderLib = require "shader"
-    local rendererSrc = love.filesystem.read("three/renderers/WebGLRenderer.lua")
+    local ShaderLib = require "engine.shader"
+    local rendererSrc = love.filesystem.read("engine/renderers/WebGLRenderer.lua")
 
     local sent = {}
     for name in rendererSrc:gmatch('send%("([%w_]+)"') do sent[name] = true end
+    -- MainTex is LOVE's auto-bind convention (mesh:setTexture), never sent via
+    -- shader:send -- see the comment in engine/shader/init.lua.
+    sent.MainTex = true
 
     for _, variant in ipairs{ "static", "skinned" } do
         local src = ShaderLib:sourceFor{ skinning = variant == "skinned" }
@@ -721,7 +829,7 @@ end
 
 function T.normalmap()
     local TL = require "init"
-    local ShaderLib = require "shader"
+    local ShaderLib = require "engine.shader"
 
     print("\n-- normal maps --")
 
@@ -1261,6 +1369,7 @@ end
 
 function T.run()
     T.math()
+    T.collision()
     T.object3d()
     T.geometry()
     T.hygiene()

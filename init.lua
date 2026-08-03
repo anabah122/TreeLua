@@ -32,95 +32,104 @@ local TL = {}
 TL.VERSION = "0.1.0"
 
 -- ── settings ─────────────────────────────────────────────────────────────────
-TL.settings = require "three.settings"
+TL.settings = require "engine.core.settings"
 
 -- ── math ─────────────────────────────────────────────────────────────────────
-TL.Vector3    = require "math.vec3"
-TL.Vector4    = require "math.vec4"
-TL.Matrix4    = require "math.mat4"
-TL.Quaternion = require "math.quat"
-TL.Euler      = require "math.euler"
-TL.Color      = require "math.color"
-TL.Box3       = require "math.box3"
-TL.Sphere     = require "math.sphere"
-TL.Plane      = require "math.plane"
-TL.Ray        = require "math.ray"
-TL.Frustum    = require "math.frustum"
+TL.Vector3    = require "engine.math.vec3"
+TL.Vector4    = require "engine.math.vec4"
+TL.Matrix4    = require "engine.math.mat4"
+TL.Quaternion = require "engine.math.quat"
+TL.Euler      = require "engine.math.euler"
+TL.Color      = require "engine.math.color"
+TL.Box3       = require "engine.math.box3"
+TL.Sphere     = require "engine.math.sphere"
+TL.Plane      = require "engine.math.plane"
+TL.Ray        = require "engine.math.ray"
+TL.Frustum    = require "engine.math.frustum"
+TL.Capsule    = require "engine.math.capsule"
 
 -- ── core ─────────────────────────────────────────────────────────────────────
-TL.Object3D       = require "three.core.Object3D"
-TL.Group          = require "three.core.Group"
-TL.BufferGeometry = require "three.core.BufferGeometry"
-TL.LineGeometry   = require "three.core.LineGeometry"
-TL.Raycaster      = require "three.core.Raycaster"
+TL.Object3D       = require "engine.core.Object3D"
+TL.Group          = require "engine.core.Group"
+TL.BufferGeometry = require "engine.core.BufferGeometry"
+TL.LineGeometry   = require "engine.core.LineGeometry"
+TL.Raycaster      = require "engine.core.Raycaster"
 
 -- ── scene ────────────────────────────────────────────────────────────────────
-TL.Scene   = require "three.scenes.Scene"
-TL.Fog     = require "three.scenes.Fog"
-TL.FogExp2 = require "three.scenes.FogExp2"
+TL.Scene   = require "engine.scenes.Scene"
+TL.Fog     = require "engine.scenes.Fog"
+TL.FogExp2 = require "engine.scenes.FogExp2"
 
 -- ── objects ──────────────────────────────────────────────────────────────────
-TL.Mesh          = require "three.objects.Mesh"
-TL.SkinnedMesh   = require "three.objects.SkinnedMesh"
-TL.Skeleton      = require "three.objects.Skeleton"
-TL.InstancedMesh = require "three.objects.InstancedMesh"
-TL.LOD           = require "three.objects.LOD"
-TL.Model         = require "three.objects.Model"
-TL.Sprite        = require "three.objects.Sprite"
-TL.Line          = require "three.objects.Line"
-TL.LineSegments  = require "three.objects.LineSegments"
-TL.ParticleSystem = require "three.particles.ParticleSystem"
+TL.Mesh          = require "engine.objects.Mesh"
+TL.SkinnedMesh   = require "engine.objects.SkinnedMesh"
+TL.Skeleton      = require "engine.objects.Skeleton"
+TL.InstancedMesh = require "engine.objects.InstancedMesh"
+TL.LOD           = require "engine.objects.LOD"
+TL.Model         = require "engine.objects.Model"
+TL.Sprite        = require "engine.objects.Sprite"
+TL.Line          = require "engine.objects.Line"
+TL.LineSegments  = require "engine.objects.LineSegments"
+TL.ParticleSystem = require "engine.particles.ParticleSystem"
 
 -- ── geometries ───────────────────────────────────────────────────────────────
 -- Generated primitives, so a scene can be built without loading a file.
-TL.BoxGeometry      = require "three.geometries.BoxGeometry"
-TL.SphereGeometry   = require "three.geometries.SphereGeometry"
-TL.PlaneGeometry    = require "three.geometries.PlaneGeometry"
-TL.CylinderGeometry = require "three.geometries.CylinderGeometry"
-TL.ConeGeometry     = require "three.geometries.ConeGeometry"
-TL.TorusGeometry    = require "three.geometries.TorusGeometry"
+TL.BoxGeometry      = require "engine.geometries.BoxGeometry"
+TL.SphereGeometry   = require "engine.geometries.SphereGeometry"
+TL.PlaneGeometry    = require "engine.geometries.PlaneGeometry"
+TL.CylinderGeometry = require "engine.geometries.CylinderGeometry"
+TL.ConeGeometry     = require "engine.geometries.ConeGeometry"
+TL.TorusGeometry    = require "engine.geometries.TorusGeometry"
 
 -- ── materials ────────────────────────────────────────────────────────────────
-TL.Material             = require "three.materials.Material"
-TL.MeshStandardMaterial = require "three.materials.MeshStandardMaterial"
-TL.LineBasicMaterial    = require "three.materials.LineBasicMaterial"
+TL.Material             = require "engine.materials.Material"
+TL.MeshStandardMaterial = require "engine.materials.MeshStandardMaterial"
+TL.LineBasicMaterial    = require "engine.materials.LineBasicMaterial"
 
 -- ── cameras ──────────────────────────────────────────────────────────────────
-TL.Camera            = require "three.cameras.Camera"
-TL.PerspectiveCamera = require "three.cameras.PerspectiveCamera"
-TL.OrthographicCamera = require "three.cameras.OrthographicCamera"
+TL.Camera            = require "engine.cameras.Camera"
+TL.PerspectiveCamera = require "engine.cameras.PerspectiveCamera"
+TL.OrthographicCamera = require "engine.cameras.OrthographicCamera"
 
 -- ── lights ───────────────────────────────────────────────────────────────────
-TL.Light            = require "three.lights.Light"
-TL.AmbientLight     = require "three.lights.AmbientLight"
-TL.DirectionalLight = require "three.lights.DirectionalLight"
-TL.HemisphereLight  = require "three.lights.HemisphereLight"
-TL.PointLight       = require "three.lights.PointLight"
-TL.SpotLight        = require "three.lights.SpotLight"
+TL.Light            = require "engine.lights.Light"
+TL.AmbientLight     = require "engine.lights.AmbientLight"
+TL.DirectionalLight = require "engine.lights.DirectionalLight"
+TL.HemisphereLight  = require "engine.lights.HemisphereLight"
+TL.PointLight       = require "engine.lights.PointLight"
+TL.SpotLight        = require "engine.lights.SpotLight"
 
 -- ── renderers ────────────────────────────────────────────────────────────────
-TL.WebGLRenderer = require "three.renderers.WebGLRenderer"
+TL.WebGLRenderer = require "engine.renderers.WebGLRenderer"
 
 -- ── postprocessing ───────────────────────────────────────────────────────────
-TL.EffectComposer = require "three.postprocessing.EffectComposer"
-TL.RenderPass      = require "three.postprocessing.RenderPass"
-TL.BloomPass       = require "three.postprocessing.BloomPass"
+TL.EffectComposer = require "engine.postprocessing.EffectComposer"
+TL.RenderPass      = require "engine.postprocessing.RenderPass"
+TL.BloomPass       = require "engine.postprocessing.BloomPass"
 
 -- ── loaders ──────────────────────────────────────────────────────────────────
-TL.Loader        = require "three.loaders.Loader"
-TL.GLTFLoader    = require "three.loaders.GLTFLoader"
-TL.ColladaLoader = require "three.loaders.ColladaLoader"
-TL.TextureLoader = require "three.loaders.TextureLoader"
+TL.Loader        = require "engine.loaders.Loader"
+TL.GLTFLoader    = require "engine.loaders.GLTFLoader"
+TL.ColladaLoader = require "engine.loaders.ColladaLoader"
+TL.TextureLoader = require "engine.loaders.TextureLoader"
 
 -- ── animation ────────────────────────────────────────────────────────────────
-TL.AnimationClip   = require "three.animation.AnimationClip"
-TL.AnimationAction = require "three.animation.AnimationAction"
-TL.AnimationMixer  = require "three.animation.AnimationMixer"
-TL.PoseAccumulator = require "three.animation.PoseAccumulator"
+TL.AnimationClip   = require "engine.animation.AnimationClip"
+TL.AnimationAction = require "engine.animation.AnimationAction"
+TL.AnimationMixer  = require "engine.animation.AnimationMixer"
+TL.PoseAccumulator = require "engine.animation.PoseAccumulator"
 
 -- ── controls ─────────────────────────────────────────────────────────────────
-TL.FlyControls   = require "three.controls.FlyControls"
-TL.OrbitControls = require "three.controls.OrbitControls"
+TL.FlyControls   = require "engine.controls.FlyControls"
+TL.OrbitControls = require "engine.controls.OrbitControls"
+
+-- ── collision ────────────────────────────────────────────────────────────────
+TL.CollisionWorld = require "engine.collision.World"
+TL.FlatBroadphase = require "engine.collision.FlatBroadphase"
+TL.Octree         = require "engine.collision.Octree"
+TL.MeshCollider   = require "engine.collision.MeshCollider"
+TL.Heightfield    = require "engine.collision.Heightfield"
+TL.Triangle       = require "engine.math.triangle"
 
 -- ── constants ────────────────────────────────────────────────────────────────
 TL.FrontSide  = "front"
@@ -144,10 +153,10 @@ TL.MathUtils = {
 -- Their shapes are not part of the stable API.
 TL.internal = {
     importer = {
-        common = require "importer.common",
-        gltf   = require "importer.gltf",
-        dae    = require "importer.dae",
-        obj    = require "importer.obj",
+        common = require "engine.importer.common",
+        gltf   = require "engine.importer.gltf",
+        dae    = require "engine.importer.dae",
+        obj    = require "engine.importer.obj",
     },
 }
 

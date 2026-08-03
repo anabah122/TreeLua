@@ -1,8 +1,8 @@
 -- Босс: анимированная glTF-модель (LOD "high") + примитивный заменитель
 -- ("low"), переключаемые вручную через LOD:update(camera), как требует README.
 local cfg = require "demos.isaac.config"
-local Vector3 = require "math.vec3"
-local Quaternion = require "math.quat"
+local Vector3 = require "engine.math.vec3"
+local Quaternion = require "engine.math.quat"
 
 local FORWARD = Vector3:new(0, 0, 1)
 local scratchQ = Quaternion:new()
