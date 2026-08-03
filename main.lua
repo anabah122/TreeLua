@@ -8,28 +8,12 @@ for _, a in ipairs(arg or {}) do
     end
 end
 
-local TL       = require "init"
-local settings = TL.settings
+local TL = require "init"
 
 local demoName = "collisiontest"
 for _, a in ipairs(arg or {}) do
     if a == "--maria" then demoName = "mariatest" end
-end
-local game = require("demos." .. demoName .. ".init")
-
-function love.load()
-    game.init()
+    if a == "--shadows" then demoName = "shadows" end
 end
 
-function love.update(dt)
-    game.update(dt)
-end
-
-function love.draw()
-    game.draw()
-end
-
-function love.resize(w, h) game.resize(w, h) end
-function love.keypressed(k) game.keypressed(k) end
-function love.mousemoved(x, y, dx, dy) game.mousemoved(x, y, dx, dy) end
-function love.wheelmoved(dx, dy) game.wheelmoved(dx, dy) end
+TL.baseCallbacks(require("demos." .. demoName .. ".init"))
